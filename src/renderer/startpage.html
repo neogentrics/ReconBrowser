@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recon Start</title>
+  <link rel="stylesheet" href="startpage.css">
+</head>
+<body>
+  <div class="start-container">
+    <div class="brand-hero">
+      <div class="brand-logo">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="2" x2="12" y2="6"></line>
+          <line x1="12" y1="18" x2="12" y2="22"></line>
+          <line x1="2" y1="12" x2="6" y2="12"></line>
+          <line x1="18" y1="12" x2="22" y2="12"></line>
+          <circle cx="12" cy="12" r="3" fill="#7c3aed"></circle>
+        </svg>
+      </div>
+      <h1>Recon Browser</h1>
+      <p class="tagline">Bloat-free. Privacy-hardened. Built for Recon Towers.</p>
+    </div>
+
+    <!-- Centered Search -->
+    <div class="search-box">
+      <div class="engine-indicator" title="Search powered by DuckDuckGo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#de5833" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <input type="text" id="start-search" placeholder="Search with DuckDuckGo or type a URL..." autofocus />
+      <div class="bang-hint"><code>!g</code> Google &nbsp;•&nbsp; <code>!b</code> Bing</div>
+    </div>
+
+    <!-- Privacy & Shields Live Stats -->
+    <div class="stats-card">
+      <div class="stat-item">
+        <span class="stat-icon">🛡️</span>
+        <div class="stat-info">
+          <strong id="stat-shield-state">Active</strong>
+          <small>Recon Shields</small>
+        </div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-icon">⚡</span>
+        <div class="stat-info">
+          <strong id="stat-speed">Ultra</strong>
+          <small>Zero Telemetry Overhead</small>
+        </div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-icon">🔒</span>
+        <div class="stat-info">
+          <strong id="stat-doh">Encrypted</strong>
+          <small>DNS-over-HTTPS</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recon Apps Ecosystem Quick Launch Grid -->
+    <div class="apps-section">
+      <h2>Recon Apps Hub</h2>
+      <div class="apps-grid">
+        <a href="https://recontowers.com" class="app-card">
+          <span class="app-icon">🌐</span>
+          <span class="app-title">Recon Towers</span>
+          <span class="app-desc">Ecosystem Home</span>
+        </a>
+        <a href="https://recontowers.com/projects/neo-markdown-reader" class="app-card">
+          <span class="app-icon">📝</span>
+          <span class="app-title">Markdown Reader</span>
+          <span class="app-desc">Distraction-Free Docs</span>
+        </a>
+        <a href="https://recontowers.com/projects" class="app-card">
+          <span class="app-icon">📚</span>
+          <span class="app-title">StoryTracker</span>
+          <span class="app-desc">Author & Lore Workspace</span>
+        </a>
+        <a href="https://recontowers.com/projects" class="app-card">
+          <span class="app-icon">🎧</span>
+          <span class="app-title">Audio Studio</span>
+          <span class="app-desc">Production & Sound</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('start-search');
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const val = searchInput.value.trim();
+        if (!val) return;
+        if (val.startsWith('http://') || val.startsWith('https://')) {
+          window.location.href = val;
+        } else if (val.includes('.') && !val.includes(' ')) {
+          window.location.href = 'https://' + val;
+        } else if (val.startsWith('!g ')) {
+          window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(val.substring(3).trim());
+        } else if (val.startsWith('!b ')) {
+          window.location.href = 'https://www.bing.com/search?q=' + encodeURIComponent(val.substring(3).trim());
+        } else {
+          window.location.href = 'https://duckduckgo.com/?q=' + encodeURIComponent(val);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -6,12 +6,25 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Tab Strip -->
+  <div id="tab-strip">
+    <div id="tabs-container">
+      <div class="tab active" data-tab-id="1">
+        <span class="tab-favicon">⚡</span>
+        <span class="tab-title">Recon Start</span>
+        <span class="tab-close" title="Close Tab">×</span>
+      </div>
+    </div>
+    <button id="btn-new-tab" title="New Tab">+</button>
+  </div>
+
   <!-- Top Navigation & Omnibar -->
   <header id="recon-navbar">
     <div class="nav-controls">
       <button id="btn-back" title="Back">‹</button>
       <button id="btn-forward" title="Forward">›</button>
       <button id="btn-reload" title="Reload">↻</button>
+      <button id="btn-home" title="Go to Start Page">⌂</button>
     </div>
 
     <div class="omnibar-container">
@@ -21,11 +34,11 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
       </div>
-      <input type="text" id="omnibar" placeholder="Search with DuckDuckGo or enter address (!g for Google, !b for Bing)..." autofocus />
+      <input type="text" id="omnibar" placeholder="Search with DuckDuckGo or enter address (!g for Google, !b for Bing)..." />
     </div>
 
     <!-- Recon Shields Status Widget -->
-    <div class="shields-widget" id="shields-widget" title="Recon Shields Status">
+    <div class="shields-widget" id="shields-widget" title="Click to open Shields Settings">
       <span class="shield-icon">🛡️</span>
       <span class="shield-label">Shields: <strong id="shield-status">ON</strong></span>
       <span class="blocked-badge" id="blocked-count">0</span>
@@ -42,11 +55,69 @@
         <a href="#" data-url="https://recontowers.com/projects" class="menu-item">🎧 Audio Studio</a>
       </div>
     </div>
+
+    <button id="btn-settings-toggle" class="nav-icon-btn" title="Settings">⚙</button>
   </header>
 
-  <!-- Browser Content View -->
+  <!-- Side Settings / Shields Drawer -->
+  <aside id="settings-drawer" class="drawer-closed">
+    <div class="drawer-header">
+      <h3>Recon Shields & Settings</h3>
+      <button id="btn-close-drawer">×</button>
+    </div>
+    <div class="drawer-content">
+      <div class="setting-group">
+        <h4>Shield Protections</h4>
+        <label class="switch-row">
+          <span>Block Trackers & Ads</span>
+          <input type="checkbox" id="toggle-adblock" checked />
+        </label>
+        <label class="switch-row">
+          <span>Anti-Fingerprinting Noise</span>
+          <input type="checkbox" id="toggle-fingerprint" checked />
+        </label>
+        <label class="switch-row">
+          <span>WebRTC IP Leak Protection</span>
+          <input type="checkbox" id="toggle-webrtc" checked />
+        </label>
+        <label class="switch-row">
+          <span>Strip Tracking URLs (utm, fbclid)</span>
+          <input type="checkbox" id="toggle-strip-params" checked />
+        </label>
+      </div>
+
+      <div class="setting-group">
+        <h4>Search & Privacy</h4>
+        <label class="select-row">
+          <span>Default Engine</span>
+          <select id="select-engine">
+            <option value="duckduckgo" selected>DuckDuckGo (Recommended)</option>
+            <option value="google">Google</option>
+            <option value="bing">Bing</option>
+          </select>
+        </label>
+        <label class="switch-row">
+          <span>DNS-over-HTTPS (Cloudflare)</span>
+          <input type="checkbox" id="toggle-doh" checked />
+        </label>
+      </div>
+
+      <div class="setting-group">
+        <h4>Theme & Interface</h4>
+        <label class="select-row">
+          <span>Appearance</span>
+          <select id="select-theme">
+            <option value="cyber-dark" selected>Recon Cyber Dark</option>
+            <option value="obsidian">Pure Obsidian</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Browser Content View Area -->
   <main id="browser-container">
-    <webview id="browser-view" src="https://duckduckgo.com" partition="persist:recon" allowpopups></webview>
+    <webview id="browser-view" src="startpage.html" partition="persist:recon" allowpopups></webview>
   </main>
 
   <script src="renderer.js"></script>

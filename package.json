@@ -1,0 +1,44 @@
+{
+  "name": "recon-browser",
+  "productName": "Recon Browser",
+  "version": "0.2.0",
+  "description": "A privacy-hardened, bloat-free browser for the Recon Apps ecosystem. Built with native shields, zero telemetry, and DuckDuckGo search.",
+  "author": "Recon Towers Dev Department <author@neogentrics.com>",
+  "license": "MIT",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "python3 -m unittest discover tests",
+    "dist:win": "electron-builder --win nsis portable --x64 --publish never",
+    "dist:mac": "electron-builder --mac dmg --arm64 --x64 --publish never",
+    "dist:linux": "electron-builder --linux AppImage deb --publish never"
+  },
+  "build": {
+    "appId": "com.neogentrics.reconbrowser",
+    "productName": "Recon Browser",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": ["nsis", "portable"],
+      "artifactName": "ReconBrowser-${version}-Setup.exe"
+    },
+    "portable": {
+      "artifactName": "ReconBrowser-${version}-Portable.exe"
+    },
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": ["dmg"],
+      "artifactName": "ReconBrowser-${version}-mac-${arch}.dmg"
+    },
+    "linux": {
+      "category": "Network;WebBrowser",
+      "target": ["AppImage", "deb"],
+      "artifactName": "ReconBrowser-${version}-linux-${arch}.${ext}"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  }
+}

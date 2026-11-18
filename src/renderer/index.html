@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recon Browser</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Top Navigation & Omnibar -->
+  <header id="recon-navbar">
+    <div class="nav-controls">
+      <button id="btn-back" title="Back">‹</button>
+      <button id="btn-forward" title="Forward">›</button>
+      <button id="btn-reload" title="Reload">↻</button>
+    </div>
+
+    <div class="omnibar-container">
+      <div class="search-badge" id="search-badge" title="Default Engine: DuckDuckGo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#de5833" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <input type="text" id="omnibar" placeholder="Search with DuckDuckGo or enter address (!g for Google, !b for Bing)..." autofocus />
+    </div>
+
+    <!-- Recon Shields Status Widget -->
+    <div class="shields-widget" id="shields-widget" title="Recon Shields Status">
+      <span class="shield-icon">🛡️</span>
+      <span class="shield-label">Shields: <strong id="shield-status">ON</strong></span>
+      <span class="blocked-badge" id="blocked-count">0</span>
+    </div>
+
+    <!-- Recon Apps Ecosystem Quick Menu -->
+    <div class="ecosystem-menu">
+      <button id="btn-ecosystem" title="Recon Apps Hub">⚡ Recon Apps</button>
+      <div class="ecosystem-dropdown" id="ecosystem-dropdown">
+        <div class="dropdown-header">Recon Towers Ecosystem</div>
+        <a href="#" data-url="https://recontowers.com" class="menu-item">🌐 Recon Towers Hub</a>
+        <a href="#" data-url="https://recontowers.com/projects/neo-markdown-reader" class="menu-item">📝 RT Markdown Reader</a>
+        <a href="#" data-url="https://recontowers.com/projects" class="menu-item">📚 StoryTracker & Author Desk</a>
+        <a href="#" data-url="https://recontowers.com/projects" class="menu-item">🎧 Audio Studio</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Browser Content View -->
+  <main id="browser-container">
+    <webview id="browser-view" src="https://duckduckgo.com" partition="persist:recon" allowpopups></webview>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

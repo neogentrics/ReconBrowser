@@ -24,7 +24,12 @@ const tabs = {
 };
 let activeTabId = 1;
 
-// Navigation
+// Helper to resolve startpage URL
+function pathToFileURL(filename) {
+  return `file://${__dirname}/${filename}`;
+}
+
+// Navigation Controls
 btnBack.addEventListener('click', () => {
   if (webview.canGoBack()) webview.goBack();
 });
@@ -40,10 +45,6 @@ btnReload.addEventListener('click', () => {
 btnHome.addEventListener('click', () => {
   webview.loadURL(pathToFileURL('startpage.html'));
 });
-
-function pathToFileURL(filename) {
-  return `file://${__dirname}/${filename}`;
-}
 
 // Omnibar Navigation
 omnibar.addEventListener('keydown', (e) => {
@@ -81,7 +82,7 @@ webview.addEventListener('did-navigate', (e) => {
   const url = e.url;
   if (url.includes('startpage.html')) {
     omnibar.value = '';
-    omnibar.placeholder = 'Search with DuckDuckGo or enter address...';
+    omnibar.placeholder = 'Search with DuckDuckGo or enter address (!g for Google, !b for Bing)...';
     updateActiveTabTitle('Recon Start');
   } else {
     omnibar.value = url;
@@ -161,16 +162,29 @@ function closeTab(id) {
   }
 }
 
-// Initial tab listeners
-document.querySelectorAll('.tab').forEach(tabEl => {
-  const id = Number(tabEl.getAttribute('data-tab-id'));
-  tabEl.addEventListener('click', (e) => {
-    if (e.target.classList.contains('tab-close')) {
-      closeTab(id);
-    } else {
-      switchTab(id);
-    }
-  });
+// Global Keyboard Shortcuts (Ctrl+T, Ctrl+W, Ctrl+L, Ctrl+R)
+document.addEventListener('keydown', (e) => {
+  // Focus Omnibar (Ctrl+L or Cmd+L)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
+    e.preventDefault();
+    omnibar.focus();
+    omnibar.select();
+  }
+  // New Tab (Ctrl+T or Cmd+T)
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 't') {
+    e.preventDefault();
+    btnNewTab.click();
+  }
+  // Close Tab (Ctrl+W or Cmd+W)
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'w') {
+    e.preventDefault();
+    closeTab(activeTabId);
+  }
+  // Reload (Ctrl+R or Cmd+R)
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r') {
+    e.preventDefault();
+    webview.reload();
+  }
 });
 
 // Shields counter from main process
@@ -179,17 +193,9 @@ ipcRenderer.on('shield-blocked-update', (event, data) => {
 });
 
 // Drawer toggles
-shieldsWidget.addEventListener('click', () => {
-  toggleDrawer();
-});
-
-btnSettingsToggle.addEventListener('click', () => {
-  toggleDrawer();
-});
-
-btnCloseDrawer.addEventListener('click', () => {
-  settingsDrawer.classList.add('drawer-closed');
-});
+shieldsWidget.addEventListener('click', toggleDrawer);
+btnSettingsToggle.addEventListener('click', toggleDrawer);
+btnCloseDrawer.addEventListener('click', () => settingsDrawer.classList.add('drawer-closed'));
 
 function toggleDrawer() {
   settingsDrawer.classList.toggle('drawer-closed');

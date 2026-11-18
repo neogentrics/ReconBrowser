@@ -7,29 +7,44 @@
 
 <br>
 
-[![Version](https://img.shields.io/badge/version-0.1.0--alpha-7c3aed?style=for-the-badge&labelColor=150e22)](https://github.com/neogentrics/ReconBrowser/releases)
-[![Status](https://img.shields.io/badge/status-active_development-238636?style=for-the-badge&labelColor=150e22)](https://github.com/neogentrics/ReconBrowser)
+[![Latest Release](https://img.shields.io/github/v/release/neogentrics/ReconBrowser?style=for-the-badge&color=7c3aed&labelColor=150e22)](https://github.com/neogentrics/ReconBrowser/releases/latest)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/neogentrics/ReconBrowser/release.yml?branch=main&style=for-the-badge&label=builds&labelColor=150e22)](https://github.com/neogentrics/ReconBrowser/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge&labelColor=150e22)](LICENSE)
-[![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-1f6feb?style=for-the-badge&labelColor=150e22)](#platforms)
+[![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Android-1f6feb?style=for-the-badge&labelColor=150e22)](#downloads)
 [![Default Search](https://img.shields.io/badge/search-DuckDuckGo-de5833?style=for-the-badge&logo=duckduckgo&logoColor=white&labelColor=150e22)](https://duckduckgo.com)
 [![Shields](https://img.shields.io/badge/shields-native_blocking-da3633?style=for-the-badge&labelColor=150e22)](#recon-shields)
 
 <br>
 
-[Roadmap](docs/ROADMAP.md) • [Shields Spec](docs/SHIELDS_SPEC.md) • [Search Config](config/search-engines.json) • [Recon Towers Hub](https://recontowers.com)
+[Downloads](#downloads) • [Roadmap](docs/ROADMAP.md) • [Shields Spec](docs/SHIELDS_SPEC.md) • [Recon Towers Hub](https://recontowers.com)
 
 </div>
 
 ---
 
+## Downloads
+
+Download the latest standalone installer or portable build from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest):
+
+| Platform | Download Package | Description |
+| :--- | :--- | :--- |
+| **Windows** | [**ReconBrowser-Setup.exe**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Complete Windows installer with desktop and start menu shortcuts |
+| **Windows** | [**ReconBrowser-Portable.exe**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Zero-install standalone portable executable |
+| **Linux** | [**ReconBrowser-x86_64.AppImage**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Universal Linux standalone executable (Ubuntu, Fedora, Arch, etc.) |
+| **Linux** | [**ReconBrowser-amd64.deb**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Debian / Ubuntu / Mint system package |
+| **macOS** | [**ReconBrowser-arm64.dmg**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Apple Silicon (M1 / M2 / M3 / M4) package |
+| **macOS** | [**ReconBrowser-x64.dmg**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Intel Mac package |
+
+---
+
 ## Overview
 
-**Recon Browser** is engineered from the ground up to strip away corporate telemetry, tracking scripts, and bloatware. Drawing architectural inspiration from Netscape’s open foundation and modernized with a multi-process sandbox, native Brave-style shields, and modern Gecko/SpiderMonkey technologies.
+**Recon Browser** is engineered from the ground up to strip away corporate telemetry, tracking scripts, and bloatware. Drawing architectural inspiration from Netscape’s open foundation and modernized with a multi-process sandbox, native Brave-style shields, and modern web engines.
 
 ### Key Highlights
 - **Zero Telemetry & Pingbacks**: No background diagnostics, no Mozilla/Google tracking URLs, no Pocket integrations.
 - **Native Recon Shields**: In-memory tracker and ad blocking prior to network dispatch—no third-party extensions required.
-- **Search Freedom**: Pre-configured with **DuckDuckGo** as default, with instant one-click fallbacks for **Google** and **Bing**.
+- **Search Freedom**: Pre-configured with **DuckDuckGo** as default, with instant one-click fallbacks for **Google** (`!g`) and **Bing** (`!b`).
 - **Recon Apps Integration**: Built to seamlessly link with **Author Desk**, **Audio Studio**, **StoryTracker**, and **Markdown Reader**.
 - **Memory Safety & Sandboxing**: Process-isolated tab architectures to prevent arbitrary code execution and memory corruption.
 
@@ -48,47 +63,30 @@
 
 ---
 
-## Repository Structure
+## Keyboard Shortcuts
 
-```text
-ReconBrowser/
-├── config/
-│   ├── search-engines.json      # DuckDuckGo, Google, Bing presets
-│   ├── shields-config.json      # Protection rules and DoH endpoints
-│   └── filters/
-│       └── default-trackers.txt # Core tracking & ad domain blocklist
-├── docs/
-│   ├── ROADMAP.md               # Phased delivery plan (v0.1.0 to v1.1.0)
-│   └── SHIELDS_SPEC.md          # Technical specification for shields
-├── src/
-│   └── shields/
-│       ├── filter_engine.py     # Rule parser and URL classifier
-│       └── fingerprint_guard.js # Canvas, WebGL, and AudioContext guard
-└── tests/
-    └── test_shields.py          # Shields unit and benchmark suite
-```
+- `Ctrl+T` / `Cmd+T`: Open new tab (defaults to Recon Start)
+- `Ctrl+W` / `Cmd+W`: Close active tab
+- `Ctrl+L` / `Cmd+L`: Focus and select omnibar
+- `Ctrl+R` / `Cmd+R`: Reload current page
+- `!g <query>`: Instant search redirect to Google
+- `!b <query>`: Instant search redirect to Bing
 
 ---
 
-## Phased Development Roadmap
-
-- [x] **v0.1.0-alpha**: Initial repository architecture, clean telemetry-stripped baseline, search presets.
-- [ ] **v0.2.0-beta**: Native **Recon Shields Engine** (rule matcher, canvas noise injection, DoH resolver).
-- [ ] **v0.3.0**: **Recon UI & Theme** (dark cyber aesthetics, minimalist omnibar, vertical tab option).
-- [ ] **v1.0.0**: **Production Release** (multi-platform installers, audited process isolation).
-- [ ] **v1.1.0+**: **Recon Ecosystem Sync** (peer-to-peer encrypted sync with Recon Towers apps).
-
----
-
-## Contributing & Development
+## Contributing & Local Development
 
 ```bash
 # Clone the repository
 git clone https://github.com/neogentrics/ReconBrowser.git
 cd ReconBrowser
 
-# Run shields test suite
-python3 -m unittest discover tests
+# Install dependencies and launch local build
+npm install
+npm start
+
+# Run automated test suite
+npm test
 ```
 
 ---

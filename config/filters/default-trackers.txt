@@ -1,0 +1,22 @@
+# Recon Browser Default Tracker Blocklist
+! Category: Ad Tech & Telemetry
+||google-analytics.com^
+||googletagmanager.com^
+||doubleclick.net^
+||scorecardresearch.com^
+||criteo.com^
+||criteo.net^
+||taboola.com^
+||outbrain.com^
+||adnxs.com^
+||rubiconproject.com^
+||pubmatic.com^
+||amazon-adsystem.com^
+||facebook.net^$third-party
+||facebook.com/tr/*
+||telemetry.mozilla.org^
+||data.mistat.india.xiaomi.com^
+||hotjar.com^
+||mixpanel.com^
+||segment.io^
+||segment.com^

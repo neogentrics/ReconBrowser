@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0-beta",
+  "global_protection": "strict",
+  "protections": {
+    "ad_blocking": true,
+    "tracker_blocking": true,
+    "fingerprint_defense": true,
+    "webrtc_ip_protection": true,
+    "https_enforce": true,
+    "strip_tracking_parameters": true
+  },
+  "dns_over_https": {
+    "enabled": true,
+    "provider": "https://cloudflare-dns.com/dns-query",
+    "fallbacks": [
+      "https://dns.quad9.net/dns-query"
+    ]
+  },
+  "tracking_parameters": [
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_term",
+    "utm_content",
+    "fbclid",
+    "gclid",
+    "_ga",
+    "msclkid",
+    "mc_eid"
+  ],
+  "site_overrides": {
+    "recontowers.com": {
+      "protection": "standard"
+    }
+  }
+}

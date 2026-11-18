@@ -1,0 +1,19 @@
+# Build outputs
+target/
+obj/
+bin/
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Node / JS
+node_modules/
+npm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

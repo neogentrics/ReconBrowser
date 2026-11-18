@@ -1,0 +1,20 @@
+{
+  "default": "duckduckgo",
+  "engines": {
+    "duckduckgo": {
+      "name": "DuckDuckGo",
+      "search_url": "https://duckduckgo.com/?q={searchTerms}",
+      "suggest_url": "https://duckduckgo.com/ac/?q={searchTerms}&type=list"
+    },
+    "google": {
+      "name": "Google",
+      "search_url": "https://www.google.com/search?q={searchTerms}",
+      "suggest_url": "https://suggestqueries.google.com/complete/search?client=firefox&q={searchTerms}"
+    },
+    "bing": {
+      "name": "Bing",
+      "search_url": "https://www.bing.com/search?q={searchTerms}",
+      "suggest_url": "https://api.bing.com/osjson.aspx?query={searchTerms}"
+    }
+  }
+}

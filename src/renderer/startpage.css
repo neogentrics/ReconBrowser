@@ -80,50 +80,50 @@ body.theme-mist {
 }
 
 body.theme-forest {
-  --start-bg: radial-gradient(circle at 50% 20%, #14301f 0%, #0b120e 80%);
-  --card-bg: #0e2116;
-  --border-color: #2b4a37;
-  --accent-purple: #5fcf8e;
+  --start-bg: radial-gradient(circle at 50% 25%, #184c31 0%, #06150e 80%);
+  --card-bg: #113824;
+  --border-color: #257047;
+  --accent-purple: #34d399;
   --accent-cyan: #2dd4bf;
   --accent-green: #4ade80;
-  --text-main: #d6e4da;
-  --text-muted: #8ea394;
-  --app-card-bg: #09170f;
+  --text-main: #ecfdf5;
+  --text-muted: #94cbb0;
+  --app-card-bg: #0b2618;
 }
 
 body.theme-dusk {
-  --start-bg: radial-gradient(circle at 50% 20%, #2a1f4f 0%, #110e18 80%);
-  --card-bg: #1c1533;
-  --border-color: #45376f;
-  --accent-purple: #b197fc;
+  --start-bg: radial-gradient(circle at 50% 25%, #3d2775 0%, #0c0816 80%);
+  --card-bg: #271b4b;
+  --border-color: #5d3ea3;
+  --accent-purple: #c084fc;
   --accent-cyan: #38bdf8;
   --accent-green: #34d399;
-  --text-main: #e2dcee;
-  --text-muted: #9d92b5;
-  --app-card-bg: #150f27;
+  --text-main: #f3f0fa;
+  --text-muted: #b4a7d1;
+  --app-card-bg: #1b1236;
 }
 
 body.theme-evergreen {
-  --start-bg: radial-gradient(circle at 50% 20%, #2a4b3d 0%, #122a20 80%);
-  --card-bg: #19352a;
-  --border-color: #44705c;
+  --start-bg: radial-gradient(circle at 50% 25%, #1d5743 0%, #081a13 80%);
+  --card-bg: #164736;
+  --border-color: #2e7a5e;
   --accent-purple: #50c878;
   --accent-cyan: #2dd4bf;
   --accent-green: #4ade80;
-  --text-main: #eaf4ee;
-  --text-muted: #9db5a7;
-  --app-card-bg: #0f241c;
+  --text-main: #f0fdf4;
+  --text-muted: #9dc8b5;
+  --app-card-bg: #0e3024;
 }
 
 body.theme-aero {
-  --start-bg: radial-gradient(circle at 50% 20%, #e3ecf5 0%, #b2c4d5 80%);
-  --card-bg: rgba(240, 245, 251, 0.85);
-  --border-color: #9cb2c7;
-  --accent-purple: #1f5a8c;
+  --start-bg: radial-gradient(circle at 50% 25%, #e6f1fc 0%, #94b9dc 80%);
+  --card-bg: #eaf2fb;
+  --border-color: #88aecd;
+  --accent-purple: #1d4ed8;
   --accent-cyan: #0284c7;
   --accent-green: #0d9488;
-  --text-main: #10202e;
-  --text-muted: #4b6278;
+  --text-main: #0c1c2b;
+  --text-muted: #435e77;
   --app-card-bg: #ffffff;
 }
 
@@ -140,77 +140,120 @@ body.theme-contrast {
 }
 
 body.theme-red {
-  --start-bg: radial-gradient(circle at 50% 20%, #5c0f1e 0%, #29040c 80%);
-  --card-bg: #4a0c18;
-  --border-color: #84303a;
+  --start-bg: radial-gradient(circle at 50% 25%, #660e1f 0%, #1c0307 80%);
+  --card-bg: #400913;
+  --border-color: #8f1e31;
   --accent-purple: #ffd166;
   --accent-cyan: #ff8c42;
   --accent-green: #22c55e;
-  --text-main: #fff1ee;
-  --text-muted: #f7dcd8;
-  --app-card-bg: #3f0a14;
+  --text-main: #fff5f5;
+  --text-muted: #f4c2ca;
+  --app-card-bg: #2d050c;
 }
 
 body.theme-yellow {
-  --start-bg: radial-gradient(circle at 50% 20%, #ffe89e 0%, #ffc642 80%);
-  --card-bg: #fff8d6;
-  --border-color: #d9a91f;
-  --accent-purple: #1d4e89;
+  --start-bg: radial-gradient(circle at 50% 25%, #fff6cc 0%, #f59e0b 80%);
+  --card-bg: #fff9d6;
+  --border-color: #d99000;
+  --accent-purple: #1e3a8a;
   --accent-cyan: #0284c7;
   --accent-green: #15803d;
-  --text-main: #2a2208;
-  --text-muted: #544715;
+  --text-main: #261f06;
+  --text-muted: #574612;
   --app-card-bg: #ffffff;
 }
 
 body.theme-colorblind-blue-orange {
-  --start-bg: radial-gradient(circle at 50% 20%, #1e2937 0%, #0d1218 80%);
-  --card-bg: #1b2430;
-  --border-color: #354860;
+  --start-bg: radial-gradient(circle at 50% 25%, #253a54 0%, #0a1017 80%);
+  --card-bg: #20334a;
+  --border-color: #355378;
   --accent-purple: #0072b2;
   --accent-cyan: #56b4e9;
   --accent-green: #e69f00;
   --text-main: #f0f4f8;
   --text-muted: #9ab0c8;
-  --app-card-bg: #121820;
+  --app-card-bg: #0c131c;
 }
 
 body.theme-colorblind-cyan-magenta {
-  --start-bg: radial-gradient(circle at 50% 20%, #262133 0%, #0e0d13 80%);
-  --card-bg: #201c2a;
-  --border-color: #423a57;
+  --start-bg: radial-gradient(circle at 50% 25%, #352b4d 0%, #0d0b14 80%);
+  --card-bg: #2c2340;
+  --border-color: #4c3b6d;
   --accent-purple: #cc79a7;
   --accent-cyan: #009e73;
   --accent-green: #f0e442;
   --text-main: #fbf7fc;
   --text-muted: #aa9eb4;
-  --app-card-bg: #14121a;
+  --app-card-bg: #110e19;
 }
 
-/* Aspects in Start Page */
+/* ==========================================================================
+   Aspect Variations (Solid, Metallic, Glass) for Start Page
+   ========================================================================== */
+
+/* --- 1. SOLID (Matte Architectural Finish) --- */
+body.aspect-solid {
+  background: var(--start-bg) !important;
+}
+
 body.aspect-solid .stat-item,
 body.aspect-solid .app-card,
 body.aspect-solid #start-search {
+  background: var(--card-bg) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+  border: 1.5px solid var(--border-color) !important;
+}
+
+body.aspect-solid .stat-item:hover,
+body.aspect-solid .app-card:hover {
+  border-color: var(--accent-purple) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* --- 2. METALLIC (Brushed Sheen & Specular Plate Finish) --- */
+body.aspect-metallic {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, transparent 28%, rgba(255, 255, 255, 0.04) 52%, transparent 76%, rgba(0, 0, 0, 0.35) 100%), var(--start-bg) !important;
 }
 
 body.aspect-metallic .stat-item,
-body.aspect-metallic .app-card {
-  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.01) 40%, rgba(0, 0, 0, 0.2) 100%) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-  border-color: color-mix(in srgb, var(--border-color) 70%, #ffffff 30%) !important;
+body.aspect-metallic .app-card,
+body.aspect-metallic #start-search {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.05) 35%, rgba(0, 0, 0, 0.32) 70%, rgba(255, 255, 255, 0.14) 100%), var(--card-bg) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 -1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.55) !important;
+  border: 1px solid color-mix(in srgb, var(--border-color) 35%, #ffffff 65%) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.aspect-metallic .stat-item:hover,
+body.aspect-metallic .app-card:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.08) 35%, rgba(0, 0, 0, 0.25) 70%, rgba(255, 255, 255, 0.18) 100%), var(--card-bg) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.75), 0 12px 32px rgba(0, 0, 0, 0.65) !important;
+  border-color: #ffffff !important;
+}
+
+/* --- 3. GLASS (Frosted Acrylic & Ambient Glow Finish) --- */
+body.aspect-glass {
+  background: radial-gradient(circle at 18% 22%, color-mix(in srgb, var(--accent-purple) 40%, transparent) 0%, transparent 45%), radial-gradient(circle at 82% 78%, color-mix(in srgb, var(--accent-cyan) 35%, transparent) 0%, transparent 50%), radial-gradient(circle at 50% 15%, color-mix(in srgb, var(--accent-green) 25%, transparent) 0%, transparent 40%), var(--start-bg) !important;
 }
 
 body.aspect-glass .stat-item,
 body.aspect-glass .app-card,
 body.aspect-glass #start-search {
-  background-color: color-mix(in srgb, var(--card-bg) 65%, transparent) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
-  border-color: rgba(255, 255, 255, 0.16) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.03) 100%), color-mix(in srgb, var(--card-bg) 40%, transparent) !important;
+  backdrop-filter: blur(28px) saturate(220%) brightness(112%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(220%) brightness(112%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 14px 36px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.aspect-glass .stat-item:hover,
+body.aspect-glass .app-card:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.06) 100%), color-mix(in srgb, var(--card-bg) 50%, transparent) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.55), 0 18px 44px rgba(0, 0, 0, 0.6) !important;
 }
 
 body {

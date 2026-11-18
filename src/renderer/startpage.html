@@ -148,31 +148,23 @@
     };
 
     statShieldBtn.addEventListener('click', () => {
-      const current = localStorage.getItem('recon_shields_active') !== 'false';
-      const next = !current;
-      localStorage.setItem('recon_shields_active', String(next));
-      window.applyReconShieldsState(next);
-      window.dispatchEvent(new CustomEvent('recon-shields-toggled', { detail: { active: next } }));
+      console.log('RECON_ACTION:TOGGLE_SHIELDS');
     });
 
     statDohBtn.addEventListener('click', () => {
-      const current = localStorage.getItem('recon_doh_enabled') !== 'false';
-      const next = !current;
-      localStorage.setItem('recon_doh_enabled', String(next));
-      window.applyReconDohState(next);
-      window.dispatchEvent(new CustomEvent('recon-doh-toggled', { detail: { enabled: next } }));
+      console.log('RECON_ACTION:TOGGLE_DOH');
     });
 
     // Initialize from localStorage
     applyReconEngine(getEngine());
-    applyReconTheme(localStorage.getItem('recon_theme') || 'cyber');
+    applyReconTheme(localStorage.getItem('recon_theme') || 'cyber', localStorage.getItem('recon_aspect') || 'solid');
     window.applyReconShieldsState(localStorage.getItem('recon_shields_active') !== 'false');
     window.applyReconDohState(localStorage.getItem('recon_doh_enabled') !== 'false');
     window.applyReconAppsVisibility(localStorage.getItem('recon_show_startpage_apps') !== 'false');
 
     window.addEventListener('storage', () => {
       applyReconEngine(getEngine());
-      applyReconTheme(localStorage.getItem('recon_theme') || 'cyber');
+      applyReconTheme(localStorage.getItem('recon_theme') || 'cyber', localStorage.getItem('recon_aspect') || 'solid');
       window.applyReconShieldsState(localStorage.getItem('recon_shields_active') !== 'false');
       window.applyReconDohState(localStorage.getItem('recon_doh_enabled') !== 'false');
       window.applyReconAppsVisibility(localStorage.getItem('recon_show_startpage_apps') !== 'false');

@@ -286,6 +286,39 @@ function findLocalAppPath(appName) {
 }
 
 // IPC Handlers
+let dohEnabled = true;
+
+function applyDohConfig(enabled) {
+  dohEnabled = enabled;
+  if (app.configureHostResolver) {
+    try {
+      if (enabled) {
+        app.configureHostResolver({
+          enableBuiltInResolver: true,
+          secureDnsMode: 'secure',
+          secureDnsServers: [
+            'https://cloudflare-dns.com/dns-query'
+          ]
+        });
+        console.log('[Recon Network] DoH Configured: Cloudflare 1.1.1.1 Secure Mode');
+      } else {
+        app.configureHostResolver({
+          enableBuiltInResolver: false,
+          secureDnsMode: 'off',
+          secureDnsServers: []
+        });
+        console.log('[Recon Network] DoH Disabled: Standard System DNS Resolver');
+      }
+    } catch (err) {
+      console.error('[Recon Network] Failed to configure host resolver:', err);
+    }
+  }
+}
+
+ipcMain.on('toggle-doh', (event, enabled) => {
+  applyDohConfig(enabled);
+});
+
 ipcMain.on('toggle-shields', (event, enabled) => {
   shieldsEnabled = enabled;
   console.log(`[Recon Shields] Global State toggled: ${shieldsEnabled ? 'ACTIVE' : 'DISABLED'}`);
@@ -355,7 +388,10 @@ ipcMain.on('install-update-now', () => {
   if (updater) updater.installNow();
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  applyDohConfig(dohEnabled);
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

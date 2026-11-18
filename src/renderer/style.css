@@ -98,63 +98,63 @@ body.theme-mist {
 }
 
 body.theme-forest {
-  --bg-primary: #0b120e;
-  --bg-secondary: #14301f;
-  --bg-hover: #1b422b;
-  --border-color: #2b4a37;
-  --accent-purple: #5fcf8e;
+  --bg-primary: #06150e;
+  --bg-secondary: #0f3320;
+  --bg-hover: #185233;
+  --border-color: #257047;
+  --accent-purple: #34d399;
   --accent-cyan: #2dd4bf;
   --accent-green: #4ade80;
-  --text-main: #d6e4da;
-  --text-muted: #8ea394;
-  --card-bg: #0e2116;
-  --input-bg: #070c09;
-  --popover-bg: #14301f;
+  --text-main: #ecfdf5;
+  --text-muted: #94cbb0;
+  --card-bg: #113824;
+  --input-bg: #081a11;
+  --popover-bg: #113824;
 }
 
 body.theme-dusk {
-  --bg-primary: #110e18;
-  --bg-secondary: #2a1f4f;
-  --bg-hover: #3b2c6e;
-  --border-color: #45376f;
-  --accent-purple: #b197fc;
+  --bg-primary: #0e0a18;
+  --bg-secondary: #2b1c54;
+  --bg-hover: #3d2775;
+  --border-color: #5d3ea3;
+  --accent-purple: #c084fc;
   --accent-cyan: #38bdf8;
   --accent-green: #34d399;
-  --text-main: #e2dcee;
-  --text-muted: #9d92b5;
-  --card-bg: #1c1533;
-  --input-bg: #0c0912;
-  --popover-bg: #2a1f4f;
+  --text-main: #f3f0fa;
+  --text-muted: #b4a7d1;
+  --card-bg: #271b4b;
+  --input-bg: #0c0816;
+  --popover-bg: #271b4b;
 }
 
 body.theme-evergreen {
-  --bg-primary: #122a20;
-  --bg-secondary: #2a4b3d;
-  --bg-hover: #36614f;
-  --border-color: #44705c;
+  --bg-primary: #0a1c15;
+  --bg-secondary: #134232;
+  --bg-hover: #1b5944;
+  --border-color: #2e7a5e;
   --accent-purple: #50c878;
   --accent-cyan: #2dd4bf;
   --accent-green: #4ade80;
-  --text-main: #eaf4ee;
-  --text-muted: #9db5a7;
-  --card-bg: #19352a;
-  --input-bg: #0d1e17;
-  --popover-bg: #2a4b3d;
+  --text-main: #f0fdf4;
+  --text-muted: #9dc8b5;
+  --card-bg: #164736;
+  --input-bg: #0b221a;
+  --popover-bg: #164736;
 }
 
 body.theme-aero {
-  --bg-primary: #b2c4d5;
-  --bg-secondary: #e3ecf5;
-  --bg-hover: #cfddec;
-  --border-color: #9cb2c7;
-  --accent-purple: #1f5a8c;
+  --bg-primary: #9ec0df;
+  --bg-secondary: #d3e4f5;
+  --bg-hover: #bdd7ef;
+  --border-color: #88aecd;
+  --accent-purple: #1d4ed8;
   --accent-cyan: #0284c7;
   --accent-green: #0d9488;
-  --text-main: #10202e;
-  --text-muted: #4b6278;
-  --card-bg: #f0f5fb;
+  --text-main: #0c1c2b;
+  --text-muted: #435e77;
+  --card-bg: #eaf2fb;
   --input-bg: #ffffff;
-  --popover-bg: #e3ecf5;
+  --popover-bg: #d3e4f5;
 }
 
 body.theme-contrast {
@@ -173,99 +173,199 @@ body.theme-contrast {
 }
 
 body.theme-red {
-  --bg-primary: #3f0a14;
-  --bg-secondary: #5c0f1e;
-  --bg-hover: #7a1f2b;
-  --border-color: #84303a;
+  --bg-primary: #26040a;
+  --bg-secondary: #540b19;
+  --bg-hover: #751224;
+  --border-color: #8f1f33;
   --accent-purple: #ffd166;
   --accent-cyan: #ff8c42;
   --accent-green: #22c55e;
-  --text-main: #fff1ee;
-  --text-muted: #f7dcd8;
-  --card-bg: #4a0c18;
-  --input-bg: #2d060e;
-  --popover-bg: #5c0f1e;
+  --text-main: #fff5f5;
+  --text-muted: #f4c2ca;
+  --card-bg: #440914;
+  --input-bg: #1a0307;
+  --popover-bg: #440914;
 }
 
 body.theme-yellow {
-  --bg-primary: #ffb627;
-  --bg-secondary: #fff4c2;
-  --bg-hover: #ffe27a;
-  --border-color: #d9a91f;
-  --accent-purple: #1d4e89;
+  --bg-primary: #ffaa00;
+  --bg-secondary: #fff2b2;
+  --bg-hover: #ffe47a;
+  --border-color: #d99000;
+  --accent-purple: #1e3a8a;
   --accent-cyan: #0284c7;
   --accent-green: #15803d;
-  --text-main: #2a2208;
-  --text-muted: #544715;
-  --card-bg: #fdf3c4;
+  --text-main: #261f06;
+  --text-muted: #574612;
+  --card-bg: #fff9d6;
   --input-bg: #ffffff;
-  --popover-bg: #fff4c2;
+  --popover-bg: #fff2b2;
 }
 
 body.theme-colorblind-blue-orange {
-  --bg-primary: #121820;
-  --bg-secondary: #1b2430;
-  --bg-hover: #263345;
-  --border-color: #354860;
+  --bg-primary: #0c131c;
+  --bg-secondary: #182638;
+  --bg-hover: #243954;
+  --border-color: #355378;
   --accent-purple: #0072b2;
   --accent-cyan: #56b4e9;
   --accent-green: #e69f00;
   --text-main: #f0f4f8;
   --text-muted: #9ab0c8;
-  --card-bg: #1e2937;
-  --input-bg: #0d1218;
-  --popover-bg: #1b2430;
+  --card-bg: #20334a;
+  --input-bg: #0a1017;
+  --popover-bg: #182638;
 }
 
 body.theme-colorblind-cyan-magenta {
-  --bg-primary: #14121a;
-  --bg-secondary: #201c2a;
-  --bg-hover: #2e283d;
-  --border-color: #423a57;
+  --bg-primary: #110e19;
+  --bg-secondary: #211a30;
+  --bg-hover: #2f2545;
+  --border-color: #4c3b6d;
   --accent-purple: #cc79a7;
   --accent-cyan: #009e73;
   --accent-green: #f0e442;
   --text-main: #fbf7fc;
   --text-muted: #aa9eb4;
-  --card-bg: #262133;
-  --input-bg: #0e0d13;
-  --popover-bg: #201c2a;
+  --card-bg: #2c2340;
+  --input-bg: #0d0b14;
+  --popover-bg: #211a30;
 }
 
 /* ==========================================================================
    Aspect Variations (Solid, Metallic, Glass)
    ========================================================================== */
+
+/* --- 1. SOLID (Matte Architectural Finish) --- */
 body.aspect-solid header,
-body.aspect-solid .shields-widget,
-body.aspect-solid .tab,
-body.aspect-solid #shields-popover,
-body.aspect-solid #settings-drawer {
+body.aspect-solid #recon-navbar {
+  background: var(--bg-secondary) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
+  border-bottom: 1.5px solid var(--border-color) !important;
 }
 
+body.aspect-solid #omnibar {
+  background: var(--input-bg) !important;
+  border: 1.5px solid var(--border-color) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.aspect-solid .shields-widget,
+body.aspect-solid #btn-ecosystem,
+body.aspect-solid .nav-controls button,
+body.aspect-solid .nav-icon-btn {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+body.aspect-solid .tab {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-bottom: none !important;
+}
+
+body.aspect-solid .tab.active {
+  background-color: var(--card-bg) !important;
+  border-top: 2px solid var(--accent-purple) !important;
+  box-shadow: none !important;
+}
+
+body.aspect-solid #shields-popover,
+body.aspect-solid #settings-drawer {
+  background: var(--card-bg) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.5) !important;
+  border: 1.5px solid var(--border-color) !important;
+}
+
+/* --- 2. METALLIC (Brushed Sheen & Chamfered Edge Finish) --- */
 body.aspect-metallic header,
-body.aspect-metallic #settings-drawer,
-body.aspect-metallic #shields-popover,
-body.aspect-metallic .tab.active,
-body.aspect-metallic .shields-widget {
-  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.01) 40%, rgba(0, 0, 0, 0.2) 100%) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-  border-color: color-mix(in srgb, var(--border-color) 70%, #ffffff 30%) !important;
+body.aspect-metallic #recon-navbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.07) 25%, rgba(0, 0, 0, 0.28) 55%, rgba(255, 255, 255, 0.14) 85%, rgba(0, 0, 0, 0.45) 100%), var(--bg-secondary) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, #ffffff 60%) !important;
+  backdrop-filter: none !important;
 }
 
+body.aspect-metallic #omnibar {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.18) 60%, rgba(255, 255, 255, 0.08) 100%), var(--input-bg) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7), inset 0 -1px 0 rgba(255, 255, 255, 0.25), 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid color-mix(in srgb, var(--border-color) 40%, #ffffff 60%) !important;
+}
+
+body.aspect-metallic .shields-widget,
+body.aspect-metallic #btn-ecosystem,
+body.aspect-metallic .nav-controls button:not(:disabled),
+body.aspect-metallic .nav-icon-btn {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.06) 50%, rgba(0, 0, 0, 0.35) 100%), var(--card-bg) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 2px 6px rgba(0, 0, 0, 0.45) !important;
+  border: 1px solid color-mix(in srgb, var(--border-color) 35%, #ffffff 65%) !important;
+}
+
+body.aspect-metallic .tab.active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.1) 40%, rgba(0, 0, 0, 0.3) 100%), var(--card-bg) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 1px 0 0 rgba(255, 255, 255, 0.25), inset -1px 0 0 rgba(255, 255, 255, 0.25) !important;
+  border-color: color-mix(in srgb, var(--border-color) 40%, #ffffff 60%) !important;
+}
+
+body.aspect-metallic #shields-popover,
+body.aspect-metallic #settings-drawer {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.05) 30%, rgba(0, 0, 0, 0.35) 60%, rgba(255, 255, 255, 0.16) 80%, rgba(0, 0, 0, 0.5) 100%), var(--card-bg) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), inset -1px 0 0 rgba(255, 255, 255, 0.2), 0 16px 40px rgba(0, 0, 0, 0.7) !important;
+  border: 1px solid color-mix(in srgb, var(--border-color) 35%, #ffffff 65%) !important;
+}
+
+/* --- 3. GLASS (Frosted Acrylic & Ambient Glow Finish) --- */
 body.aspect-glass header,
-body.aspect-glass #settings-drawer,
-body.aspect-glass #shields-popover,
-body.aspect-glass .shields-widget,
-body.aspect-glass #read-aloud-bar,
-body.aspect-glass .reader-header-bar {
-  background-color: color-mix(in srgb, var(--bg-secondary) 75%, transparent) !important;
+body.aspect-glass #recon-navbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.04) 100%), color-mix(in srgb, var(--bg-secondary) 50%, transparent) !important;
+  backdrop-filter: blur(28px) saturate(220%) brightness(112%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(220%) brightness(112%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.aspect-glass #omnibar {
+  background: color-mix(in srgb, var(--input-bg) 45%, transparent) !important;
   backdrop-filter: blur(20px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
-  border-color: rgba(255, 255, 255, 0.16) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 0 14px color-mix(in srgb, var(--accent-purple) 30%, transparent) !important;
+}
+
+body.aspect-glass .shields-widget,
+body.aspect-glass #btn-ecosystem,
+body.aspect-glass #read-aloud-bar,
+body.aspect-glass .reader-header-bar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 100%), color-mix(in srgb, var(--card-bg) 50%, transparent) !important;
+  backdrop-filter: blur(20px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.aspect-glass .tab.active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 100%), color-mix(in srgb, var(--card-bg) 60%, transparent) !important;
+  backdrop-filter: blur(20px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(200%) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+}
+
+body.aspect-glass #shields-popover,
+body.aspect-glass #settings-drawer {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.02) 100%), color-mix(in srgb, var(--card-bg) 45%, transparent) !important;
+  backdrop-filter: blur(36px) saturate(220%) brightness(115%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(220%) brightness(115%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.32) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45), 0 24px 60px rgba(0, 0, 0, 0.65) !important;
 }
 
 body {

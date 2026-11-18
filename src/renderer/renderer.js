@@ -188,6 +188,30 @@ function createTab(initialUrl = null, activate = true) {
     syncThemeToWebview(webviewEl);
   });
 
+  // Webview console bridge for startpage bidirectional actions
+  webviewEl.addEventListener('console-message', (e) => {
+    const msg = e.message;
+    if (msg === 'RECON_ACTION:TOGGLE_SHIELDS') {
+      shieldsGlobalActive = !shieldsGlobalActive;
+      toggleAdblock.checked = shieldsGlobalActive;
+      popoverOptAdblock.checked = shieldsGlobalActive;
+      localStorage.setItem('recon_shields_active', String(shieldsGlobalActive));
+      localStorage.setItem('recon_opt_adblock', String(shieldsGlobalActive));
+      ipcRenderer.send('toggle-shields', shieldsGlobalActive);
+      updateShieldsPopoverDisplay();
+      tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
+      showToast(shieldsGlobalActive ? 'Recon Shields: Active' : 'Recon Shields: Paused');
+    } else if (msg === 'RECON_ACTION:TOGGLE_DOH') {
+      const current = localStorage.getItem('recon_doh_enabled') !== 'false';
+      const next = !current;
+      localStorage.setItem('recon_doh_enabled', String(next));
+      if (toggleDoh) toggleDoh.checked = next;
+      ipcRenderer.send('toggle-doh', next);
+      tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
+      showToast(next ? 'DNS-over-HTTPS: Encrypted (Cloudflare)' : 'DNS-over-HTTPS: Standard (System DNS)');
+    }
+  });
+
   browserContainer.appendChild(webviewEl);
 
   const tabData = {
@@ -516,8 +540,12 @@ ipcRenderer.on('shield-blocked-update', (event, data) => {
 // Toggle Global Shields
 toggleAdblock.addEventListener('change', (e) => {
   shieldsGlobalActive = e.target.checked;
+  localStorage.setItem('recon_shields_active', String(shieldsGlobalActive));
+  localStorage.setItem('recon_opt_adblock', String(shieldsGlobalActive));
+  popoverOptAdblock.checked = shieldsGlobalActive;
   ipcRenderer.send('toggle-shields', shieldsGlobalActive);
   updateShieldsPopoverDisplay();
+  tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
 });
 
 // Per-Site Shields Toggle
@@ -536,6 +564,7 @@ popoverToggleSite.addEventListener('change', (e) => {
 
   ipcRenderer.send('set-site-shields', { host, enabled: siteActive });
   updateShieldsPopoverDisplay();
+  tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
 });
 
 // Synchronize Popover Protection Switches
@@ -584,6 +613,8 @@ function syncThemeToWebview(webviewEl, theme = null, aspect = null) {
   const activeAspect = aspect || localStorage.getItem('recon_aspect') || 'solid';
   const engine = localStorage.getItem('recon_default_engine') || 'duckduckgo';
   const showApps = localStorage.getItem('recon_show_startpage_apps') !== 'false';
+  const shieldsActive = shieldsGlobalActive;
+  const dohActive = localStorage.getItem('recon_doh_enabled') !== 'false';
   try {
     webviewEl.executeJavaScript(`
       if (typeof window.applyReconTheme === 'function') {
@@ -594,6 +625,12 @@ function syncThemeToWebview(webviewEl, theme = null, aspect = null) {
       }
       if (typeof window.applyReconAppsVisibility === 'function') {
         window.applyReconAppsVisibility(${showApps});
+      }
+      if (typeof window.applyReconShieldsState === 'function') {
+        window.applyReconShieldsState(${shieldsActive});
+      }
+      if (typeof window.applyReconDohState === 'function') {
+        window.applyReconDohState(${dohActive});
       }
     `);
   } catch {}
@@ -666,6 +703,31 @@ selectEngine.addEventListener('change', (e) => {
   setEngine(e.target.value);
   showToast(`Default search set to ${getEngineDisplayName(e.target.value)}`);
 });
+
+// ==========================================================================
+// DNS-over-HTTPS (DoH) Management & Verification
+// ==========================================================================
+const btnVerifyDoh = document.getElementById('btn-verify-doh');
+if (toggleDoh) {
+  toggleDoh.checked = localStorage.getItem('recon_doh_enabled') !== 'false';
+  toggleDoh.addEventListener('change', (e) => {
+    const enabled = e.target.checked;
+    localStorage.setItem('recon_doh_enabled', String(enabled));
+    ipcRenderer.send('toggle-doh', enabled);
+    tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
+    showToast(enabled ? 'DNS-over-HTTPS: Encrypted (Cloudflare)' : 'DNS-over-HTTPS: Standard (System DNS)');
+  });
+}
+
+if (btnVerifyDoh) {
+  btnVerifyDoh.addEventListener('click', () => {
+    createTab('https://one.one.one.one/help', true);
+    settingsDrawer.classList.add('drawer-hidden');
+  });
+}
+
+// Initial DoH sync to main process
+ipcRenderer.send('toggle-doh', localStorage.getItem('recon_doh_enabled') !== 'false');
 
 // ==========================================================================
 // Ecosystem Quick Menu & Native App Launching

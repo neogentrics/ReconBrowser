@@ -5,25 +5,19 @@
   <title>Recon Browser</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="theme-cyber">
   <!-- Tab Strip -->
   <div id="tab-strip">
-    <div id="tabs-container">
-      <div class="tab active" data-tab-id="1">
-        <span class="tab-favicon">⚡</span>
-        <span class="tab-title">Recon Start</span>
-        <span class="tab-close" title="Close Tab">×</span>
-      </div>
-    </div>
-    <button id="btn-new-tab" title="New Tab">+</button>
+    <div id="tabs-container"></div>
+    <button id="btn-new-tab" title="New Tab (Ctrl+T)">+</button>
   </div>
 
   <!-- Top Navigation & Omnibar -->
   <header id="recon-navbar">
     <div class="nav-controls">
-      <button id="btn-back" title="Back">‹</button>
-      <button id="btn-forward" title="Forward">›</button>
-      <button id="btn-reload" title="Reload">↻</button>
+      <button id="btn-back" title="Back (Alt+Left)">‹</button>
+      <button id="btn-forward" title="Forward (Alt+Right)">›</button>
+      <button id="btn-reload" title="Reload (Ctrl+R)">↻</button>
       <button id="btn-home" title="Go to Start Page">⌂</button>
     </div>
 
@@ -38,7 +32,7 @@
     </div>
 
     <!-- Recon Shields Status Widget -->
-    <div class="shields-widget" id="shields-widget" title="Click to open Shields Settings">
+    <div class="shields-widget" id="shields-widget" title="Recon Shields Status & Site Controls">
       <span class="shield-icon">🛡️</span>
       <span class="shield-label">Shields: <strong id="shield-status">ON</strong></span>
       <span class="blocked-badge" id="blocked-count">0</span>
@@ -56,33 +50,92 @@
       </div>
     </div>
 
-    <button id="btn-settings-toggle" class="nav-icon-btn" title="Settings">⚙</button>
+    <!-- Global Browser Settings Button -->
+    <button id="btn-settings-toggle" class="nav-icon-btn" title="Settings (Ctrl+,)">⚙</button>
   </header>
 
-  <!-- Side Settings / Shields Drawer -->
+  <!-- Multi-Webview Container -->
+  <main id="browser-container"></main>
+
+  <!-- Dedicated Recon Shields Popover (Anchored under Shields Widget) -->
+  <div id="shields-popover" class="popover-hidden">
+    <div class="popover-arrow"></div>
+    <div class="popover-header">
+      <div class="popover-title">
+        <span class="shield-badge-icon">🛡️</span>
+        <div>
+          <h4>Recon Shields</h4>
+          <small id="shields-popover-domain">Local Start Page</small>
+        </div>
+      </div>
+      <button id="btn-close-popover" class="popover-close">×</button>
+    </div>
+    
+    <div class="popover-body">
+      <div class="site-toggle-card">
+        <div class="site-toggle-info">
+          <strong>Shields UP for this site</strong>
+          <small id="site-protection-state">Active protection enabled</small>
+        </div>
+        <label class="switch-row inline-switch">
+          <input type="checkbox" id="popover-toggle-site" checked />
+        </label>
+      </div>
+
+      <div class="popover-stat-box">
+        <div class="stat-number" id="popover-stat-count">0</div>
+        <div class="stat-desc">Trackers & ads blocked on this page</div>
+      </div>
+
+      <div class="popover-details">
+        <div class="popover-row">
+          <span>Tracker & Ad Blocking</span>
+          <span class="status-pill active">Blocked</span>
+        </div>
+        <div class="popover-row">
+          <span>Canvas & Audio Jitter Noise</span>
+          <span class="status-pill active">Randomized</span>
+        </div>
+        <div class="popover-row">
+          <span>WebRTC IP Leak Protection</span>
+          <span class="status-pill active">Masked</span>
+        </div>
+        <div class="popover-row">
+          <span>Tracking URL Parameters</span>
+          <span class="status-pill active">Stripped</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="popover-footer">
+      <button id="btn-popover-open-settings" class="btn-subtle-full">⚙ Browser Settings...</button>
+    </div>
+  </div>
+
+  <!-- Side Settings Drawer (Opened only via ⚙ gear button) -->
   <aside id="settings-drawer" class="drawer-closed">
     <div class="drawer-header">
-      <h3>Recon Shields & Settings</h3>
+      <h3>Recon Settings</h3>
       <button id="btn-close-drawer">×</button>
     </div>
     <div class="drawer-content">
       <div class="setting-group">
-        <h4>Shield Protections</h4>
-        <label class="switch-row">
-          <span>Block Trackers & Ads</span>
-          <input type="checkbox" id="toggle-adblock" checked />
-        </label>
-        <label class="switch-row">
-          <span>Anti-Fingerprinting Noise</span>
-          <input type="checkbox" id="toggle-fingerprint" checked />
-        </label>
-        <label class="switch-row">
-          <span>WebRTC IP Leak Protection</span>
-          <input type="checkbox" id="toggle-webrtc" checked />
-        </label>
-        <label class="switch-row">
-          <span>Strip Tracking URLs (utm, fbclid)</span>
-          <input type="checkbox" id="toggle-strip-params" checked />
+        <h4>Appearance & Themes</h4>
+        <label class="select-row">
+          <span>Theme</span>
+          <select id="select-theme">
+            <option value="cyber" selected>Recon Cyber Dark (Default)</option>
+            <option value="obsidian">Pure Obsidian</option>
+            <option value="slate">Recon Slate</option>
+            <option value="dark">Classic Recon Dark</option>
+            <option value="sepia">Warm Sepia</option>
+            <option value="mist">Nordic Mist</option>
+            <option value="forest">Deep Forest</option>
+            <option value="dusk">Midnight Dusk</option>
+            <option value="evergreen">Evergreen</option>
+            <option value="aero">Aero Glass</option>
+            <option value="contrast">High Contrast Cyber</option>
+          </select>
         </label>
       </div>
 
@@ -103,22 +156,102 @@
       </div>
 
       <div class="setting-group">
-        <h4>Theme & Interface</h4>
+        <h4>Global Shield Protections</h4>
+        <label class="switch-row">
+          <span>Block Trackers & Ads</span>
+          <input type="checkbox" id="toggle-adblock" checked />
+        </label>
+        <label class="switch-row">
+          <span>Anti-Fingerprinting Noise</span>
+          <input type="checkbox" id="toggle-fingerprint" checked />
+        </label>
+        <label class="switch-row">
+          <span>WebRTC IP Leak Protection</span>
+          <input type="checkbox" id="toggle-webrtc" checked />
+        </label>
+        <label class="switch-row">
+          <span>Strip Tracking URLs (utm, fbclid)</span>
+          <input type="checkbox" id="toggle-strip-params" checked />
+        </label>
+      </div>
+
+      <div class="setting-group">
+        <h4>Read Aloud & Speech</h4>
         <label class="select-row">
-          <span>Appearance</span>
-          <select id="select-theme">
-            <option value="cyber-dark" selected>Recon Cyber Dark</option>
-            <option value="obsidian">Pure Obsidian</option>
+          <span>Voice Speed</span>
+          <select id="select-voice-speed">
+            <option value="normal" selected>Normal</option>
+            <option value="fast">Fast</option>
+            <option value="relaxed">Relaxed</option>
           </select>
         </label>
+        <label class="switch-row">
+          <span>Auto-highlight reading line</span>
+          <input type="checkbox" id="toggle-tts-highlight" checked />
+        </label>
+      </div>
+
+      <div class="setting-group">
+        <h4>About Recon Browser</h4>
+        <button id="btn-open-about" class="btn-subtle">About & Version Details...</button>
       </div>
     </div>
   </aside>
 
-  <!-- Browser Content View Area -->
-  <main id="browser-container">
-    <webview id="browser-view" src="startpage.html" partition="persist:recon" allowpopups></webview>
-  </main>
+  <!-- About Recon Browser Modal (Modeled directly on RT Markdown Reader) -->
+  <dialog id="about-dlg" class="about-modal">
+    <div class="about-content">
+      <button id="about-close" class="about-close-btn" title="Close">×</button>
+      <div class="about-header">
+        <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
+        <div>
+          <h2>Recon Browser</h2>
+          <span id="about-version" class="about-ver">Version 1.1.0</span>
+        </div>
+      </div>
+
+      <p class="about-desc">
+        A privacy-hardened, bloat-free browser for the Recon Apps ecosystem. Built with native shields, zero telemetry, and DuckDuckGo search.
+      </p>
+
+      <div class="about-links">
+        <div class="about-link-row">
+          <span class="link-label">Website</span>
+          <a href="#" id="about-website" class="ext-link">Recon Browser on Recon Towers</a>
+        </div>
+        <div class="about-link-row">
+          <span class="link-label">What’s new in this version</span>
+          <a href="#" id="about-notes" class="ext-link">Release notes on GitHub</a>
+        </div>
+        <div class="about-link-row">
+          <span class="link-label">Report a problem or suggest a feature</span>
+          <a href="#" id="about-issue" class="ext-link">GitHub issues</a>
+        </div>
+        <div class="about-link-row">
+          <span class="link-label">Source code</span>
+          <a href="#" id="about-source" class="ext-link">github.com/neogentrics/ReconBrowser</a>
+        </div>
+      </div>
+
+      <div class="about-tech" id="about-tech">
+        Electron · Chromium · Node · Windows 10 (x64)
+      </div>
+
+      <div class="about-copyright">
+        <span id="about-copyright-text">© 2026 Recon Towers. All rights reserved.</span>
+        <a href="#" id="about-license" class="ext-link">License</a> · 
+        <a href="#" id="about-notices" class="ext-link">Open-source notices</a>
+      </div>
+
+      <div class="about-actions">
+        <button id="about-copy" class="btn-secondary">Copy Version Details</button>
+        <button id="about-done" class="btn-primary">Done</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast-hidden"></div>
 
   <script src="renderer.js"></script>
 </body>

@@ -5,7 +5,7 @@
   <title>Recon Start</title>
   <link rel="stylesheet" href="startpage.css">
 </head>
-<body>
+<body class="theme-cyber">
   <div class="start-container">
     <div class="brand-hero">
       <div class="brand-logo">
@@ -89,6 +89,41 @@
 
   <script>
     const searchInput = document.getElementById('start-search');
+    const indicator = document.querySelector('.engine-indicator');
+
+    function getEngine() {
+      return localStorage.getItem('recon_default_engine') || 'duckduckgo';
+    }
+
+    window.applyReconEngine = function(engine) {
+      if (engine === 'google') {
+        indicator.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4285f4" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v8M8 12h8"></path></svg>';
+        indicator.title = 'Search powered by Google';
+        searchInput.placeholder = 'Search with Google or type a URL...';
+      } else if (engine === 'bing') {
+        indicator.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#008373" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polygon points="2 17 12 22 22 17"></polygon></svg>';
+        indicator.title = 'Search powered by Bing';
+        searchInput.placeholder = 'Search with Bing or type a URL...';
+      } else {
+        indicator.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#de5833" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';
+        indicator.title = 'Search powered by DuckDuckGo';
+        searchInput.placeholder = 'Search with DuckDuckGo or type a URL...';
+      }
+    };
+
+    window.applyReconTheme = function(theme) {
+      document.body.className = 'theme-' + (theme || 'cyber');
+    };
+
+    // Initialize from localStorage
+    applyReconEngine(getEngine());
+    applyReconTheme(localStorage.getItem('recon_theme') || 'cyber');
+
+    window.addEventListener('storage', () => {
+      applyReconEngine(getEngine());
+      applyReconTheme(localStorage.getItem('recon_theme') || 'cyber');
+    });
+
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const val = searchInput.value.trim();
@@ -102,7 +137,14 @@
         } else if (val.startsWith('!b ')) {
           window.location.href = 'https://www.bing.com/search?q=' + encodeURIComponent(val.substring(3).trim());
         } else {
-          window.location.href = 'https://duckduckgo.com/?q=' + encodeURIComponent(val);
+          const engine = getEngine();
+          if (engine === 'google') {
+            window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(val);
+          } else if (engine === 'bing') {
+            window.location.href = 'https://www.bing.com/search?q=' + encodeURIComponent(val);
+          } else {
+            window.location.href = 'https://duckduckgo.com/?q=' + encodeURIComponent(val);
+          }
         }
       }
     });

@@ -4,15 +4,172 @@
   box-sizing: border-box;
 }
 
-:root {
+/* ==========================================================================
+   Recon Ecosystem Themes (Matching StoryTracker & RT Markdown Reader)
+   ========================================================================== */
+:root, body.theme-cyber {
   --bg-primary: #090b10;
   --bg-secondary: #121520;
   --bg-hover: #1c2234;
   --border-color: #1e2436;
   --accent-purple: #7c3aed;
+  --accent-cyan: #06b6d4;
   --accent-green: #22c55e;
   --text-main: #f1f5f9;
   --text-muted: #64748b;
+  --card-bg: #141926;
+  --input-bg: #090b10;
+  --popover-bg: #141926;
+}
+
+body.theme-obsidian {
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-hover: #171717;
+  --border-color: #262626;
+  --accent-purple: #9333ea;
+  --accent-cyan: #06b6d4;
+  --accent-green: #22c55e;
+  --text-main: #fafafa;
+  --text-muted: #737373;
+  --card-bg: #0d0d0d;
+  --input-bg: #000000;
+  --popover-bg: #0d0d0d;
+}
+
+body.theme-slate {
+  --bg-primary: #1a2028;
+  --bg-secondary: #222a34;
+  --bg-hover: #2e3846;
+  --border-color: #3b4756;
+  --accent-purple: #8fb3d9;
+  --accent-cyan: #38bdf8;
+  --accent-green: #4ade80;
+  --text-main: #e4e9ef;
+  --text-muted: #94a3b8;
+  --card-bg: #2b3440;
+  --input-bg: #151a21;
+  --popover-bg: #2b3440;
+}
+
+body.theme-dark {
+  --bg-primary: #15131c;
+  --bg-secondary: #1f1c29;
+  --bg-hover: #2b2738;
+  --border-color: #363046;
+  --accent-purple: #a896ff;
+  --accent-cyan: #22d3ee;
+  --accent-green: #34d399;
+  --text-main: #ece9f4;
+  --text-muted: #a9a3b8;
+  --card-bg: #262236;
+  --input-bg: #121019;
+  --popover-bg: #262236;
+}
+
+body.theme-sepia {
+  --bg-primary: #e9dcc2;
+  --bg-secondary: #f4e9d3;
+  --bg-hover: #dfceb0;
+  --border-color: #cdbb9a;
+  --accent-purple: #8a4b12;
+  --accent-cyan: #0284c7;
+  --accent-green: #15803d;
+  --text-main: #43362b;
+  --text-muted: #786452;
+  --card-bg: #ecdfc4;
+  --input-bg: #fdf5e6;
+  --popover-bg: #f4e9d3;
+}
+
+body.theme-mist {
+  --bg-primary: #dfe5ec;
+  --bg-secondary: #dbe4ee;
+  --bg-hover: #cbd7e4;
+  --border-color: #bccad9;
+  --accent-purple: #355f94;
+  --accent-cyan: #0284c7;
+  --accent-green: #0f766e;
+  --text-main: #26313f;
+  --text-muted: #52637a;
+  --card-bg: #cfe9e2;
+  --input-bg: #f0f4f9;
+  --popover-bg: #dbe4ee;
+}
+
+body.theme-forest {
+  --bg-primary: #0b120e;
+  --bg-secondary: #14301f;
+  --bg-hover: #1b422b;
+  --border-color: #2b4a37;
+  --accent-purple: #5fcf8e;
+  --accent-cyan: #2dd4bf;
+  --accent-green: #4ade80;
+  --text-main: #d6e4da;
+  --text-muted: #8ea394;
+  --card-bg: #0e2116;
+  --input-bg: #070c09;
+  --popover-bg: #14301f;
+}
+
+body.theme-dusk {
+  --bg-primary: #110e18;
+  --bg-secondary: #2a1f4f;
+  --bg-hover: #3b2c6e;
+  --border-color: #45376f;
+  --accent-purple: #b197fc;
+  --accent-cyan: #38bdf8;
+  --accent-green: #34d399;
+  --text-main: #e2dcee;
+  --text-muted: #9d92b5;
+  --card-bg: #1c1533;
+  --input-bg: #0c0912;
+  --popover-bg: #2a1f4f;
+}
+
+body.theme-evergreen {
+  --bg-primary: #122a20;
+  --bg-secondary: #2a4b3d;
+  --bg-hover: #36614f;
+  --border-color: #44705c;
+  --accent-purple: #50c878;
+  --accent-cyan: #2dd4bf;
+  --accent-green: #4ade80;
+  --text-main: #eaf4ee;
+  --text-muted: #9db5a7;
+  --card-bg: #19352a;
+  --input-bg: #0d1e17;
+  --popover-bg: #2a4b3d;
+}
+
+body.theme-aero {
+  --bg-primary: #b2c4d5;
+  --bg-secondary: #e3ecf5;
+  --bg-hover: #cfddec;
+  --border-color: #9cb2c7;
+  --accent-purple: #1f5a8c;
+  --accent-cyan: #0284c7;
+  --accent-green: #0d9488;
+  --text-main: #10202e;
+  --text-muted: #4b6278;
+  --card-bg: #f0f5fb;
+  --input-bg: #ffffff;
+  --popover-bg: #e3ecf5;
+}
+
+body.theme-contrast {
+  --bg-primary: #000000;
+  --bg-secondary: #000000;
+  --bg-hover: #1a1a1a;
+  --border-color: #ffff00;
+  --accent-purple: #ffff00;
+  --accent-cyan: #00ffff;
+  --accent-green: #00ff00;
+  --text-main: #ffffff;
+  --text-muted: #cccccc;
+  --card-bg: #000000;
+  --input-bg: #000000;
+  --popover-bg: #000000;
 }
 
 body {
@@ -23,12 +180,15 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 
-/* Tab Strip */
+/* ==========================================================================
+   Tab Strip
+   ========================================================================== */
 #tab-strip {
-  height: 36px;
-  background-color: #0c0e17;
+  height: 38px;
+  background-color: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: flex-end;
@@ -51,7 +211,7 @@ body {
 
 .tab {
   height: 30px;
-  background-color: #141824;
+  background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-bottom: none;
   border-radius: 8px 8px 0 0;
@@ -60,7 +220,7 @@ body {
   align-items: center;
   gap: 8px;
   min-width: 140px;
-  max-width: 200px;
+  max-width: 210px;
   font-size: 12px;
   color: var(--text-muted);
   cursor: pointer;
@@ -68,13 +228,13 @@ body {
 }
 
 .tab:hover {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-hover);
   color: var(--text-main);
 }
 
 .tab.active {
-  background-color: var(--bg-secondary);
-  color: #ffffff;
+  background-color: var(--card-bg);
+  color: var(--text-main);
   border-top: 2px solid var(--accent-purple);
   height: 32px;
 }
@@ -122,9 +282,11 @@ body {
   color: var(--text-main);
 }
 
-/* Navbar */
+/* ==========================================================================
+   Navbar & Controls
+   ========================================================================== */
 #recon-navbar {
-  height: 46px;
+  height: 48px;
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   display: flex;
@@ -132,6 +294,7 @@ body {
   padding: 0 12px;
   gap: 10px;
   user-select: none;
+  position: relative;
 }
 
 .nav-controls {
@@ -144,18 +307,24 @@ body {
   border: none;
   color: var(--text-muted);
   font-size: 18px;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 6px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.15s ease;
 }
 
 .nav-controls button:hover, .nav-icon-btn:hover {
   background-color: var(--bg-hover);
-  color: #f8fafc;
+  color: var(--text-main);
+}
+
+.nav-controls button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* Omnibar */
@@ -176,11 +345,11 @@ body {
 
 #omnibar {
   width: 100%;
-  height: 32px;
-  background-color: var(--bg-primary);
+  height: 34px;
+  background-color: var(--input-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 0 14px 0 34px;
+  padding: 0 14px 0 36px;
   color: var(--text-main);
   font-size: 13px;
   outline: none;
@@ -192,22 +361,23 @@ body {
   box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25);
 }
 
-/* Shields Widget */
+/* Shields Widget in Navbar */
 .shields-widget {
   display: flex;
   align-items: center;
   gap: 6px;
-  background-color: #161b2a;
-  border: 1px solid #252d44;
-  padding: 4px 10px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 5px 10px;
   border-radius: 6px;
   font-size: 12px;
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition: all 0.15s ease;
 }
 
 .shields-widget:hover {
   background-color: var(--bg-hover);
+  border-color: var(--accent-purple);
 }
 
 .shields-widget strong {
@@ -223,7 +393,7 @@ body {
   font-weight: bold;
 }
 
-/* Ecosystem Menu */
+/* Recon Apps Ecosystem Dropdown */
 .ecosystem-menu {
   position: relative;
 }
@@ -232,11 +402,12 @@ body {
   background-color: var(--accent-purple);
   border: none;
   color: white;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.15s ease;
 }
 
 #btn-ecosystem:hover {
@@ -247,8 +418,8 @@ body {
   display: none;
   position: absolute;
   right: 0;
-  top: 36px;
-  background-color: var(--bg-secondary);
+  top: 40px;
+  background-color: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -269,24 +440,211 @@ body {
 .menu-item {
   display: block;
   padding: 8px 12px;
-  color: #cbd5e1;
+  color: var(--text-main);
   text-decoration: none;
   font-size: 13px;
 }
 
 .menu-item:hover {
   background-color: var(--bg-hover);
-  color: #f8fafc;
 }
 
-/* Settings Drawer */
+/* ==========================================================================
+   Multi-Webview Browser Container
+   ========================================================================== */
+#browser-container {
+  flex: 1;
+  position: relative;
+  background-color: var(--bg-primary);
+  display: flex;
+}
+
+.tab-webview {
+  width: 100%;
+  height: 100%;
+  border: none;
+  flex: 1;
+}
+
+/* ==========================================================================
+   Dedicated Recon Shields Popover (Anchored under Shields Widget)
+   ========================================================================== */
+#shields-popover {
+  position: absolute;
+  top: 90px;
+  right: 170px;
+  width: 320px;
+  background-color: var(--popover-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  z-index: 2500;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeIn 0.15s ease-out;
+}
+
+#shields-popover.popover-hidden {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.popover-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.popover-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shield-badge-icon {
+  font-size: 20px;
+}
+
+.popover-title h4 {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.popover-title small {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: block;
+  max-width: 210px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popover-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.popover-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.site-toggle-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--bg-secondary);
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.site-toggle-info strong {
+  font-size: 12px;
+  display: block;
+}
+
+.site-toggle-info small {
+  font-size: 11px;
+  color: var(--accent-green);
+}
+
+.popover-stat-box {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(6, 182, 212, 0.12));
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent-purple);
+}
+
+.stat-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.popover-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: var(--bg-secondary);
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.popover-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-main);
+}
+
+.status-pill {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.status-pill.active {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: var(--accent-green);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.popover-footer {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+}
+
+.btn-subtle-full {
+  width: 100%;
+  padding: 6px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-subtle-full:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-main);
+}
+
+/* ==========================================================================
+   Side Settings Drawer (Opened via ⚙ Gear Button)
+   ========================================================================== */
 #settings-drawer {
   position: absolute;
-  top: 82px;
+  top: 86px;
   right: 0;
   bottom: 0;
-  width: 320px;
-  background-color: var(--bg-secondary);
+  width: 330px;
+  background-color: var(--card-bg);
   border-left: 1px solid var(--border-color);
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.6);
   z-index: 2000;
@@ -335,10 +693,11 @@ body {
 }
 
 .setting-group h4 {
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
   color: var(--text-muted);
   letter-spacing: 0.5px;
+  font-weight: 700;
 }
 
 .switch-row, .select-row {
@@ -349,22 +708,183 @@ body {
 }
 
 .select-row select {
-  background: var(--bg-primary);
+  background: var(--input-bg);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 4px 8px;
+  padding: 5px 8px;
   border-radius: 6px;
+  font-size: 12px;
+  outline: none;
+}
+
+.btn-subtle {
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.btn-subtle:hover {
+  background-color: var(--bg-hover);
+}
+
+/* ==========================================================================
+   About Recon Browser Modal (Matching RT Markdown Reader)
+   ========================================================================== */
+.about-modal {
+  margin: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  padding: 24px;
+  width: 440px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+  outline: none;
+}
+
+.about-modal::backdrop {
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+.about-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.about-close-btn {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.about-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.about-app-icon {
+  border-radius: 10px;
+}
+
+.about-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.about-ver {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.about-desc {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-main);
+}
+
+.about-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   font-size: 12px;
 }
 
-/* Browser Container */
-#browser-container {
-  flex: 1;
-  position: relative;
-  background-color: var(--bg-primary);
+.about-link-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-#browser-view {
-  width: 100%;
-  height: 100%;
+.link-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ext-link {
+  color: var(--accent-purple);
+  text-decoration: none;
+}
+
+.ext-link:hover {
+  text-decoration: underline;
+}
+
+.about-tech {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.about-copyright {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.about-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--accent-purple);
+  border: none;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Toast Notification
+   ========================================================================== */
+#toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  z-index: 3000;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#toast.toast-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 10px);
 }

@@ -1,7 +1,7 @@
 {
   "name": "recon-browser",
   "productName": "Recon Browser",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A privacy-hardened, bloat-free browser for the Recon Apps ecosystem. Built with native shields, zero telemetry, and DuckDuckGo search.",
   "author": "Recon Towers Dev Department <author@neogentrics.com>",
   "license": "MIT",
@@ -17,24 +17,42 @@
     "appId": "com.neogentrics.reconbrowser",
     "productName": "Recon Browser",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "win": {
+      "icon": "build/icon.ico",
       "target": ["nsis", "portable"],
+      "artifactName": "ReconBrowser-${version}-Setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Recon Browser",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
       "artifactName": "ReconBrowser-${version}-Setup.exe"
     },
     "portable": {
       "artifactName": "ReconBrowser-${version}-Portable.exe"
     },
     "mac": {
+      "icon": "build/icon.png",
       "category": "public.app-category.developer-tools",
       "target": ["dmg"],
       "artifactName": "ReconBrowser-${version}-mac-${arch}.dmg"
     },
     "linux": {
+      "icon": "build/icon.png",
       "category": "Network;WebBrowser",
       "target": ["AppImage", "deb"],
-      "artifactName": "ReconBrowser-${version}-linux-${arch}.${ext}"
+      "artifactName": "ReconBrowser-${version}-linux-${arch}.${ext}",
+      "maintainer": "Recon Towers Dev Department <author@neogentrics.com>",
+      "synopsis": "A privacy-hardened, bloat-free browser for the Recon Apps ecosystem",
+      "syncDesktopName": true
     }
   },
   "devDependencies": {

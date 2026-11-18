@@ -1,38 +1,130 @@
-# Recon Browser — Development Roadmap
+# Recon Browser — Development Roadmap (v1.0.0 → v3.0.0)
 
-This roadmap outlines the complete development cycle for **Recon Browser** from baseline architecture through production releases.
+> [!NOTE]
+> **Recon Browser** is the privacy-hardened, bloat-free cyber browser engineered for the **Recon Apps** ecosystem hosted at [recontowers.com](https://recontowers.com). Inspired by the classic open architecture of Netscape Communicator and fortified with modern zero-telemetry shields, it acts as the primary web portal, research station, and content ingestion engine for **RT Story Tracker**, **RT Markdown Reader**, **Author Desk**, **Audio Studio**, and **ReconOS**.
 
 ---
 
-## Release Milestones
+## 1. Release Philosophy & Cadence
 
-### Milestone 1: v0.1.0-alpha (Baseline Architecture) — [Complete]
-- [x] Initial repository structure and GitHub linkage (`neogentrics/ReconBrowser`).
-- [x] Privacy search engine configuration (DuckDuckGo default, Google/Bing fallbacks).
-- [x] Telemetry stripping plan and architecture documentation.
+Following the established standard of **RT Story Tracker** and **RT Markdown Reader**:
 
-### Milestone 2: v0.2.0-beta (Recon Shields Engine) — [Complete]
-- [x] Rule parser and filter matcher for Adblock Plus / EasyList syntax.
-- [x] Tracking query parameter stripper (`utm_*`, `fbclid`, `gclid`).
-- [x] Content-script canvas micro-noise injection (`fingerprint_guard.js`).
-- [x] AudioContext and WebRTC IP leak mitigation.
+1. **Point Releases (`v1.x`, `v2.x`) = Feature Introductions & Active Staging**:
+   - Each minor release introduces a focused, cohesive capability (e.g., Linked Apps, Citation Vault, Local AI Summarizer, Multi-Workspace Trees).
+   - Features undergo active testing with companion Recon applications across Windows, macOS, Linux, and Android.
+2. **Major Versions (`v1.0`, `v2.0`, `v3.0`) = Hardened Production Baselines**:
+   - Major version releases graduate all tested features into zero-test, fully hardened production status.
+   - Guaranteed backwards compatibility: seamless zero-data-loss database and config migrations from the prior version.
+   - Clean install on an unconfigured machine without external cloud dependencies or server setups.
+3. **Recon Ecosystem First**:
+   - Zero mandatory cloud accounts.
+   - Zero telemetry, analytics, or remote tracking.
+   - End-to-end encrypted local sync (via user-owned folders, local network pairing, or home servers).
 
-### Milestone 3: v0.3.0 (Recon UI & Multi-Tab System) — [Complete]
-- [x] Cyber-minimalist Recon Start Page with integrated DuckDuckGo omnibar and search bangs.
-- [x] Dynamic multi-tab strip with creation, switching, and closing.
-- [x] Slide-out Shields & Settings Drawer with live toggle switches.
-- [x] GitHub Actions automated multi-platform compiler.
+---
 
-### Milestone 4: v1.0.0-stable (Production Release) — [Complete / Live]
-- [x] Global keyboard navigation shortcuts (`Ctrl+T`, `Ctrl+W`, `Ctrl+L`, `Ctrl+R`).
-- [x] Automated cross-platform release builds:
-  - Windows: Setup installer (`.exe`) & Portable executable
-  - Linux: Universal `.AppImage` & `.deb` package
-  - macOS: Apple Silicon (`arm64`) & Intel (`x64`) `.dmg` installers
-  - Android: Automated package build workflow
-- [x] Full test suite passing in CI.
+## 2. Release Milestones Summary
 
-### Milestone 5: v1.1.0+ (Recon Towers Ecosystem Sync) — [Next Up]
-- [ ] Peer-to-peer encrypted local sync for bookmarks and history.
-- [ ] Direct export hooks to **Author Desk** and **Markdown Reader**.
-- [ ] Zero cloud account requirement; decentralized device pairing.
+| Version | Status | Primary Theme | Core Features |
+| :--- | :--- | :--- | :--- |
+| **v1.0.0** | ✅ **Live** | Production Release Baseline | Multi-tab UI, DuckDuckGo Omnibar, Native Shields, Cross-Platform GitHub Actions CI/CD |
+| **v1.1.0** | 🚧 **In Progress** | Ecosystem Bridge, Auto-Updates & Polish | Auto-updater via GitHub Releases, 11 Recon themes, Linked Apps IPC, Shields Popover vs Settings Drawer, About Us modal |
+| **v1.2.0** | 📋 Planned | StoryTracker Research & Lore Vault | Highlight-to-Lore ingestion, auto-citations, persistent research cache |
+| **v1.3.0** | 📋 Planned | Zero-Knowledge Sync | Folder-based sync (No account required), AES-256 encryption, local Wi-Fi pairing |
+| **v1.4.0** | 📋 Planned | Offline Archives | `.reconarchive` single-file bundles, SQLite FTS5 local research search engine |
+| **v1.5.0** | 📋 Planned | Shields 2.0 & Inspector | Custom filter list subscriptions, live HTTP/3 & TLS network inspector drawer |
+| **v1.6.0** | 📋 Planned | Creative Suite Hooks | Author Desk docked companion rail, Audio Studio sound grabber, Read Aloud TTS |
+| **v1.7.0** | 📋 Planned | Containers & Ephemeral | Isolated cookie containers, per-container SOCKS5/Tor routing, disposable tabs |
+| **v1.8.0** | 📋 Planned | Local AI Integration | Ollama bridge (`localhost:11434`), zero-cloud summarization & claim extraction |
+| **v1.9.0** | 📋 Planned | Gen 1 Hardening | Memory leak tuning (<250MB RAM), sandbox security audit, upgrade migration tests |
+| **v2.0.0** | 🎯 Milestone | The Connected Studio Browser | **All Gen 1 features graduate to permanent production**; unified Recon Spotlight (`Ctrl+K`) |
+| **v2.1.0** | 📋 Planned | Workspaces & Tree Tabs | Collapsible tab trees, project workspaces, intelligent tab memory sleep |
+| **v2.2.0** | 📋 Planned | Decentralized Gateway | Native IPFS (`ipfs://`) and Gemini (`gemini://`) protocol handlers |
+| **v2.3.0** | 📋 Planned | Home Server Sync | WebDAV & Nextcloud integration, remote device tab handoff |
+| **v2.4.0** | 📋 Planned | Security Toolkit | In-browser CSP analyzer, cookie security scanner, TLS cipher auditor |
+| **v2.5.0** | 📋 Planned | Spatial Research Canvas | Infinite 2D research whiteboard with direct export to StoryTracker |
+| **v2.6.0** | 📋 Planned | Local Voice Reader | High-fidelity neural local TTS, audio streaming to RT Audio Studio |
+| **v2.7.0** | 📋 Planned | Hardware Vault & Panic | Hardware security key (FIDO2) integration, single-keystroke panic lock |
+| **v2.8.0** | 📋 Planned | ReconOS Wayland Layer | Zero-copy framebuffer compositor for native ReconOS desktop environment |
+| **v2.9.0** | 📋 Planned | Gen 2 Hardening | Cross-architecture stress testing (x86_64, aarch64, RISC-V), 72h fuzzing |
+| **v3.0.0** | 🏆 Grand Goal | The Sovereign Cyber Navigator | **Full Gen 2 graduation to production**; flagship browser of ReconOS and sovereign suite |
+
+---
+
+## 3. Milestone Details
+
+### Milestone 1: v1.0.0 Stable — Production Release [Complete & Live]
+- [x] Initial release packaged and distributed on GitHub Releases.
+- [x] Suffix-tree tracking domain blocklist with instant query parameter stripping.
+- [x] Canvas micro-noise and AudioContext jitter protection.
+- [x] DuckDuckGo privacy routing with `!g` and `!b` search bangs.
+- [x] Multi-platform matrix compiler for Windows (`.exe`), Linux (`.AppImage`, `.deb`), macOS (`.dmg`), and Android.
+
+### Milestone 2: v1.1.0 — Ecosystem Bridge, Auto-Updates & Polish [In Progress]
+- [x] **Auto-Update Engine**: Cross-platform update detection against GitHub Releases (`src/main/updater.js`), background downloading on Windows/Linux, and manual "Check for Updates..." in Help menu.
+- [x] **Native App Branding & Icons**: High-resolution icons (`icon.ico`, `icon.png`, `icon.svg`) configured for Windows, macOS, Linux, and Android.
+- [x] **Multi-Tab Isolation Fix**: Independent `<webview>` per tab; scroll, state, and form preservation; zero navigation collision; seamless closing and automatic fallback to Recon Start.
+- [x] **Shields Popover vs. Settings Drawer Separation**:
+  - Clicking Shield icon opens anchored site-specific status popover with live blocked counter.
+  - Clicking ⚙ Gear icon opens full Recon Settings Drawer.
+- [x] **Search Engine Preference Sync**: Changing default engine in Settings immediately updates Omnibar and Start Page search routing (DuckDuckGo, Google, Bing).
+- [x] **11 Recon Themes**: Support for Cyber Dark, Pure Obsidian, Slate, Dark, Sepia, Mist, Forest, Dusk, Evergreen, Aero Glass, and High Contrast Cyber.
+- [x] **About Recon Browser Modal**: Full About dialog modeled directly on RT Markdown Reader with tech specs, release notes, license, and one-click "Copy Version Details".
+
+### Milestone 3: v1.2.0 — StoryTracker Research & Lore Vault
+- [ ] Highlight-to-Lore ingestion: Right-click any text or image on any web page → *Send to StoryTracker*.
+- [ ] Auto-citation capture: Automatically attach URL, title, author, and timestamp to research cards.
+- [ ] Local research cache: Retain offline snapshots of referenced sources.
+
+### Milestone 4: v1.3.0 — Zero-Knowledge Sync & Vault Backup
+- [ ] Folder-based sync (No account required): Sync bookmarks, history, and preferences via user-owned folder (OneDrive, Google Drive, Dropbox, Syncthing).
+- [ ] Zero-Knowledge encryption: AES-256-GCM encryption with Argon2id master passphrase.
+- [ ] Local network Wi-Fi device pairing with Android companion app.
+
+### Milestone 5: v1.4.0 — Offline Archives & Single-File Bundles
+- [ ] `.reconarchive` single-file web bundles with bundled images, CSS, and fonts.
+- [ ] Export tab group as Markdown folder for RT Markdown Reader.
+- [ ] Full-text SQLite FTS5 search index across all saved research articles.
+
+### Milestone 6: v1.5.0 — Recon Shields 2.0 & Network Inspector
+- [ ] Custom filter list subscriptions (EasyPrivacy, Fanboy Annoyances, uBlock Badware).
+- [ ] Live HTTP/3, QUIC, and TLS 1.3 network request inspector drawer.
+- [ ] Per-domain element zapper.
+
+### Milestone 7: v1.6.0 — Creative Suite Hooks & Read Aloud
+- [ ] Author Desk docked companion rail.
+- [ ] Audio Studio media grabber for audio references.
+- [ ] Read Aloud neural text-to-speech for any web page with synchronized highlighting.
+
+### Milestone 8: v1.7.0 — Containers & Ephemeral Personas
+- [ ] Recon Containers: Isolated cookie and cache jars for Research, Personal, Finance, and Social.
+- [ ] Per-container proxy routing (SOCKS5, Tor, WireGuard).
+- [ ] Ephemeral disposable tabs with cryptographic wipe on close.
+
+### Milestone 9: v1.8.0 — Local AI & Ollama Integration
+- [ ] Ollama bridge (`http://localhost:11434`) for local private AI (Qwen, Llama, Gemma).
+- [ ] In-browser article summarizer with zero cloud transmission.
+- [ ] Fact-check and claim extractor for StoryTracker.
+
+### Milestone 10: v1.9.0 — Generation 1 Hardening & Security Audit
+- [ ] Memory profiling: Enforce <250MB RAM with 10 open tabs.
+- [ ] Sandbox escape and CVE penetration testing.
+- [ ] Automated zero-data-loss migration tests.
+
+### Milestone 11: v2.0.0 Stable — The Connected Studio Browser [Production Milestone]
+- [ ] **Graduation Milestone**: All features from v1.1.0–v1.9.0 graduate from test to permanent production.
+- [ ] Unified Recon Spotlight (`Ctrl+K`) searching tabs, bookmarks, archives, and companion Recon apps.
+- [ ] Bi-directional studio sync across the entire workstation.
+
+### Milestone 12: v2.1.0 to v2.9.0 — Sovereign Web & Decentralized Systems
+- [ ] Workspaces & Tree Tabs with memory sleep.
+- [ ] Native IPFS (`ipfs://`) and Gemini (`gemini://`) decentralized protocol gateway.
+- [ ] ReconOS-Server & private Home Server sync (WebDAV, Nextcloud).
+- [ ] In-browser security and CSP penetration toolkit.
+- [ ] Spatial 2D research canvas exporting to StoryTracker Storyboards.
+- [ ] Hardware security key (FIDO2/YubiKey) vault lock.
+- [ ] ReconOS Wayland zero-copy compositor engine.
+
+### Milestone 13: v3.0.0 Stable — The Sovereign Cyber Navigator [Grand Milestone]
+- [ ] **Universal Studio Pipeline**: Complete closed-loop workflow from Web Discovery (Recon Browser) → Lore (StoryTracker) → Drafting (Author Desk) → Review (RT Markdown Reader) → Narration (Audio Studio) → Publishing (RT Press).
+- [ ] Default flagship browser for **ReconOS**.

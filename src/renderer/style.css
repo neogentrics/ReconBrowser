@@ -172,6 +172,102 @@ body.theme-contrast {
   --popover-bg: #000000;
 }
 
+body.theme-red {
+  --bg-primary: #3f0a14;
+  --bg-secondary: #5c0f1e;
+  --bg-hover: #7a1f2b;
+  --border-color: #84303a;
+  --accent-purple: #ffd166;
+  --accent-cyan: #ff8c42;
+  --accent-green: #22c55e;
+  --text-main: #fff1ee;
+  --text-muted: #f7dcd8;
+  --card-bg: #4a0c18;
+  --input-bg: #2d060e;
+  --popover-bg: #5c0f1e;
+}
+
+body.theme-yellow {
+  --bg-primary: #ffb627;
+  --bg-secondary: #fff4c2;
+  --bg-hover: #ffe27a;
+  --border-color: #d9a91f;
+  --accent-purple: #1d4e89;
+  --accent-cyan: #0284c7;
+  --accent-green: #15803d;
+  --text-main: #2a2208;
+  --text-muted: #544715;
+  --card-bg: #fdf3c4;
+  --input-bg: #ffffff;
+  --popover-bg: #fff4c2;
+}
+
+body.theme-colorblind-blue-orange {
+  --bg-primary: #121820;
+  --bg-secondary: #1b2430;
+  --bg-hover: #263345;
+  --border-color: #354860;
+  --accent-purple: #0072b2;
+  --accent-cyan: #56b4e9;
+  --accent-green: #e69f00;
+  --text-main: #f0f4f8;
+  --text-muted: #9ab0c8;
+  --card-bg: #1e2937;
+  --input-bg: #0d1218;
+  --popover-bg: #1b2430;
+}
+
+body.theme-colorblind-cyan-magenta {
+  --bg-primary: #14121a;
+  --bg-secondary: #201c2a;
+  --bg-hover: #2e283d;
+  --border-color: #423a57;
+  --accent-purple: #cc79a7;
+  --accent-cyan: #009e73;
+  --accent-green: #f0e442;
+  --text-main: #fbf7fc;
+  --text-muted: #aa9eb4;
+  --card-bg: #262133;
+  --input-bg: #0e0d13;
+  --popover-bg: #201c2a;
+}
+
+/* ==========================================================================
+   Aspect Variations (Solid, Metallic, Glass)
+   ========================================================================== */
+body.aspect-solid header,
+body.aspect-solid .shields-widget,
+body.aspect-solid .tab,
+body.aspect-solid #shields-popover,
+body.aspect-solid #settings-drawer {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+body.aspect-metallic header,
+body.aspect-metallic #settings-drawer,
+body.aspect-metallic #shields-popover,
+body.aspect-metallic .tab.active,
+body.aspect-metallic .shields-widget {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.01) 40%, rgba(0, 0, 0, 0.2) 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  border-color: color-mix(in srgb, var(--border-color) 70%, #ffffff 30%) !important;
+}
+
+body.aspect-glass header,
+body.aspect-glass #settings-drawer,
+body.aspect-glass #shields-popover,
+body.aspect-glass .shields-widget,
+body.aspect-glass #read-aloud-bar,
+body.aspect-glass .reader-header-bar {
+  background-color: color-mix(in srgb, var(--bg-secondary) 75%, transparent) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background-color: var(--bg-primary);
@@ -349,7 +445,7 @@ body {
   background-color: var(--input-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 0 14px 0 36px;
+  padding: 0 68px 0 36px;
   color: var(--text-main);
   font-size: 13px;
   outline: none;
@@ -359,6 +455,38 @@ body {
 #omnibar:focus {
   border-color: var(--accent-purple);
   box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25);
+}
+
+.omnibar-action-btn {
+  position: absolute;
+  top: 5px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+#btn-reader-view {
+  right: 36px;
+}
+
+#btn-read-aloud {
+  right: 8px;
+}
+
+.omnibar-action-btn:hover {
+  color: var(--text-main);
+  background-color: var(--bg-hover);
+}
+
+.omnibar-action-btn.active {
+  color: var(--accent-purple);
+  background-color: rgba(124, 58, 237, 0.2);
 }
 
 /* Shields Widget in Navbar */
@@ -382,15 +510,36 @@ body {
 
 .shields-widget strong {
   color: var(--accent-green);
+  transition: color 0.15s ease;
+}
+
+.shields-widget.shields-paused strong {
+  color: #ef4444;
+}
+
+.shield-icon {
+  transition: opacity 0.15s ease;
+}
+
+.shields-widget.shields-paused .shield-icon {
+  opacity: 0.5;
 }
 
 .blocked-badge {
-  background-color: #dc2626;
-  color: #ffffff;
-  padding: 1px 6px;
+  background-color: var(--card-bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  padding: 1px 7px;
   border-radius: 10px;
   font-size: 11px;
-  font-weight: bold;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.blocked-badge.has-blocked {
+  background-color: var(--accent-purple);
+  color: #ffffff;
+  border-color: var(--accent-purple);
 }
 
 /* Recon Apps Ecosystem Dropdown */
@@ -584,32 +733,33 @@ body {
 .popover-details {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   background-color: var(--bg-secondary);
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid var(--border-color);
+  transition: opacity 0.15s ease;
+}
+
+.popover-details.protections-disabled {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .popover-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--text-main);
+  cursor: pointer;
 }
 
-.status-pill {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-
-.status-pill.active {
-  background-color: rgba(34, 197, 94, 0.15);
-  color: var(--accent-green);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+.popover-row input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--accent-purple);
+  width: 15px;
+  height: 15px;
 }
 
 .popover-footer {
@@ -887,4 +1037,230 @@ body {
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 10px);
+}
+
+/* ==========================================================================
+   Read Aloud Floating Controller Bar
+   ========================================================================== */
+#read-aloud-bar {
+  position: absolute;
+  top: 86px;
+  right: 24px;
+  z-index: 1000;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#read-aloud-bar.speech-bar-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+}
+
+.speech-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+}
+
+.speech-icon {
+  font-size: 14px;
+}
+
+.speech-info {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-main);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.speech-ctrl-btn {
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  color: var(--text-main);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+}
+
+.speech-ctrl-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--accent-purple);
+}
+
+.speech-select {
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-size: 11px;
+  border-radius: 4px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.speech-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-left: 4px;
+  padding: 0 2px;
+}
+
+.speech-close-btn:hover {
+  color: #ef4444;
+}
+
+/* ==========================================================================
+   Reader View Overlay
+   ========================================================================== */
+#reader-overlay {
+  position: absolute;
+  top: 78px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 500;
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+
+#reader-overlay.reader-overlay-hidden {
+  display: none;
+}
+
+.reader-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 32px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.reader-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.reader-tag {
+  background-color: rgba(124, 58, 237, 0.2);
+  color: var(--accent-purple);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.reader-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reader-action-btn,
+.reader-size-btn,
+.reader-close-btn {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.reader-action-btn:hover,
+.reader-size-btn:hover {
+  border-color: var(--accent-purple);
+  background-color: var(--bg-hover);
+}
+
+.reader-close-btn:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.reader-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px 80px 20px;
+}
+
+.reader-article {
+  max-width: 720px;
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif;
+  line-height: 1.75;
+  color: var(--text-main);
+  font-size: 17px;
+}
+
+#reader-title {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.25;
+  margin-bottom: 12px;
+  color: var(--text-main);
+}
+
+.reader-byline {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.reader-body p {
+  margin-bottom: 1.4em;
+}
+
+.reader-body h2, .reader-body h3, .reader-body h4 {
+  margin-top: 1.6em;
+  margin-bottom: 0.8em;
+  color: var(--text-main);
+}
+
+.reader-body blockquote {
+  border-left: 3px solid var(--accent-purple);
+  padding-left: 16px;
+  margin: 1.4em 0;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.reader-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1.5em 0;
+}
+
+/* TTS Active Line Highlight in Reader View & Page */
+.tts-highlight {
+  background-color: rgba(254, 240, 138, 0.35) !important;
+  border-radius: 3px;
+  outline: 2px solid rgba(234, 179, 8, 0.4);
 }

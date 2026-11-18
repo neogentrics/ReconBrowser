@@ -36,21 +36,21 @@
 
     <!-- Privacy & Shields Live Stats -->
     <div class="stats-card">
-      <div class="stat-item">
+      <div class="stat-item clickable" id="btn-stat-shields" title="Click to toggle Recon Shields">
         <span class="stat-icon">🛡️</span>
         <div class="stat-info">
           <strong id="stat-shield-state">Active</strong>
           <small>Recon Shields</small>
         </div>
       </div>
-      <div class="stat-item">
+      <div class="stat-item" id="btn-stat-speed" title="Zero Telemetry Overhead">
         <span class="stat-icon">⚡</span>
         <div class="stat-info">
           <strong id="stat-speed">Ultra</strong>
           <small>Zero Telemetry Overhead</small>
         </div>
       </div>
-      <div class="stat-item">
+      <div class="stat-item clickable" id="btn-stat-doh" title="Click to toggle DNS-over-HTTPS">
         <span class="stat-icon">🔒</span>
         <div class="stat-info">
           <strong id="stat-doh">Encrypted</strong>
@@ -68,20 +68,15 @@
           <span class="app-title">Recon Towers</span>
           <span class="app-desc">Ecosystem Home</span>
         </a>
-        <a href="https://recontowers.com/projects/neo-markdown-reader" class="app-card">
+        <a href="https://recontowers.com/apps/rt-markdown-reader/" data-app="rt-markdown-reader" class="app-card">
           <span class="app-icon">📝</span>
           <span class="app-title">Markdown Reader</span>
           <span class="app-desc">Distraction-Free Docs</span>
         </a>
-        <a href="https://recontowers.com/projects" class="app-card">
+        <a href="https://recontowers.com/apps/rt-story-tracker/" data-app="rt-story-tracker" class="app-card">
           <span class="app-icon">📚</span>
           <span class="app-title">StoryTracker</span>
           <span class="app-desc">Author & Lore Workspace</span>
-        </a>
-        <a href="https://recontowers.com/projects" class="app-card">
-          <span class="app-icon">🎧</span>
-          <span class="app-title">Audio Studio</span>
-          <span class="app-desc">Production & Sound</span>
         </a>
       </div>
     </div>
@@ -90,6 +85,11 @@
   <script>
     const searchInput = document.getElementById('start-search');
     const indicator = document.querySelector('.engine-indicator');
+    const statShieldBtn = document.getElementById('btn-stat-shields');
+    const statShieldState = document.getElementById('stat-shield-state');
+    const statDohBtn = document.getElementById('btn-stat-doh');
+    const statDoh = document.getElementById('stat-doh');
+    const appsSection = document.querySelector('.apps-section');
 
     function getEngine() {
       return localStorage.getItem('recon_default_engine') || 'duckduckgo';
@@ -111,17 +111,71 @@
       }
     };
 
-    window.applyReconTheme = function(theme) {
-      document.body.className = 'theme-' + (theme || 'cyber');
+    window.applyReconTheme = function(theme, aspect = null) {
+      const activeTheme = theme || localStorage.getItem('recon_theme') || 'cyber';
+      const activeAspect = aspect || localStorage.getItem('recon_aspect') || 'solid';
+      document.body.className = `theme-${activeTheme} aspect-${activeAspect}`;
     };
+
+    window.applyReconShieldsState = function(active) {
+      if (active) {
+        statShieldState.textContent = 'Active';
+        statShieldState.style.color = 'var(--accent-green)';
+        statShieldBtn.classList.remove('paused');
+      } else {
+        statShieldState.textContent = 'Paused';
+        statShieldState.style.color = '#ef4444';
+        statShieldBtn.classList.add('paused');
+      }
+    };
+
+    window.applyReconDohState = function(enabled) {
+      if (enabled) {
+        statDoh.textContent = 'Encrypted';
+        statDoh.style.color = 'var(--accent-green)';
+        statDohBtn.classList.remove('paused');
+      } else {
+        statDoh.textContent = 'Standard';
+        statDoh.style.color = 'var(--text-muted)';
+        statDohBtn.classList.add('paused');
+      }
+    };
+
+    window.applyReconAppsVisibility = function(visible) {
+      if (appsSection) {
+        appsSection.classList.toggle('apps-hidden', !visible);
+      }
+    };
+
+    statShieldBtn.addEventListener('click', () => {
+      const current = localStorage.getItem('recon_shields_active') !== 'false';
+      const next = !current;
+      localStorage.setItem('recon_shields_active', String(next));
+      window.applyReconShieldsState(next);
+      window.dispatchEvent(new CustomEvent('recon-shields-toggled', { detail: { active: next } }));
+    });
+
+    statDohBtn.addEventListener('click', () => {
+      const current = localStorage.getItem('recon_doh_enabled') !== 'false';
+      const next = !current;
+      localStorage.setItem('recon_doh_enabled', String(next));
+      window.applyReconDohState(next);
+      window.dispatchEvent(new CustomEvent('recon-doh-toggled', { detail: { enabled: next } }));
+    });
 
     // Initialize from localStorage
     applyReconEngine(getEngine());
     applyReconTheme(localStorage.getItem('recon_theme') || 'cyber');
+    window.applyReconShieldsState(localStorage.getItem('recon_shields_active') !== 'false');
+    window.applyReconDohState(localStorage.getItem('recon_doh_enabled') !== 'false');
+    window.applyReconAppsVisibility(localStorage.getItem('recon_show_startpage_apps') !== 'false');
 
     window.addEventListener('storage', () => {
       applyReconEngine(getEngine());
       applyReconTheme(localStorage.getItem('recon_theme') || 'cyber');
+      window.applyReconShieldsState(localStorage.getItem('recon_shields_active') !== 'false');
+      window.applyReconDohState(localStorage.getItem('recon_doh_enabled') !== 'false');
+      window.applyReconAppsVisibility(localStorage.getItem('recon_show_startpage_apps') !== 'false');
     });
 
     searchInput.addEventListener('keydown', (e) => {

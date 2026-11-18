@@ -139,6 +139,80 @@ body.theme-contrast {
   --app-card-bg: #000000;
 }
 
+body.theme-red {
+  --start-bg: radial-gradient(circle at 50% 20%, #5c0f1e 0%, #29040c 80%);
+  --card-bg: #4a0c18;
+  --border-color: #84303a;
+  --accent-purple: #ffd166;
+  --accent-cyan: #ff8c42;
+  --accent-green: #22c55e;
+  --text-main: #fff1ee;
+  --text-muted: #f7dcd8;
+  --app-card-bg: #3f0a14;
+}
+
+body.theme-yellow {
+  --start-bg: radial-gradient(circle at 50% 20%, #ffe89e 0%, #ffc642 80%);
+  --card-bg: #fff8d6;
+  --border-color: #d9a91f;
+  --accent-purple: #1d4e89;
+  --accent-cyan: #0284c7;
+  --accent-green: #15803d;
+  --text-main: #2a2208;
+  --text-muted: #544715;
+  --app-card-bg: #ffffff;
+}
+
+body.theme-colorblind-blue-orange {
+  --start-bg: radial-gradient(circle at 50% 20%, #1e2937 0%, #0d1218 80%);
+  --card-bg: #1b2430;
+  --border-color: #354860;
+  --accent-purple: #0072b2;
+  --accent-cyan: #56b4e9;
+  --accent-green: #e69f00;
+  --text-main: #f0f4f8;
+  --text-muted: #9ab0c8;
+  --app-card-bg: #121820;
+}
+
+body.theme-colorblind-cyan-magenta {
+  --start-bg: radial-gradient(circle at 50% 20%, #262133 0%, #0e0d13 80%);
+  --card-bg: #201c2a;
+  --border-color: #423a57;
+  --accent-purple: #cc79a7;
+  --accent-cyan: #009e73;
+  --accent-green: #f0e442;
+  --text-main: #fbf7fc;
+  --text-muted: #aa9eb4;
+  --app-card-bg: #14121a;
+}
+
+/* Aspects in Start Page */
+body.aspect-solid .stat-item,
+body.aspect-solid .app-card,
+body.aspect-solid #start-search {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+body.aspect-metallic .stat-item,
+body.aspect-metallic .app-card {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.01) 40%, rgba(0, 0, 0, 0.2) 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  border-color: color-mix(in srgb, var(--border-color) 70%, #ffffff 30%) !important;
+}
+
+body.aspect-glass .stat-item,
+body.aspect-glass .app-card,
+body.aspect-glass #start-search {
+  background-color: color-mix(in srgb, var(--card-bg) 65%, transparent) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background: var(--start-bg);
@@ -256,10 +330,31 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.stat-item.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.stat-item.clickable:hover {
+  border-color: var(--accent-purple);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.stat-item.clickable:active {
+  transform: translateY(0);
+}
+
+.stat-item.paused .stat-icon {
+  opacity: 0.5;
 }
 
 .stat-icon {
   font-size: 20px;
+  transition: opacity 0.2s ease;
 }
 
 .stat-info {
@@ -270,6 +365,7 @@ body {
 .stat-info strong {
   font-size: 13px;
   color: var(--accent-green);
+  transition: color 0.2s ease;
 }
 
 .stat-info small {
@@ -284,6 +380,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  transition: all 0.2s ease;
+}
+
+.apps-section.apps-hidden {
+  display: none !important;
 }
 
 .apps-section h2 {
@@ -297,7 +398,7 @@ body {
 
 .apps-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 

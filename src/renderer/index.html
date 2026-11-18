@@ -18,7 +18,7 @@
       <button id="btn-back" title="Back (Alt+Left)">‹</button>
       <button id="btn-forward" title="Forward (Alt+Right)">›</button>
       <button id="btn-reload" title="Reload (Ctrl+R)">↻</button>
-      <button id="btn-home" title="Go to Start Page">⌂</button>
+      <button id="btn-home" title="Home (Recon Towers)">⌂</button>
     </div>
 
     <div class="omnibar-container">
@@ -29,24 +29,25 @@
         </svg>
       </div>
       <input type="text" id="omnibar" placeholder="Search with DuckDuckGo or enter address (!g for Google, !b for Bing)..." />
+      <button id="btn-reader-view" class="omnibar-action-btn" title="Toggle Reader View (Ctrl+Alt+R)">📖</button>
+      <button id="btn-read-aloud" class="omnibar-action-btn" title="Read Aloud (Ctrl+Shift+A)">🔊</button>
     </div>
 
     <!-- Recon Shields Status Widget -->
     <div class="shields-widget" id="shields-widget" title="Recon Shields Status & Site Controls">
-      <span class="shield-icon">🛡️</span>
+      <span class="shield-icon" id="shield-icon">🛡️</span>
       <span class="shield-label">Shields: <strong id="shield-status">ON</strong></span>
       <span class="blocked-badge" id="blocked-count">0</span>
     </div>
 
     <!-- Recon Apps Ecosystem Quick Menu -->
-    <div class="ecosystem-menu">
+    <div class="ecosystem-menu" id="ecosystem-menu-container">
       <button id="btn-ecosystem" title="Recon Apps Hub">⚡ Recon Apps</button>
       <div class="ecosystem-dropdown" id="ecosystem-dropdown">
         <div class="dropdown-header">Recon Towers Ecosystem</div>
         <a href="#" data-url="https://recontowers.com" class="menu-item">🌐 Recon Towers Hub</a>
-        <a href="#" data-url="https://recontowers.com/projects/neo-markdown-reader" class="menu-item">📝 RT Markdown Reader</a>
-        <a href="#" data-url="https://recontowers.com/projects" class="menu-item">📚 StoryTracker & Author Desk</a>
-        <a href="#" data-url="https://recontowers.com/projects" class="menu-item">🎧 Audio Studio</a>
+        <a href="#" data-app="rt-markdown-reader" data-url="https://recontowers.com/apps/rt-markdown-reader/" class="menu-item">📝 RT Markdown Reader</a>
+        <a href="#" data-app="rt-story-tracker" data-url="https://recontowers.com/apps/rt-story-tracker/" class="menu-item">📚 StoryTracker & Author Desk</a>
       </div>
     </div>
 
@@ -54,8 +55,50 @@
     <button id="btn-settings-toggle" class="nav-icon-btn" title="Settings (Ctrl+,)">⚙</button>
   </header>
 
+  <!-- Floating Read Aloud Controller Bar -->
+  <div id="read-aloud-bar" class="speech-bar-hidden">
+    <div class="speech-bar-inner">
+      <span class="speech-icon">🔊</span>
+      <span class="speech-info" id="speech-status">Ready to read</span>
+      <button id="btn-speech-pause" class="speech-ctrl-btn" title="Play / Pause">⏸</button>
+      <button id="btn-speech-stop" class="speech-ctrl-btn" title="Stop (Ctrl+Shift+X)">⏹</button>
+      <select id="select-speech-speed" class="speech-select">
+        <option value="0.75">0.75x</option>
+        <option value="1.0" selected>1.0x</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+      </select>
+      <button id="btn-speech-close" class="speech-close-btn" title="Close">×</button>
+    </div>
+  </div>
+
   <!-- Multi-Webview Container -->
   <main id="browser-container"></main>
+
+  <!-- Dedicated Reader View Overlay -->
+  <div id="reader-overlay" class="reader-overlay-hidden">
+    <div class="reader-header-bar">
+      <div class="reader-meta">
+        <span class="reader-tag">📖 READER VIEW</span>
+        <span id="reader-site-name">Article</span>
+        <span class="reader-dot">•</span>
+        <span id="reader-time-est">1 min read</span>
+      </div>
+      <div class="reader-controls">
+        <button id="btn-reader-listen" class="reader-action-btn" title="Read Aloud (Ctrl+Shift+A)">🔊 Read Aloud</button>
+        <button id="btn-reader-size-down" class="reader-size-btn" title="Smaller font">A-</button>
+        <button id="btn-reader-size-up" class="reader-size-btn" title="Larger font">A+</button>
+        <button id="btn-reader-close" class="reader-close-btn" title="Exit Reader View (Esc)">✕ Exit Reader</button>
+      </div>
+    </div>
+    <div class="reader-scroll-container">
+      <article class="reader-article">
+        <h1 id="reader-title"></h1>
+        <div id="reader-byline" class="reader-byline"></div>
+        <div id="reader-body" class="reader-body"></div>
+      </article>
+    </div>
+  </div>
 
   <!-- Dedicated Recon Shields Popover (Anchored under Shields Widget) -->
   <div id="shields-popover" class="popover-hidden">
@@ -87,23 +130,24 @@
         <div class="stat-desc">Trackers & ads blocked on this page</div>
       </div>
 
-      <div class="popover-details">
-        <div class="popover-row">
-          <span>Tracker & Ad Blocking</span>
-          <span class="status-pill active">Blocked</span>
-        </div>
-        <div class="popover-row">
+      <!-- Configurable Protections List -->
+      <div class="popover-details" id="popover-protections-list">
+        <label class="popover-row switch-label">
+          <span>Block Trackers & Ads</span>
+          <input type="checkbox" id="popover-opt-adblock" checked />
+        </label>
+        <label class="popover-row switch-label">
           <span>Canvas & Audio Jitter Noise</span>
-          <span class="status-pill active">Randomized</span>
-        </div>
-        <div class="popover-row">
+          <input type="checkbox" id="popover-opt-fingerprint" checked />
+        </label>
+        <label class="popover-row switch-label">
           <span>WebRTC IP Leak Protection</span>
-          <span class="status-pill active">Masked</span>
-        </div>
-        <div class="popover-row">
-          <span>Tracking URL Parameters</span>
-          <span class="status-pill active">Stripped</span>
-        </div>
+          <input type="checkbox" id="popover-opt-webrtc" checked />
+        </label>
+        <label class="popover-row switch-label">
+          <span>Strip Tracking URL Parameters</span>
+          <input type="checkbox" id="popover-opt-params" checked />
+        </label>
       </div>
     </div>
 
@@ -122,7 +166,7 @@
       <div class="setting-group">
         <h4>Appearance & Themes</h4>
         <label class="select-row">
-          <span>Theme</span>
+          <span>Theme (Palette)</span>
           <select id="select-theme">
             <option value="cyber" selected>Recon Cyber Dark (Default)</option>
             <option value="obsidian">Pure Obsidian</option>
@@ -133,9 +177,43 @@
             <option value="forest">Deep Forest</option>
             <option value="dusk">Midnight Dusk</option>
             <option value="evergreen">Evergreen</option>
-            <option value="aero">Aero Glass</option>
-            <option value="contrast">High Contrast Cyber</option>
+            <option value="red">Crimson Horizon (Red)</option>
+            <option value="yellow">Amber Sunset (Yellow)</option>
+            <option value="contrast">High Contrast (ADA Compliant)</option>
+            <option value="colorblind-blue-orange">Colorblind Blue-Orange (ADA)</option>
+            <option value="colorblind-cyan-magenta">Colorblind Cyan-Magenta (ADA)</option>
           </select>
+        </label>
+        <label class="select-row" style="margin-top: 8px;">
+          <span>Theme Aspect (Finish)</span>
+          <select id="select-aspect">
+            <option value="solid" selected>Solid (Matte)</option>
+            <option value="metallic">Metallic (Brushed Sheen)</option>
+            <option value="glass">Glass (Frosted Acrylic)</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="setting-group">
+        <h4>Interface & Layout</h4>
+        <label class="select-row">
+          <span>Home Button Destination</span>
+          <select id="select-home-dest">
+            <option value="recontowers" selected>Recon Towers (recontowers.com)</option>
+            <option value="startpage">Recon Start Page</option>
+            <option value="custom">Custom URL...</option>
+          </select>
+        </label>
+        <div id="custom-home-group" style="display: none; margin-top: 6px;">
+          <input type="text" id="input-custom-home" placeholder="https://recontowers.com" class="drawer-input" />
+        </div>
+        <label class="switch-row" style="margin-top: 10px;">
+          <span>Show Apps Hub on Start Page</span>
+          <input type="checkbox" id="toggle-startpage-apps" checked />
+        </label>
+        <label class="switch-row">
+          <span>Show Recon Apps in Top Bar</span>
+          <input type="checkbox" id="toggle-navbar-apps" checked />
         </label>
       </div>
 
@@ -177,12 +255,14 @@
 
       <div class="setting-group">
         <h4>Read Aloud & Speech</h4>
+        <button id="btn-drawer-start-read" class="btn-subtle-full" style="margin-bottom: 10px; font-weight: 600;">🔊 Start Reading Aloud (Ctrl+Shift+A)</button>
         <label class="select-row">
           <span>Voice Speed</span>
           <select id="select-voice-speed">
-            <option value="normal" selected>Normal</option>
-            <option value="fast">Fast</option>
-            <option value="relaxed">Relaxed</option>
+            <option value="0.75">Relaxed (0.75x)</option>
+            <option value="1.0" selected>Normal (1.0x)</option>
+            <option value="1.25">Brisk (1.25x)</option>
+            <option value="1.5">Fast (1.5x)</option>
           </select>
         </label>
         <label class="switch-row">

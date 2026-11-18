@@ -1,7 +1,7 @@
 {
   "name": "recon-browser",
   "productName": "Recon Browser",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A privacy-hardened, bloat-free browser for the Recon Apps ecosystem. Built with native shields, zero telemetry, and DuckDuckGo search.",
   "author": "Recon Towers Dev Department <author@neogentrics.com>",
   "license": "MIT",

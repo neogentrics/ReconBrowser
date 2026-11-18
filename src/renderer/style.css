@@ -1364,3 +1364,275 @@ body {
   border-radius: 3px;
   outline: 2px solid rgba(234, 179, 8, 0.4);
 }
+
+/* ==========================================================================
+   Recon App Link Drawer & Status Components
+   ========================================================================== */
+.app-link-status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-link-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.app-link-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-link-card-name {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-link-status-pill {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.app-link-status-pill.linked {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.app-link-status-pill.unlinked {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.app-link-status-pill.offline {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.app-link-btn-action {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-hover);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.app-link-btn-action:hover {
+  background: var(--accent-purple);
+  color: #fff;
+  border-color: var(--accent-purple);
+}
+
+/* ==========================================================================
+   Research Clip Modal (v1.3.1)
+   ========================================================================== */
+.research-clip-modal {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-primary);
+  color: var(--text-main);
+  padding: 0;
+  width: 580px;
+  max-width: 90vw;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.research-clip-modal::backdrop {
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+.clip-modal-content {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 14px;
+}
+
+.clip-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+}
+
+.clip-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clip-header-icon {
+  font-size: 20px;
+}
+
+.clip-modal-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.clip-warning-banner {
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #facc15;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.clip-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.clip-form-group label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.clip-form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.clip-source-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.clip-source-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+}
+
+.clip-source-grid {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  row-gap: 4px;
+  font-size: 11.5px;
+}
+
+.clip-meta-label {
+  color: var(--text-muted);
+}
+
+.clip-meta-val {
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clip-preview-textarea {
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px 10px;
+  border-radius: 6px;
+  resize: vertical;
+  min-height: 90px;
+  outline: none;
+}
+
+.clip-preview-textarea:focus {
+  border-color: var(--accent-purple);
+}
+
+.clip-destinations-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.clip-dest-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.clip-dest-card:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-purple);
+}
+
+.clip-dest-card.selected {
+  border-color: var(--accent-purple);
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.clip-dest-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.clip-dest-radio {
+  cursor: pointer;
+}
+
+.clip-dest-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.clip-dest-name {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.clip-dest-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.clip-modal-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+}

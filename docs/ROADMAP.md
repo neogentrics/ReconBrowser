@@ -30,7 +30,7 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 | **v1.0.0** | ✅ **Live** | Production Release Baseline | Multi-tab UI, DuckDuckGo Omnibar, Native Shields, Cross-Platform GitHub Actions CI/CD |
 | **v1.1.0** | ✅ **Live** | Ecosystem Bridge, Auto-Updates & Polish | Auto-updater via GitHub Releases, 11 Recon themes, Linked Apps IPC, Shields Popover vs Settings Drawer, About Us modal |
 | **v1.2.0** | 🚀 **Live** | Reader View, Read Aloud & Universal Aspects | Distraction-free Reader View, Read Aloud TTS with sentence highlighting, Solid/Metallic/Glass Aspects, ADA & Colorblind themes, configurable Home URL, local app auto-launch |
-| **v1.3.0** | 📋 Planned | StoryTracker Research & Lore Vault | Highlight-to-Lore ingestion, auto-citations, persistent research cache |
+| **v1.3.1** | ✅ **Live** | App Link Research Clips & Stability | App Link v1 protocol (`recon-browser`), research clip ingestion to RT Story Tracker & RT Markdown Reader, safe storage encryption, shields & DoH persistence, rich finish gradients |
 | **v1.4.0** | 📋 Planned | Zero-Knowledge Sync | Folder-based sync (No account required), AES-256 encryption, local Wi-Fi pairing |
 | **v1.5.0** | 📋 Planned | Offline Archives | `.reconarchive` single-file bundles, SQLite FTS5 local research search engine |
 | **v1.6.0** | 📋 Planned | Shields 2.0 & Inspector | Custom filter list subscriptions, live HTTP/3 & TLS network inspector drawer |
@@ -71,12 +71,16 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 - [x] **11 Recon Themes**: Support for Cyber Dark, Pure Obsidian, Slate, Dark, Sepia, Mist, Forest, Dusk, Evergreen, Aero Glass, and High Contrast Cyber.
 - [x] **About Recon Browser Modal**: Full About dialog modeled directly on RT Markdown Reader with tech specs, release notes, license, and one-click "Copy Version Details".
 
-### Milestone 3: v1.2.0 — StoryTracker Research & Lore Vault
-- [ ] Highlight-to-Lore ingestion: Right-click any text or image on any web page → *Send to StoryTracker*.
-- [ ] Auto-citation capture: Automatically attach URL, title, author, and timestamp to research cards.
-- [ ] Local research cache: Retain offline snapshots of referenced sources.
+### Milestone 3: v1.3.1 — App Link Research Clips & Stability [Complete & Live]
+- [x] **App Link Protocol v1 (`recon-browser`)**: Registered presence file in `%APPDATA%\Recon Towers\app-link` / `~/.config/Recon Towers/app-link`, local socket/pipe endpoints, and handshake.
+- [x] **Cross-App Pairing & Safe Storage**: Secure pairing with **RT Story Tracker** and **RT Markdown Reader**; 32-byte shared keys encrypted via Electron `safeStorage`.
+- [x] **Pre-Send Review Modal (`Ctrl+Shift+C`)**: Title, category taxonomy (`lore`, `character`, `setting`, `historical`, `science`, `general`), tags, metadata, and markdown preview before transmission.
+- [x] **Document Sanitization & Citation Formatting**: YAML front matter (`source_url`, `source_title`, `source_author`, `source_date`, `accessed`), stripped scripts/styles/embeds, and bottom citation line.
+- [x] **Safety Guardrails**: 1 MB clip truncation warning, safe document naming from title slugs without leaking URLs/body text, and private window transmission protection.
+- [x] **Shields & DoH Persistence**: Preferences reliably persist across reboots, with bidirectional sync between startpage badges and top bar popovers.
+- [x] **Theme Finishes Shading**: Distinct multi-stop gradients, brushed metallic sheen, and frosted glass blur.
 
-### Milestone 4: v1.3.0 — Zero-Knowledge Sync & Vault Backup
+### Milestone 4: v1.4.0 — Zero-Knowledge Sync & Vault Backup
 - [ ] Folder-based sync (No account required): Sync bookmarks, history, and preferences via user-owned folder (OneDrive, Google Drive, Dropbox, Syncthing).
 - [ ] Zero-Knowledge encryption: AES-256-GCM encryption with Argon2id master passphrase.
 - [ ] Local network Wi-Fi device pairing with Android companion app.

@@ -43,7 +43,7 @@
           <small>Recon Shields</small>
         </div>
       </div>
-      <div class="stat-item" id="btn-stat-speed" title="Zero Telemetry Overhead">
+      <div class="stat-item clickable" id="btn-stat-speed" title="Zero Telemetry Overhead — click for privacy details">
         <span class="stat-icon">⚡</span>
         <div class="stat-info">
           <strong id="stat-speed">Ultra</strong>
@@ -89,6 +89,7 @@
     const statShieldState = document.getElementById('stat-shield-state');
     const statDohBtn = document.getElementById('btn-stat-doh');
     const statDoh = document.getElementById('stat-doh');
+    const statSpeedBtn = document.getElementById('btn-stat-speed');
     const appsSection = document.querySelector('.apps-section');
 
     function getEngine() {
@@ -153,6 +154,10 @@
 
     statDohBtn.addEventListener('click', () => {
       console.log('RECON_ACTION:TOGGLE_DOH');
+    });
+
+    statSpeedBtn.addEventListener('click', () => {
+      console.log('RECON_ACTION:SHOW_TELEMETRY_INFO');
     });
 
     // Initialize from localStorage

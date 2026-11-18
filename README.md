@@ -24,7 +24,7 @@
 
 ## Downloads
 
-The latest version is **v1.2.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
+The latest version is **v1.3.1**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
 
 | Platform | Download Package | Description |
 | :--- | :--- | :--- |
@@ -45,14 +45,6 @@ The latest version is **v1.2.0**. Download it from [GitHub Releases](https://git
 
 An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 
---- | :--- | :--- |
-| **Windows** | [**ReconBrowser-Setup.exe**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Complete Windows installer with desktop and start menu shortcuts |
-| **Windows** | [**ReconBrowser-Portable.exe**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Zero-install standalone portable executable |
-| **Linux** | [**ReconBrowser-x86_64.AppImage**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Universal Linux standalone executable (Ubuntu, Fedora, Arch, etc.) |
-| **Linux** | [**ReconBrowser-amd64.deb**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Debian / Ubuntu / Mint system package |
-| **macOS** | [**ReconBrowser-arm64.dmg**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Apple Silicon (M1 / M2 / M3 / M4) package |
-| **macOS** | [**ReconBrowser-x64.dmg**](https://github.com/neogentrics/ReconBrowser/releases/latest) | Intel Mac package |
-
 ---
 
 ## Overview
@@ -69,6 +61,16 @@ An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 ---
 
 ## What's New
+
+### v1.3.1: App Link Research Clips & Ecosystem Polish
+
+- **Research Clips via App Link** (`Ctrl+Shift+C`): send text selections directly to **RT Story Tracker** (files directly into lore/character/research) and **RT Markdown Reader** (opens in a live editor tab) using the secure App Link protocol v1.
+- **YAML Front Matter & Markdown**: clean markdown conversion, sanitization (stripping scripts, iframes, styles), proper YAML quoting, and automated metadata citations (`source_url`, `source_title`, `source_author`, `source_date`, `accessed`).
+- **1 MB Guardrail & Safe Filenames**: automatically truncates selections exceeding 1 MB with user alerts; filenames are slugified from clip titles without ever exposing web addresses or raw excerpt text.
+- **Settings Persistence**: shields state, DoH state, and UI toggles reliably persist across application restarts.
+- **Bidirectional Shields & DoH Sync**: start page badges synchronize immediately with top navigation popovers and settings drawer switches; added Cloudflare resolver diagnostics test button.
+- **Enhanced Finish Gradients**: rich surface shading, directional gradients, and specular edge bevels across Solid Matte, Metallic Brushed Sheen, and Frosted Glass finishes.
+- **Interactive Telemetry Badge**: clicking the center telemetry badge confirms zero telemetry overhead and local privacy.
 
 ### v1.2.0: Reader View, Read Aloud and new looks
 
@@ -115,6 +117,7 @@ The first stable release: multi-tab browsing, the DuckDuckGo address bar with `!
 - `Ctrl+L` / `Cmd+L`: Focus and select omnibar
 - `Ctrl+R` / `Cmd+R`: Reload current page
 - `Ctrl+,` / `Cmd+,`: Open settings
+- `Ctrl+Shift+C` / `Cmd+Shift+C`: Send Research Clip to Recon Apps (RT Story Tracker / RT Markdown Reader)
 - `Ctrl+Alt+R` / `Cmd+Alt+R`: Toggle Reader View (`Esc` leaves it)
 - `Ctrl+Shift+A` / `Cmd+Shift+A`: Read the page aloud
 - `Ctrl+Shift+X` / `Cmd+Shift+X`: Stop reading
@@ -132,7 +135,7 @@ The full plan, with every feature, is in [docs/ROADMAP.md](docs/ROADMAP.md). In 
 | **v1.0** | Released | The first stable release |
 | **v1.1** | Released | Updates, tab isolation, themes and the shields popover |
 | **v1.2** | Released | Reader View, Read Aloud, aspects and accessible themes |
-| **v1.3** | Planned | StoryTracker research: send a highlight to a lore entry, with its citation, and keep an offline copy of the source |
+| **v1.3.1**| Released | StoryTracker & Markdown Reader research: send research clips with YAML front matter via App Link |
 | **v1.4** | Planned | Sync with no account, through a folder you already sync, with encryption |
 | **v1.5** | Planned | Offline archives: save a page as one file, search all your saved research |
 | **v1.6** | Planned | Shields 2.0: filter list subscriptions and a live network inspector |

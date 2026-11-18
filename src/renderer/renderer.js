@@ -84,13 +84,48 @@ const aboutDone = document.getElementById('about-done');
 const aboutCopy = document.getElementById('about-copy');
 const toastEl = document.getElementById('toast');
 
+// Research Clip & App Link Elements (v1.3.1)
+const btnClipResearch = document.getElementById('btn-clip-research');
+const menuSendClip = document.getElementById('menu-send-clip');
+const appLinkStatusList = document.getElementById('app-link-status-list');
+const btnRefreshAppLink = document.getElementById('btn-refresh-app-link');
+
+const modalResearchClip = document.getElementById('modal-research-clip');
+const clipModalClose = document.getElementById('clip-modal-close');
+const clipTruncateWarning = document.getElementById('clip-truncate-warning');
+const clipInputTitle = document.getElementById('clip-input-title');
+const clipSelectCategory = document.getElementById('clip-select-category');
+const clipInputTags = document.getElementById('clip-input-tags');
+const clipMetaPageTitle = document.getElementById('clip-meta-page-title');
+const clipMetaUrl = document.getElementById('clip-meta-url');
+const clipMetaAuthor = document.getElementById('clip-meta-author');
+const clipMetaDate = document.getElementById('clip-meta-date');
+const clipMetaAccessed = document.getElementById('clip-meta-accessed');
+const clipPreviewText = document.getElementById('clip-preview-text');
+const clipDestinations = document.getElementById('clip-destinations');
+const btnClipCopyMd = document.getElementById('btn-clip-copy-md');
+const btnClipCancel = document.getElementById('btn-clip-cancel');
+const btnClipSend = document.getElementById('btn-clip-send');
+
 // State
 const tabs = new Map(); // tabId -> { id, title, url, tabEl, webviewEl, blockedCount, shieldsPaused, readerActive }
 let activeTabId = null;
 let nextTabId = 1;
-let shieldsGlobalActive = true;
+let shieldsGlobalActive = localStorage.getItem('recon_shields_active') !== 'false';
 let totalBlockedCount = 0;
 let readerFontSize = 17;
+let currentClipContext = null;
+let selectedDestAppId = null;
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 // Speech Synthesis State
 let ttsSentences = [];
@@ -209,6 +244,8 @@ function createTab(initialUrl = null, activate = true) {
       ipcRenderer.send('toggle-doh', next);
       tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
       showToast(next ? 'DNS-over-HTTPS: Encrypted (Cloudflare)' : 'DNS-over-HTTPS: Standard (System DNS)');
+    } else if (msg === 'RECON_ACTION:SHOW_TELEMETRY_INFO') {
+      showToast('⚡ Ultra Mode Active: Zero telemetry, zero usage pings, and 100% local privacy.');
     }
   });
 
@@ -1092,6 +1129,353 @@ ipcRenderer.on('updater-status', (event, status) => {
   }
 });
 
+// ==========================================================================
+// Recon App Link & Research Clips (v1.3.1)
+// ==========================================================================
+async function refreshAppLinkStatus() {
+  if (!appLinkStatusList) return;
+  try {
+    const status = await ipcRenderer.invoke('app-link:get-status');
+    const apps = status.apps || [];
+    if (apps.length === 0) {
+      appLinkStatusList.innerHTML = `
+        <div style="font-size: 11.5px; color: var(--text-muted); padding: 4px 0;">
+          No Recon Towers apps detected in presence directory.<br>
+          Launch RT Story Tracker or RT Markdown Reader to connect.
+        </div>
+      `;
+      return;
+    }
+
+    appLinkStatusList.innerHTML = apps.map(app => {
+      let pillClass = 'offline';
+      let pillText = 'Offline';
+      let actionBtn = '';
+
+      if (app.running && app.linked) {
+        pillClass = 'linked';
+        pillText = 'Linked';
+        actionBtn = `<button class="app-link-btn-action" data-action="unlink" data-id="${app.id}">Unlink</button>`;
+      } else if (app.running && !app.linked) {
+        pillClass = 'unlinked';
+        pillText = 'Unlinked';
+        actionBtn = `<button class="app-link-btn-action" data-action="pair" data-id="${app.id}">Link Now</button>`;
+      } else if (!app.running && app.linked) {
+        pillClass = 'linked';
+        pillText = 'Linked (Offline)';
+        actionBtn = `<button class="app-link-btn-action" data-action="unlink" data-id="${app.id}">Unlink</button>`;
+      }
+
+      return `
+        <div class="app-link-card">
+          <div class="app-link-card-info">
+            <span class="app-link-card-name">${escapeHtml(app.name)}</span>
+            <span style="font-size: 10.5px; color: var(--text-muted);">${app.id} (v${app.version || '1.0'})</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="app-link-status-pill ${pillClass}">${pillText}</span>
+            ${actionBtn}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    appLinkStatusList.querySelectorAll('.app-link-btn-action').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const action = e.target.getAttribute('data-action');
+        const id = e.target.getAttribute('data-id');
+        if (action === 'pair') {
+          showToast(`Requesting link with ${id}... approve in the other app.`);
+          const res = await ipcRenderer.invoke('app-link:pair-with', id);
+          if (res.success) {
+            showToast(`Successfully linked with ${res.name || id}!`);
+          } else {
+            showToast(`Could not link with ${id}: ${res.message || res.code}`);
+          }
+          refreshAppLinkStatus();
+        } else if (action === 'unlink') {
+          await ipcRenderer.invoke('app-link:unlink', id);
+          showToast(`Unlinked ${id}`);
+          refreshAppLinkStatus();
+        }
+      });
+    });
+  } catch (err) {
+    console.error('App Link status error:', err);
+    appLinkStatusList.innerHTML = `<div style="font-size: 11px; color: #ef4444;">Error scanning App Link presence.</div>`;
+  }
+}
+
+if (btnRefreshAppLink) {
+  btnRefreshAppLink.addEventListener('click', () => refreshAppLinkStatus());
+}
+
+async function extractSelectionAndMetadata(overrideSelection = null) {
+  const activeTab = tabs.get(activeTabId);
+  if (!activeTab || !activeTab.webviewEl) {
+    return null;
+  }
+
+  // Safety check: Never send from private window
+  if (activeTab.isPrivate) {
+    showToast('Cannot send research clips from a private window.');
+    return null;
+  }
+
+  try {
+    const extractScript = `
+      (function() {
+        const sel = window.getSelection();
+        let text = '';
+        let html = '';
+        if (sel && sel.rangeCount > 0) {
+          text = sel.toString();
+          const div = document.createElement('div');
+          for (let i = 0; i < sel.rangeCount; i++) {
+            div.appendChild(sel.getRangeAt(i).cloneContents());
+          }
+          html = div.innerHTML;
+        }
+
+        const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute('content');
+        const docTitle = document.title || ogTitle || '';
+
+        const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href');
+        const pageUrl = canonical ? new URL(canonical, window.location.href).href : window.location.href;
+
+        const metaAuthor = document.querySelector('meta[name="author"]')?.getAttribute('content')
+          || document.querySelector('meta[property="article:author"]')?.getAttribute('content')
+          || document.querySelector('[rel="author"]')?.textContent?.trim()
+          || '';
+
+        const metaDate = document.querySelector('meta[property="article:published_time"]')?.getAttribute('content')
+          || document.querySelector('meta[name="date"]')?.getAttribute('content')
+          || document.querySelector('meta[name="pubdate"]')?.getAttribute('content')
+          || document.querySelector('time')?.getAttribute('datetime')
+          || '';
+
+        return {
+          selectionText: text,
+          selectionHtml: html,
+          pageTitle: docTitle,
+          pageUrl: pageUrl,
+          pageAuthor: metaAuthor,
+          pageDate: metaDate
+        };
+      })()
+    `;
+
+    const data = await activeTab.webviewEl.executeJavaScript(extractScript);
+    if (overrideSelection) {
+      data.selectionText = overrideSelection;
+      data.selectionHtml = overrideSelection;
+    }
+    return data;
+  } catch (err) {
+    console.error('Failed to extract selection from page:', err);
+    return null;
+  }
+}
+
+async function triggerClipWorkflow(overrideText = null, preferredTargetId = null) {
+  const data = await extractSelectionAndMetadata(overrideText);
+  if (!data || (!data.selectionText && !overrideText)) {
+    showToast('Select text on the page first to send a research clip.');
+    return;
+  }
+
+  openResearchClipModal(data, preferredTargetId);
+}
+
+async function openResearchClipModal(meta, preferredTargetId = null) {
+  currentClipContext = meta;
+  selectedDestAppId = preferredTargetId;
+
+  const cleanMarkdown = await ipcRenderer.invoke('app-link:clean-html', meta.selectionHtml || meta.selectionText);
+
+  const clipOptions = {
+    text: cleanMarkdown,
+    sourceUrl: meta.pageUrl && !meta.pageUrl.startsWith('file://') ? meta.pageUrl : undefined,
+    sourceTitle: meta.pageTitle || 'Web Research Clip',
+    sourceAuthor: meta.pageAuthor || undefined,
+    sourceDate: meta.pageDate ? meta.pageDate.slice(0, 10) : undefined,
+    category: clipSelectCategory.value || 'general',
+    tags: clipInputTags.value.split(',').map(t => t.trim()).filter(Boolean),
+    clipTitle: meta.pageTitle || 'Web Research Clip'
+  };
+
+  const formatted = await ipcRenderer.invoke('app-link:format-clip', clipOptions);
+
+  clipInputTitle.value = clipOptions.clipTitle;
+  clipPreviewText.value = cleanMarkdown;
+  clipTruncateWarning.style.display = formatted.truncated ? 'block' : 'none';
+
+  clipMetaPageTitle.textContent = meta.pageTitle || 'Untitled Page';
+  clipMetaUrl.textContent = clipOptions.sourceUrl || 'Local / Internal Page';
+  clipMetaAuthor.textContent = clipOptions.sourceAuthor || '—';
+  clipMetaDate.textContent = clipOptions.sourceDate || '—';
+  clipMetaAccessed.textContent = formatted.accessed || new Date().toISOString().slice(0, 10);
+
+  await renderClipDestinations();
+  modalResearchClip.showModal();
+}
+
+async function renderClipDestinations() {
+  const status = await ipcRenderer.invoke('app-link:get-status');
+  const apps = status.apps || [];
+  const runningLinked = apps.filter(a => a.running && a.linked);
+
+  if (runningLinked.length === 0) {
+    clipDestinations.innerHTML = `
+      <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 10px 12px; border-radius: 6px; font-size: 12px; color: var(--text-muted);">
+        No linked Recon apps are currently running.
+        <div style="margin-top: 4px; font-size: 11px;">
+          Start <strong>RT Story Tracker</strong> or <strong>RT Markdown Reader</strong> to send directly, or use <strong>Copy as Markdown</strong> below.
+        </div>
+      </div>
+    `;
+    btnClipSend.disabled = true;
+    btnClipSend.textContent = 'No Apps Running';
+    return;
+  }
+
+  if (!selectedDestAppId || !runningLinked.some(a => a.id === selectedDestAppId)) {
+    selectedDestAppId = runningLinked[0].id;
+  }
+
+  clipDestinations.innerHTML = runningLinked.map(a => {
+    const isChecked = a.id === selectedDestAppId;
+    return `
+      <div class="clip-dest-card ${isChecked ? 'selected' : ''}" data-id="${a.id}">
+        <div class="clip-dest-left">
+          <input type="radio" name="clip-dest-radio" value="${a.id}" class="clip-dest-radio" ${isChecked ? 'checked' : ''} />
+          <div class="clip-dest-info">
+            <span class="clip-dest-name">${escapeHtml(a.name)}</span>
+            <span class="clip-dest-desc">${a.id === 'rt-story-tracker' ? 'Author & lore workspace — files into project' : 'Distraction-free markdown workspace — opens tab'}</span>
+          </div>
+        </div>
+        <span class="app-link-status-pill linked">Ready</span>
+      </div>
+    `;
+  }).join('');
+
+  clipDestinations.querySelectorAll('.clip-dest-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.getAttribute('data-id');
+      selectedDestAppId = id;
+      clipDestinations.querySelectorAll('.clip-dest-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      const radio = card.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      btnClipSend.disabled = false;
+      const targetApp = runningLinked.find(a => a.id === id);
+      btnClipSend.textContent = `Send to ${targetApp ? targetApp.name : 'App'}`;
+    });
+  });
+
+  const selectedApp = runningLinked.find(a => a.id === selectedDestAppId);
+  btnClipSend.disabled = false;
+  btnClipSend.textContent = `Send to ${selectedApp ? selectedApp.name : 'App'}`;
+}
+
+async function sendActiveClip() {
+  if (!selectedDestAppId) {
+    showToast('Please select a destination app.');
+    return;
+  }
+
+  btnClipSend.disabled = true;
+  btnClipSend.textContent = 'Sending...';
+
+  const clipOptions = {
+    text: clipPreviewText.value,
+    sourceUrl: currentClipContext.pageUrl && !currentClipContext.pageUrl.startsWith('file://') ? currentClipContext.pageUrl : undefined,
+    sourceTitle: clipMetaPageTitle.textContent !== 'Untitled Page' ? clipMetaPageTitle.textContent : undefined,
+    sourceAuthor: clipMetaAuthor.textContent !== '—' ? clipMetaAuthor.textContent : undefined,
+    sourceDate: clipMetaDate.textContent !== '—' ? clipMetaDate.textContent : undefined,
+    category: clipSelectCategory.value,
+    tags: clipInputTags.value.split(',').map(t => t.trim()).filter(Boolean),
+    clipTitle: clipInputTitle.value.trim() || 'Web Research Clip'
+  };
+
+  const res = await ipcRenderer.invoke('app-link:send-clip', {
+    appId: selectedDestAppId,
+    clipOptions
+  });
+
+  btnClipSend.disabled = false;
+  btnClipSend.textContent = 'Send Clip';
+
+  if (res.success) {
+    modalResearchClip.close();
+    showToast(`✓ Research clip successfully sent to ${res.name || selectedDestAppId}!`);
+  } else {
+    showToast(`⚠️ Could not send clip: ${res.message || res.code}`, 6000);
+  }
+}
+
+async function copyActiveClipAsMarkdown() {
+  const clipOptions = {
+    text: clipPreviewText.value,
+    sourceUrl: currentClipContext.pageUrl && !currentClipContext.pageUrl.startsWith('file://') ? currentClipContext.pageUrl : undefined,
+    sourceTitle: clipMetaPageTitle.textContent !== 'Untitled Page' ? clipMetaPageTitle.textContent : undefined,
+    sourceAuthor: clipMetaAuthor.textContent !== '—' ? clipMetaAuthor.textContent : undefined,
+    sourceDate: clipMetaDate.textContent !== '—' ? clipMetaDate.textContent : undefined,
+    category: clipSelectCategory.value,
+    tags: clipInputTags.value.split(',').map(t => t.trim()).filter(Boolean),
+    clipTitle: clipInputTitle.value.trim() || 'Web Research Clip'
+  };
+
+  const formatted = await ipcRenderer.invoke('app-link:format-clip', clipOptions);
+  await navigator.clipboard.writeText(formatted.markdown);
+  showToast('✓ Research clip with front matter copied to clipboard as Markdown');
+}
+
+clipModalClose.addEventListener('click', () => modalResearchClip.close());
+btnClipCancel.addEventListener('click', () => modalResearchClip.close());
+btnClipSend.addEventListener('click', () => sendActiveClip());
+btnClipCopyMd.addEventListener('click', () => copyActiveClipAsMarkdown());
+
+btnClipResearch.addEventListener('click', () => triggerClipWorkflow());
+if (menuSendClip) {
+  menuSendClip.addEventListener('click', (e) => {
+    e.preventDefault();
+    ecosystemDropdown.classList.remove('dropdown-open');
+    triggerClipWorkflow();
+  });
+}
+
+ipcRenderer.on('open-clip-dialog', (event, data) => {
+  triggerClipWorkflow(data ? data.selectedText : null, data ? data.targetAppId : null);
+});
+
+ipcRenderer.on('menu-open-clip', () => {
+  triggerClipWorkflow();
+});
+
+ipcRenderer.on('copy-clip-as-markdown', async (event, data) => {
+  const meta = await extractSelectionAndMetadata(data ? data.selectedText : null);
+  if (!meta) return;
+  const cleanMarkdown = await ipcRenderer.invoke('app-link:clean-html', meta.selectionHtml || meta.selectionText);
+  const clipOptions = {
+    text: cleanMarkdown,
+    sourceUrl: meta.pageUrl && !meta.pageUrl.startsWith('file://') ? meta.pageUrl : undefined,
+    sourceTitle: meta.pageTitle || 'Web Research Clip',
+    sourceAuthor: meta.pageAuthor || undefined,
+    sourceDate: meta.pageDate ? meta.pageDate.slice(0, 10) : undefined,
+    category: 'general',
+    tags: ['research', 'web-clip'],
+    clipTitle: meta.pageTitle || 'Web Research Clip'
+  };
+  const formatted = await ipcRenderer.invoke('app-link:format-clip', clipOptions);
+  await navigator.clipboard.writeText(formatted.markdown);
+  showToast('✓ Research clip copied to clipboard as Markdown');
+});
+
+btnSettingsToggle.addEventListener('click', () => {
+  refreshAppLinkStatus();
+});
+
 // Global Keyboard Shortcuts
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
@@ -1117,7 +1501,13 @@ document.addEventListener('keydown', (e) => {
   } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'x') {
     e.preventDefault();
     stopReadAloud();
+  } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'c') {
+    e.preventDefault();
+    triggerClipWorkflow();
   } else if (e.key === 'Escape') {
+    if (modalResearchClip && modalResearchClip.open) {
+      modalResearchClip.close();
+    }
     const activeTab = tabs.get(activeTabId);
     if (activeTab && activeTab.readerActive) {
       toggleReaderView();
@@ -1137,6 +1527,15 @@ applyThemeAndAspect(savedTheme, savedAspect);
 
 const savedEngine = localStorage.getItem('recon_default_engine') || 'duckduckgo';
 setEngine(savedEngine);
+
+// Global Shields & DoH Initial State Sync
+toggleAdblock.checked = shieldsGlobalActive;
+popoverOptAdblock.checked = shieldsGlobalActive;
+ipcRenderer.send('toggle-shields', shieldsGlobalActive);
+updateShieldsPopoverDisplay();
+
+// Initial App Link Status Check
+refreshAppLinkStatus();
 
 // Create First Tab
 createTab(getStartPageURL());

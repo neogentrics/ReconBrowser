@@ -1,8 +1,10 @@
-const { app, BrowserWindow, session, ipcMain, Menu, shell, clipboard } = require('electron');
+const { app, BrowserWindow, session, ipcMain, Menu, shell, clipboard, dialog, safeStorage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { Updater } = require('./updater');
+const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link');
+const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
 
 let mainWindow;
 let blockedCount = 0;
@@ -59,7 +61,13 @@ function buildMenu() {
         { role: 'cut' },
         { role: 'copy' },
         { role: 'paste' },
-        { role: 'selectAll' }
+        { role: 'selectAll' },
+        { type: 'separator' },
+        {
+          label: 'Send Research Clip...',
+          accelerator: 'CmdOrCtrl+Shift+C',
+          click: () => mainWindow && mainWindow.webContents.send('menu-open-clip')
+        }
       ]
     },
     {
@@ -388,9 +396,219 @@ ipcMain.on('install-update-now', () => {
   if (updater) updater.installNow();
 });
 
-app.whenReady().then(() => {
+// ==========================================================================
+// Recon App Link & Research Clips (v1.3.0)
+// ==========================================================================
+let appLinkInstance = null;
+let linksMemory = null;
+const linksFile = () => path.join(app.getPath('userData'), 'links.bin');
+
+function isSecureStorage() {
+  if (!safeStorage || !safeStorage.isEncryptionAvailable()) return false;
+  if (process.platform === 'linux' && typeof safeStorage.getSelectedStorageBackend === 'function') {
+    const backend = safeStorage.getSelectedStorageBackend();
+    if (backend === 'basic_text' || backend === 'unknown') return false;
+  }
+  return true;
+}
+
+function loadLinks() {
+  if (linksMemory) return { ...linksMemory };
+  if (!isSecureStorage()) return {};
+  try {
+    const raw = fs.readFileSync(linksFile());
+    const decrypted = safeStorage.decryptString(raw);
+    const parsed = JSON.parse(decrypted);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLinks(links) {
+  if (isSecureStorage()) {
+    try {
+      const encrypted = safeStorage.encryptString(JSON.stringify(links));
+      fs.writeFileSync(linksFile(), encrypted);
+    } catch (e) {
+      linksMemory = { ...links };
+    }
+  } else {
+    // Kept in memory only until app closes, never in plain text
+    linksMemory = { ...links };
+  }
+}
+
+async function initAppLink() {
+  if (appLinkInstance) return;
+  const shared = sharedFolder({ home: app.getPath('home') });
+  const userData = app.getPath('userData');
+
+  appLinkInstance = new AppLink({
+    folder: shared,
+    dataDir: userData,
+    version: app.getVersion() || '1.3.0',
+    load: loadLinks,
+    save: saveLinks,
+    ask: async ({ name }) => {
+      const { response } = await dialog.showMessageBox(mainWindow, {
+        type: 'question',
+        title: 'App Link Request',
+        message: `Link ${name} with Recon Browser?`,
+        detail: `${name} wants to link with Recon Browser. This allows sending documents between apps.\n\nOnly approve if you requested this in ${name}.`,
+        buttons: ['Link Apps', 'Don’t Link'],
+        defaultId: 0,
+        cancelId: 1
+      });
+      return response === 0;
+    },
+    open: async ({ from, name, text, kind }) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('app-link-received-document', { from, name, text, kind });
+      }
+    }
+  });
+
+  try {
+    await appLinkInstance.start();
+    console.log('[App Link] Recon Browser presence registered on App Link');
+  } catch (err) {
+    console.error('[App Link] Failed to start App Link presence:', err);
+  }
+}
+
+// App Link IPC Handlers
+ipcMain.handle('app-link:get-status', async () => {
+  if (!appLinkInstance) await initAppLink();
+  const apps = appLinkInstance ? await appLinkInstance.list() : [];
+  return {
+    enabled: true,
+    safe: isSecureStorage(),
+    apps
+  };
+});
+
+ipcMain.handle('app-link:pair-with', async (event, appId) => {
+  if (!appLinkInstance) await initAppLink();
+  try {
+    const res = await appLinkInstance.pairWith(appId);
+    return { success: true, name: res.name, id: res.id };
+  } catch (err) {
+    return {
+      success: false,
+      code: err.code || 'failed',
+      message: toPlainWords(err, appId)
+    };
+  }
+});
+
+ipcMain.handle('app-link:unlink', async (event, appId) => {
+  if (!appLinkInstance) return { success: true };
+  await appLinkInstance.unlink(appId);
+  return { success: true };
+});
+
+ipcMain.handle('app-link:format-clip', (event, clipOptions) => {
+  return buildClipDocument(clipOptions);
+});
+
+ipcMain.handle('app-link:clean-html', (event, html) => {
+  return htmlToCleanMarkdown(html);
+});
+
+ipcMain.handle('app-link:send-clip', async (event, { appId, clipOptions }) => {
+  if (!appLinkInstance) await initAppLink();
+  const clip = buildClipDocument(clipOptions);
+
+  try {
+    const res = await appLinkInstance.sendClip(appId, {
+      name: clip.fileName,
+      text: clip.markdown
+    });
+    return {
+      success: true,
+      name: res.name,
+      fileName: clip.fileName
+    };
+  } catch (err) {
+    return {
+      success: false,
+      code: err.code || 'failed',
+      message: toPlainWords(err, appId)
+    };
+  }
+});
+
+// Context menu on web contents for selection clipping
+app.on('web-contents-created', (event, contents) => {
+  if (contents.getType() === 'webview') {
+    contents.on('context-menu', async (e, params) => {
+      if (params.selectionText && params.selectionText.trim().length > 0) {
+        const apps = appLinkInstance ? await appLinkInstance.list() : [];
+        const runningLinked = apps.filter(a => a.running && a.linked);
+
+        const menuTemplate = [
+          {
+            label: 'Send Research Clip...',
+            accelerator: 'CmdOrCtrl+Shift+C',
+            click: () => {
+              if (mainWindow) {
+                mainWindow.webContents.send('open-clip-dialog', { selectedText: params.selectionText });
+              }
+            }
+          }
+        ];
+
+        if (runningLinked.length > 0) {
+          menuTemplate.push({ type: 'separator' });
+          runningLinked.forEach(a => {
+            menuTemplate.push({
+              label: `Send to ${a.name}`,
+              click: () => {
+                if (mainWindow) {
+                  mainWindow.webContents.send('open-clip-dialog', {
+                    selectedText: params.selectionText,
+                    targetAppId: a.id
+                  });
+                }
+              }
+            });
+          });
+        }
+
+        menuTemplate.push(
+          { type: 'separator' },
+          {
+            label: 'Copy as Markdown Quote',
+            click: () => {
+              if (mainWindow) {
+                mainWindow.webContents.send('copy-clip-as-markdown', { selectedText: params.selectionText });
+              }
+            }
+          },
+          { type: 'separator' },
+          { role: 'copy' },
+          { role: 'selectAll' }
+        );
+
+        const menu = Menu.buildFromTemplate(menuTemplate);
+        menu.popup();
+      }
+    });
+  }
+});
+
+app.whenReady().then(async () => {
   applyDohConfig(dohEnabled);
+  await initAppLink();
   createWindow();
+});
+
+app.on('will-quit', async () => {
+  if (appLinkInstance) {
+    await appLinkInstance.stop();
+    appLinkInstance = null;
+  }
 });
 
 app.on('window-all-closed', () => {

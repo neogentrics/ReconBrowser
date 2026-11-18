@@ -31,6 +31,7 @@
       <input type="text" id="omnibar" placeholder="Search with DuckDuckGo or enter address (!g for Google, !b for Bing)..." />
       <button id="btn-reader-view" class="omnibar-action-btn" title="Toggle Reader View (Ctrl+Alt+R)">📖</button>
       <button id="btn-read-aloud" class="omnibar-action-btn" title="Read Aloud (Ctrl+Shift+A)">🔊</button>
+      <button id="btn-clip-research" class="omnibar-action-btn" title="Send Research Clip to Recon Apps (Ctrl+Shift+C)">📎</button>
     </div>
 
     <!-- Recon Shields Status Widget -->
@@ -48,6 +49,8 @@
         <a href="#" data-url="https://recontowers.com" class="menu-item">🌐 Recon Towers Hub</a>
         <a href="#" data-app="rt-markdown-reader" data-url="https://recontowers.com/apps/rt-markdown-reader/" class="menu-item">📝 RT Markdown Reader</a>
         <a href="#" data-app="rt-story-tracker" data-url="https://recontowers.com/apps/rt-story-tracker/" class="menu-item">📚 StoryTracker & Author Desk</a>
+        <div style="height: 1px; background: var(--border-color); margin: 6px 0; opacity: 0.6;"></div>
+        <a href="#" id="menu-send-clip" class="menu-item">📎 Send Research Clip (Ctrl+Shift+C)</a>
       </div>
     </div>
 
@@ -272,6 +275,17 @@
         </label>
       </div>
 
+      <div class="setting-group" id="app-link-settings-group">
+        <h4>Recon App Link Ecosystem</h4>
+        <p class="setting-hint" style="font-size: 11px; opacity: 0.8; margin-bottom: 8px;">
+          Connect with RT Story Tracker and RT Markdown Reader to send research clips and documents.
+        </p>
+        <div id="app-link-status-list" class="app-link-status-container">
+          <div class="app-link-loading" style="font-size: 12px; opacity: 0.6; padding: 4px 0;">Scanning for Recon Apps...</div>
+        </div>
+        <button id="btn-refresh-app-link" class="btn-subtle" style="margin-top: 8px; font-size: 11px; width: 100%;">↻ Refresh Linked Apps</button>
+      </div>
+
       <div class="setting-group">
         <h4>About Recon Browser</h4>
         <button id="btn-open-about" class="btn-subtle">About & Version Details...</button>
@@ -327,6 +341,83 @@
       <div class="about-actions">
         <button id="about-copy" class="btn-secondary">Copy Version Details</button>
         <button id="about-done" class="btn-primary">Done</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Research Clip Modal (Send to Recon Towers Apps) -->
+  <dialog id="modal-research-clip" class="research-clip-modal">
+    <div class="clip-modal-content">
+      <div class="clip-modal-header">
+        <div class="clip-title-row">
+          <span class="clip-header-icon">📎</span>
+          <h3>Send Research Clip</h3>
+        </div>
+        <button id="clip-modal-close" class="about-close-btn" title="Close (Esc)">×</button>
+      </div>
+
+      <div class="clip-modal-body">
+        <div id="clip-truncate-warning" class="clip-warning-banner" style="display: none;">
+          ⚠️ Clip exceeds 1 MB limit and was truncated. Scripts, embeds, and unsafe formatting were safely removed.
+        </div>
+
+        <div class="clip-form-group">
+          <label for="clip-input-title">Clip Title</label>
+          <input type="text" id="clip-input-title" class="drawer-input" placeholder="Title for this research clip..." />
+        </div>
+
+        <div class="clip-form-row">
+          <div class="clip-form-group" style="flex: 1;">
+            <label for="clip-select-category">Category</label>
+            <select id="clip-select-category" class="drawer-select">
+              <option value="general" selected>General</option>
+              <option value="lore">Lore</option>
+              <option value="character">Character</option>
+              <option value="setting">Setting</option>
+              <option value="historical">Historical</option>
+              <option value="science">Science</option>
+            </select>
+          </div>
+          <div class="clip-form-group" style="flex: 1.4;">
+            <label for="clip-input-tags">Tags (comma-separated)</label>
+            <input type="text" id="clip-input-tags" class="drawer-input" placeholder="research, web-clip" value="research, web-clip" />
+          </div>
+        </div>
+
+        <div class="clip-source-card">
+          <div class="clip-source-header">Source Reference</div>
+          <div class="clip-source-grid">
+            <span class="clip-meta-label">Page:</span>
+            <span class="clip-meta-val" id="clip-meta-page-title">—</span>
+            <span class="clip-meta-label">URL:</span>
+            <span class="clip-meta-val" id="clip-meta-url">—</span>
+            <span class="clip-meta-label">Author:</span>
+            <span class="clip-meta-val" id="clip-meta-author">—</span>
+            <span class="clip-meta-label">Date:</span>
+            <span class="clip-meta-val" id="clip-meta-date">—</span>
+            <span class="clip-meta-label">Accessed:</span>
+            <span class="clip-meta-val" id="clip-meta-accessed">—</span>
+          </div>
+        </div>
+
+        <div class="clip-form-group">
+          <label for="clip-preview-text">Clipped Text (Markdown preview)</label>
+          <textarea id="clip-preview-text" class="clip-preview-textarea" rows="6"></textarea>
+        </div>
+
+        <div class="clip-form-group">
+          <label>Destination App</label>
+          <div id="clip-destinations" class="clip-destinations-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <div class="clip-modal-footer">
+        <button id="btn-clip-copy-md" class="btn-secondary">📋 Copy as Markdown</button>
+        <div style="flex: 1;"></div>
+        <button id="btn-clip-cancel" class="btn-subtle">Cancel</button>
+        <button id="btn-clip-send" class="btn-primary" disabled>Send Clip</button>
       </div>
     </div>
   </dialog>

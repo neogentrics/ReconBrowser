@@ -635,6 +635,65 @@ if (settingsModal) {
   });
 }
 
+// Draggable Settings Modal
+function setupDraggableSettingsModal() {
+  const modalHeader = document.querySelector('.settings-modal-header');
+  if (!modalHeader || !settingsModal) return;
+
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+  let initialLeft = 0;
+  let initialTop = 0;
+
+  modalHeader.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.modal-close-btn')) return;
+
+    isDragging = true;
+    settingsModal.classList.add('is-dragging');
+
+    const rect = settingsModal.getBoundingClientRect();
+    startX = e.clientX;
+    startY = e.clientY;
+    initialLeft = rect.left;
+    initialTop = rect.top;
+
+    settingsModal.style.position = 'fixed';
+    settingsModal.style.margin = '0';
+    settingsModal.style.left = `${initialLeft}px`;
+    settingsModal.style.top = `${initialTop}px`;
+
+    function onMouseMove(moveEvent) {
+      if (!isDragging) return;
+      const deltaX = moveEvent.clientX - startX;
+      const deltaY = moveEvent.clientY - startY;
+
+      let newLeft = initialLeft + deltaX;
+      let newTop = initialTop + deltaY;
+
+      const maxLeft = Math.max(0, window.innerWidth - rect.width);
+      const maxTop = Math.max(0, window.innerHeight - rect.height);
+
+      newLeft = Math.max(0, Math.min(maxLeft, newLeft));
+      newTop = Math.max(0, Math.min(maxTop, newTop));
+
+      settingsModal.style.left = `${newLeft}px`;
+      settingsModal.style.top = `${newTop}px`;
+    }
+
+    function onMouseUp() {
+      isDragging = false;
+      settingsModal.classList.remove('is-dragging');
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    }
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+}
+setupDraggableSettingsModal();
+
 async function loadAboutSettingsInfo() {
   try {
     const info = await ipcRenderer.invoke('get-app-info');
@@ -676,6 +735,9 @@ document.addEventListener('click', (e) => {
   }
   if (!btnEcosystem.contains(e.target) && !ecosystemDropdown.contains(e.target)) {
     ecosystemDropdown.style.display = 'none';
+  }
+  if (bookmarksDropdown && !btnBookmarksToggle.contains(e.target) && !bookmarksDropdown.contains(e.target)) {
+    bookmarksDropdown.style.display = 'none';
   }
 });
 
@@ -1272,6 +1334,7 @@ const externalLinks = {
   'about-source': 'https://github.com/neogentrics/ReconBrowser',
   'about-license': 'https://github.com/neogentrics/ReconBrowser/blob/main/LICENSE',
   'about-notices': 'https://github.com/neogentrics/ReconBrowser/blob/main/README.md',
+  'settings-about-neogentrics': 'https://neogentrics.com',
   'settings-about-website': 'https://recontowers.com',
   'settings-about-notes': 'https://github.com/neogentrics/ReconBrowser/releases',
   'settings-about-issue': 'https://github.com/neogentrics/ReconBrowser/issues',
@@ -1726,6 +1789,14 @@ document.addEventListener('keydown', (e) => {
     if (activeTab && activeTab.readerActive) {
       toggleReaderView();
     }
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+    e.preventDefault();
+    const activeTab = tabs.get(activeTabId);
+    if (activeTab) addBookmark(activeTab.url, activeTab.title);
+  } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'b') {
+    e.preventDefault();
+    const current = localStorage.getItem('recon_show_bookmarks_bar') === 'true';
+    setBookmarksBarVisibility(!current);
   } else if ((e.ctrlKey || e.metaKey) && e.key === ',') {
     e.preventDefault();
     if (settingsModal && settingsModal.open) {
@@ -1733,6 +1804,194 @@ document.addEventListener('keydown', (e) => {
     } else {
       openSettingsModal('appearance');
     }
+  }
+});
+
+// ==========================================================================
+// Native Bookmarks System (v1.4.0)
+// ==========================================================================
+const btnBookmarksToggle = document.getElementById('btn-bookmarks-toggle');
+const bookmarksDropdown = document.getElementById('bookmarks-dropdown');
+const btnAddBookmark = document.getElementById('btn-add-bookmark');
+const bookmarksList = document.getElementById('bookmarks-list');
+const toggleBookmarksBar = document.getElementById('toggle-bookmarks-bar');
+const bookmarksBar = document.getElementById('bookmarks-bar');
+
+const DEFAULT_BOOKMARKS = [
+  { id: 'bm_1', title: 'Recon Towers Hub', url: 'https://recontowers.com', favicon: '⚡' },
+  { id: 'bm_2', title: 'Neo Gentrics', url: 'https://neogentrics.com', favicon: '🏢' },
+  { id: 'bm_3', title: 'RT Markdown Reader', url: 'https://recontowers.com/apps/rt-markdown-reader/', favicon: '📝' },
+  { id: 'bm_4', title: 'RT Story Tracker', url: 'https://recontowers.com/apps/rt-story-tracker/', favicon: '📚' },
+  { id: 'bm_5', title: 'DuckDuckGo', url: 'https://duckduckgo.com', favicon: '🦆' }
+];
+
+function loadBookmarks() {
+  try {
+    const raw = localStorage.getItem('recon_bookmarks');
+    if (raw) return JSON.parse(raw);
+  } catch (err) {}
+  saveBookmarks(DEFAULT_BOOKMARKS);
+  return DEFAULT_BOOKMARKS;
+}
+
+function saveBookmarks(bms) {
+  try {
+    localStorage.setItem('recon_bookmarks', JSON.stringify(bms));
+  } catch (err) {}
+  renderBookmarks();
+}
+
+function addBookmark(url, title, favicon = '★') {
+  if (!url) return;
+  const bms = loadBookmarks();
+  const existingIdx = bms.findIndex(b => b.url === url);
+  if (existingIdx !== -1) {
+    bms[existingIdx].title = title || bms[existingIdx].title;
+    saveBookmarks(bms);
+    showToast(`★ Updated bookmark: ${bms[existingIdx].title}`);
+    return;
+  }
+  const cleanTitle = title || (url.includes('startpage.html') ? 'Recon Start' : url);
+  const newBm = {
+    id: `bm_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+    title: cleanTitle,
+    url,
+    favicon: favicon || (url.includes('startpage.html') ? '⚡' : '🌐'),
+    createdAt: Date.now()
+  };
+  bms.push(newBm);
+  saveBookmarks(bms);
+  showToast(`★ Bookmarked: ${newBm.title}`);
+}
+
+function deleteBookmark(id) {
+  const bms = loadBookmarks().filter(b => b.id !== id);
+  saveBookmarks(bms);
+  showToast('Bookmark removed');
+}
+
+function renderBookmarks() {
+  const bms = loadBookmarks();
+
+  // 1. Render Dropdown List
+  if (bookmarksList) {
+    if (bms.length === 0) {
+      bookmarksList.innerHTML = `<div class="bookmark-empty" style="padding: 10px; color: var(--text-muted); text-align: center; font-size: 11.5px;">No bookmarks yet. Press + or Ctrl+D to bookmark the active tab.</div>`;
+    } else {
+      bookmarksList.innerHTML = bms.map(b => `
+        <div class="bookmark-dropdown-item" data-url="${escapeHtml(b.url)}">
+          <div class="bm-info" title="${escapeHtml(b.url)}">
+            <span class="bm-favicon">${b.favicon || '★'}</span>
+            <span class="bm-title">${escapeHtml(b.title)}</span>
+          </div>
+          <button class="bm-del-btn" data-del-id="${b.id}" title="Delete Bookmark">×</button>
+        </div>
+      `).join('');
+
+      bookmarksList.querySelectorAll('.bookmark-dropdown-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+          if (e.target.closest('.bm-del-btn')) {
+            e.stopPropagation();
+            const delId = e.target.closest('.bm-del-btn').getAttribute('data-del-id');
+            deleteBookmark(delId);
+            return;
+          }
+          const url = el.getAttribute('data-url');
+          if (url) {
+            const activeTab = tabs.get(activeTabId);
+            if (activeTab && activeTab.webviewEl) {
+              activeTab.webviewEl.loadURL(url);
+            } else {
+              createTab(url, true);
+            }
+            if (bookmarksDropdown) bookmarksDropdown.style.display = 'none';
+          }
+        });
+      });
+    }
+  }
+
+  // 2. Render Bookmarks Bar
+  if (bookmarksBar) {
+    bookmarksBar.innerHTML = bms.map(b => `
+      <div class="bookmark-bar-item" data-url="${escapeHtml(b.url)}" title="${escapeHtml(b.title)} (${escapeHtml(b.url)})">
+        <span class="bm-favicon">${b.favicon || '★'}</span>
+        <span class="bm-title">${escapeHtml(b.title)}</span>
+      </div>
+    `).join('');
+
+    bookmarksBar.querySelectorAll('.bookmark-bar-item').forEach(el => {
+      el.addEventListener('click', (e) => {
+        const url = el.getAttribute('data-url');
+        if (url) {
+          if (e.button === 1 || e.ctrlKey || e.metaKey) {
+            createTab(url, true);
+          } else {
+            const activeTab = tabs.get(activeTabId);
+            if (activeTab && activeTab.webviewEl) {
+              activeTab.webviewEl.loadURL(url);
+            } else {
+              createTab(url, true);
+            }
+          }
+        }
+      });
+    });
+  }
+}
+
+function setBookmarksBarVisibility(show) {
+  localStorage.setItem('recon_show_bookmarks_bar', String(show));
+  if (bookmarksBar) bookmarksBar.style.display = show ? 'flex' : 'none';
+  if (toggleBookmarksBar) toggleBookmarksBar.checked = show;
+}
+
+if (btnBookmarksToggle) {
+  btnBookmarksToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    shieldsPopover.classList.add('popover-hidden');
+    ecosystemDropdown.style.display = 'none';
+    closeSettingsModal();
+    const isShown = bookmarksDropdown.style.display === 'block';
+    bookmarksDropdown.style.display = isShown ? 'none' : 'block';
+    renderBookmarks();
+  });
+}
+
+if (btnAddBookmark) {
+  btnAddBookmark.addEventListener('click', () => {
+    const activeTab = tabs.get(activeTabId);
+    if (activeTab) {
+      addBookmark(activeTab.url, activeTab.title);
+    }
+  });
+}
+
+if (toggleBookmarksBar) {
+  toggleBookmarksBar.checked = localStorage.getItem('recon_show_bookmarks_bar') === 'true';
+  setBookmarksBarVisibility(toggleBookmarksBar.checked);
+  toggleBookmarksBar.addEventListener('change', (e) => {
+    setBookmarksBarVisibility(e.target.checked);
+  });
+}
+
+// IPC Bookmarks Listeners from native context menu
+ipcRenderer.on('bookmark-active-tab', () => {
+  const activeTab = tabs.get(activeTabId);
+  if (activeTab) {
+    addBookmark(activeTab.url, activeTab.title);
+  }
+});
+
+ipcRenderer.on('bookmark-link', (event, { url, title }) => {
+  if (url) {
+    addBookmark(url, title || url);
+  }
+});
+
+ipcRenderer.on('open-link-new-tab', (event, { url }) => {
+  if (url) {
+    createTab(url, true);
   }
 });
 
@@ -1752,7 +2011,8 @@ popoverOptAdblock.checked = shieldsGlobalActive;
 ipcRenderer.send('toggle-shields', shieldsGlobalActive);
 updateShieldsPopoverDisplay();
 
-// Initial App Link Status Check
+// Initial Bookmarks & App Link Status Check
+renderBookmarks();
 refreshAppLinkStatus();
 
 // Create First Tab

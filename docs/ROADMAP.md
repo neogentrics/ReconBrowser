@@ -32,10 +32,11 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 | **v1.2.0** | 🚀 **Live** | Reader View, Read Aloud & Universal Aspects | Distraction-free Reader View, Read Aloud TTS with sentence highlighting, Solid/Metallic/Glass Aspects, ADA & Colorblind themes, configurable Home URL, local app auto-launch |
 | **v1.3.1** | ✅ **Live** | App Link Research Clips & Stability | App Link v1 protocol (`recon-browser`), research clip ingestion to RT Story Tracker & RT Markdown Reader, safe storage encryption, shields & DoH persistence, rich finish gradients |
 | **v1.3.2** | ✅ **Live** | Tab Dragging, Spectrum Themes & Auto-Updater | Tab dragging & rearranging, 4 new paired spectrum themes (blues, reds, yellows), auto-updater manifest pipeline & interactive check dialog |
-| **v1.4.0** | 📋 Planned | Zero-Knowledge Sync | Folder-based sync (No account required), AES-256 encryption, local Wi-Fi pairing |
-| **v1.5.0** | 📋 Planned | Offline Archives | `.reconarchive` single-file bundles, SQLite FTS5 local research search engine |
-| **v1.6.0** | 📋 Planned | Shields 2.0 & Inspector | Custom filter list subscriptions, live HTTP/3 & TLS network inspector drawer |
-| **v1.7.0** | 📋 Planned | Creative Suite Hooks | Author Desk docked companion rail, Audio Studio sound grabber, StoryTracker live link |
+| **v1.3.3** | ✅ **Live** | Tabbed Settings, High Contrast, Draggable Modal | Centered tabbed modal with drag handle, high-contrast typography & system info badge, individual ecosystem suite links |
+| **v1.4.0** | 📋 **In Progress** | Password Vault, Opt-In Autofill, Bookmarks & History | Encrypted credential vault (`safeStorage`), permission-based opt-in autofill, bookmarks bar & right-click bookmarking, daily-sorted history manager, in-app updater |
+| **v1.5.0** | 📋 Planned | Zero-Knowledge Sync & Vault Backup | Folder-based sync (No account required), AES-256 encryption, local Wi-Fi pairing |
+| **v1.6.0** | 📋 Planned | Offline Archives | `.reconarchive` single-file bundles, SQLite FTS5 local research search engine |
+| **v1.7.0** | 📋 Planned | Shields 2.0 & Inspector | Custom filter list subscriptions, live HTTP/3 & TLS network inspector drawer |
 | **v1.8.0** | 📋 Planned | Containers & Ephemeral | Isolated cookie containers, per-container SOCKS5/Tor routing, disposable tabs |
 | **v1.9.0** | 📋 Planned | Local AI Integration | Ollama bridge (`localhost:11434`), zero-cloud summarization & claim extraction |
 | **v2.0.0** | 🎯 Milestone | The Connected Studio Browser | **All Gen 1 features graduate to permanent production**; unified Recon Spotlight (`Ctrl+K`) |
@@ -94,15 +95,20 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 - [x] **View Menu Quick Themes (v1.3.3)**: Instant theme and aspect switching directly from the native application menu bar.
 - [x] **Shields & Apps Hub Sync (v1.3.3)**: Real-time synchronization of site-specific paused shields to the Start Page badge, and quick toggle for Recon Apps in both dropdown and settings.
 
-### Milestone 5: v1.4.0 — Zero-Knowledge Sync & Vault Backup [Planned]
-- [ ] Folder-based sync (No account required): Sync bookmarks, history, and preferences via user-owned folder (OneDrive, Google Drive, Dropbox, Syncthing).
-- [ ] Zero-Knowledge encryption: AES-256-GCM encryption with Argon2id master passphrase.
-- [ ] Local network Wi-Fi device pairing with Android companion app.
-
-### Milestone 5: v1.4.0 — Offline Archives & Single-File Bundles
-- [ ] `.reconarchive` single-file web bundles with bundled images, CSS, and fonts.
-- [ ] Export tab group as Markdown folder for RT Markdown Reader.
-- [ ] Full-text SQLite FTS5 search index across all saved research articles.
+### Milestone 5: v1.4.0 — Encrypted Password Vault, Opt-In Autofill, Bookmarks & History [In Progress]
+- [ ] **Native Encrypted Password Vault**: Secure credential store encrypted with Electron `safeStorage` (hardware/OS DPAPI / Keychain), protecting logins from malware and plain-text file snooping.
+- [ ] **Permission-Based Opt-In Autofill**: Strictly user-initiated credential suggestions. Never autofills automatically or exposes data without explicit user request.
+- [ ] **Credential Update & Generator**: Prompts to update saved passwords upon change detection; built-in cryptographically secure random password generator.
+- [ ] **Native Bookmarks Suite**:
+  - Bookmarks Bar located directly below the navigation bar (toggleable via `Ctrl+B` or Settings).
+  - Dedicated `★` toolbar button next to Settings gear for quick bookmarks access and folder management.
+  - Page bookmarking shortcut (`Ctrl+D`) and right-click context menu "Bookmark Link" on any hyperlink.
+  - Folder hierarchy, custom naming, and date/name sorting.
+- [ ] **Local History Tracker with Daily Sorting**:
+  - Full local-only browsing history grouped and sorted by day (`Today`, `Yesterday`, specific dates).
+  - Filterable search and privacy clearing options (1 hour, 24 hours, 7 days, all-time, or auto-wipe on exit) located in Settings.
+- [ ] **In-App Background Auto-Updater**: Direct background binary downloads and one-click "Update Now" with clean UAC elevation, eliminating external browser redirects.
+- [ ] **Default Browser Integration**: First-run prompt and Settings toggle to set Recon Browser as the default system browser via `app.setAsDefaultProtocolClient()`.
 
 ### Milestone 6: v1.5.0 — Recon Shields 2.0 & Network Inspector
 - [ ] Custom filter list subscriptions (EasyPrivacy, Fanboy Annoyances, uBlock Badware).

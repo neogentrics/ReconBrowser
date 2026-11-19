@@ -390,10 +390,13 @@ function applyDohConfig(enabled) {
           enableBuiltInResolver: true,
           secureDnsMode: 'secure',
           secureDnsServers: [
-            'https://cloudflare-dns.com/dns-query'
+            'https://1.1.1.1/dns-query',
+            'https://1.0.0.1/dns-query',
+            'https://cloudflare-dns.com/dns-query',
+            'https://dns.google/dns-query'
           ]
         });
-        console.log('[Recon Network] DoH Configured: Cloudflare 1.1.1.1 Secure Mode');
+        console.log('[Recon Network] DoH Configured: Cloudflare 1.1.1.1 & Google DNS Secure Mode');
       } else {
         app.configureHostResolver({
           enableBuiltInResolver: false,
@@ -680,29 +683,60 @@ ipcMain.handle('app-link:send-clip', async (event, { appId, clipOptions }) => {
 app.on('web-contents-created', (event, contents) => {
   if (contents.getType() === 'webview') {
     contents.on('context-menu', async (e, params) => {
+      const menuTemplate = [];
+
+      // 1. Link Context Actions (Bookmark link, open in new tab, copy address)
+      if (params.linkURL) {
+        menuTemplate.push(
+          {
+            label: 'Open Link in New Tab',
+            click: () => {
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('open-link-new-tab', { url: params.linkURL });
+              }
+            }
+          },
+          {
+            label: '★ Bookmark Link',
+            click: () => {
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('bookmark-link', {
+                  url: params.linkURL,
+                  title: params.linkText || params.linkURL
+                });
+              }
+            }
+          },
+          {
+            label: 'Copy Link Address',
+            click: () => clipboard.writeText(params.linkURL)
+          }
+        );
+      }
+
+      // 2. Selection Context Actions (Research clips, markdown quote, copy)
       if (params.selectionText && params.selectionText.trim().length > 0) {
+        if (menuTemplate.length > 0) menuTemplate.push({ type: 'separator' });
+
         const apps = appLinkInstance ? await appLinkInstance.list() : [];
         const runningLinked = apps.filter(a => a.running && a.linked);
 
-        const menuTemplate = [
-          {
-            label: 'Send Research Clip...',
-            accelerator: 'CmdOrCtrl+Shift+C',
-            click: () => {
-              if (mainWindow) {
-                mainWindow.webContents.send('open-clip-dialog', { selectedText: params.selectionText });
-              }
+        menuTemplate.push({
+          label: 'Send Research Clip...',
+          accelerator: 'CmdOrCtrl+Shift+C',
+          click: () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('open-clip-dialog', { selectedText: params.selectionText });
             }
           }
-        ];
+        });
 
         if (runningLinked.length > 0) {
-          menuTemplate.push({ type: 'separator' });
           runningLinked.forEach(a => {
             menuTemplate.push({
               label: `Send to ${a.name}`,
               click: () => {
-                if (mainWindow) {
+                if (mainWindow && !mainWindow.isDestroyed()) {
                   mainWindow.webContents.send('open-clip-dialog', {
                     selectedText: params.selectionText,
                     targetAppId: a.id
@@ -714,20 +748,64 @@ app.on('web-contents-created', (event, contents) => {
         }
 
         menuTemplate.push(
-          { type: 'separator' },
           {
             label: 'Copy as Markdown Quote',
             click: () => {
-              if (mainWindow) {
+              if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('copy-clip-as-markdown', { selectedText: params.selectionText });
               }
             }
           },
           { type: 'separator' },
+          { role: 'copy' }
+        );
+      }
+
+      // 3. Editable Input Actions
+      if (params.isEditable) {
+        if (menuTemplate.length > 0) menuTemplate.push({ type: 'separator' });
+        menuTemplate.push(
+          { role: 'undo' },
+          { role: 'redo' },
+          { type: 'separator' },
+          { role: 'cut' },
           { role: 'copy' },
+          { role: 'paste' },
           { role: 'selectAll' }
         );
+      }
 
+      // 4. General Page Navigation & Bookmark fallback
+      if (!params.linkURL && (!params.selectionText || !params.selectionText.trim()) && !params.isEditable) {
+        menuTemplate.push(
+          {
+            label: 'Back',
+            enabled: contents.canGoBack(),
+            click: () => contents.goBack()
+          },
+          {
+            label: 'Forward',
+            enabled: contents.canGoForward(),
+            click: () => contents.goForward()
+          },
+          {
+            label: 'Reload',
+            click: () => contents.reload()
+          },
+          { type: 'separator' },
+          {
+            label: '★ Bookmark This Page',
+            accelerator: 'CmdOrCtrl+D',
+            click: () => {
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('bookmark-active-tab');
+              }
+            }
+          }
+        );
+      }
+
+      if (menuTemplate.length > 0) {
         const menu = Menu.buildFromTemplate(menuTemplate);
         menu.popup();
       }

@@ -5,6 +5,30 @@ All notable changes to **Recon Browser** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-11-19
+
+### Added
+- **Decentralized Gateway Suite**:
+  - **Native IPFS & IPNS Support (`ipfs://`, `ipns://`)**:
+    - Backend `IPFSManager` (`src/main/ipfs.js`) resolving decentralized CIDs and paths without third-party extensions.
+    - Automatic detection and probing of local IPFS daemons on `127.0.0.1:5001` / `:8080`.
+    - Resilient fallback cascade to high-availability public gateways (`ipfs.io`, `dweb.link`, `cloudflare-ipfs`, `pinata`).
+    - Configurable preferred gateway selector and daemon health monitoring in Recon Settings (`#panel-gateway`).
+  - **Native Gemini Protocol Client & Gemtext Reader (`gemini://`)**:
+    - Pure Node.js TLS Gemini client (`src/main/gemini.js`) operating on port 1965 with SNI and TOFU (Trust On First Use) certificate tracking.
+    - Status code handling across all Gemini responses (1x Input prompts, 2x Success, 3x Redirects, 4x/5x Error handling).
+    - Cyber Gemtext (`text/gemini`) HTML renderer (`src/renderer/gemini-viewer.html`) with headings, link navigation, blockquotes, preformatted code, and theme variable inheritance.
+  - **Omnibar Native Decentralized Routing**:
+    - Direct entry of `ipfs://`, `ipns://`, and `gemini://` addresses with instant gateway routing.
+- **Generation 1 Hardening & Tab Memory Suspender (< 250MB RAM)**:
+  - Intelligent background tab memory suspender (`src/renderer/renderer.js`): automatically unloads dormant `<webview>` processes after idle threshold (15m, 30m, 1h, or manual trigger).
+  - Preserves complete tab session state (URL, title, container partition) and displays `💤` sleep badge.
+  - Instant one-click wake restores the exact webview and page state without navigation loss.
+  - "💤 Hibernate Background Tabs Now" one-click action and live RAM savings statistics.
+- **Zero-Data-Loss Migration & Store Health Verifier**:
+  - Backend `MigrationManager` (`src/main/migration.js`) automatically validates, backs up, and verifies integrity across all 7 user stores (Bookmarks, History, Vault, Containers, Archives, Sync, Companion Notes) on startup.
+  - Interactive "Verify Stores" integrity audit tool in Settings.
+
 ## [1.8.0] - 2026-11-19
 
 ### Added

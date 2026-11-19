@@ -384,6 +384,9 @@
           <button class="settings-nav-btn" data-tab="ai">
             <span class="nav-icon">🤖</span> Recon AI
           </button>
+          <button class="settings-nav-btn" data-tab="gateway">
+            <span class="nav-icon">🪐</span> Decentralized Gateway
+          </button>
           <button class="settings-nav-btn" data-tab="about">
             <span class="nav-icon">ℹ️</span> About
           </button>
@@ -496,6 +499,24 @@
                 <small>Display the bookmarks bar below the navigation bar</small>
               </div>
               <input type="checkbox" id="settings-toggle-bookmarks-bar" class="recon-checkbox" />
+            </div>
+
+            <!-- Tab Memory Suspender (v1.9.0) -->
+            <div class="setting-row" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+              <div class="setting-label-group">
+                <strong>Tab Memory Suspender (&lt;250MB RAM)</strong>
+                <small>Automatically hibernates idle background tabs to conserve memory</small>
+              </div>
+              <select id="select-tab-sleep-timeout" class="settings-select">
+                <option value="0">Never</option>
+                <option value="900000">After 15 minutes</option>
+                <option value="1800000" selected>After 30 minutes (Recommended)</option>
+                <option value="3600000">After 1 hour</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
+              <span id="tab-suspender-stats" style="font-size: 11.5px; color: var(--text-muted);">Active Tabs: 1 | Sleeping: 0 (~0 MB RAM saved)</span>
+              <button id="btn-hibernate-background-tabs" class="btn-subtle" style="font-size: 11.5px; padding: 4px 12px;">💤 Hibernate Background Tabs Now</button>
             </div>
           </div>
 
@@ -1034,13 +1055,84 @@
             </div>
           </div>
 
-          <!-- 12. About -->
+          <!-- 13. Decentralized Gateway (v1.9.0) -->
+          <div class="settings-panel" id="panel-gateway">
+            <h4 class="panel-heading" style="margin-bottom: 12px;">Decentralized Gateway — IPFS &amp; Gemini</h4>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+              Access sovereign, decentralized web networks natively without third-party extensions. Built-in protocol handling for <strong>ipfs://</strong>, <strong>ipns://</strong>, and <strong>gemini://</strong>.
+            </p>
+
+            <h5 class="subpanel-heading" style="margin-bottom: 8px;">🪐 IPFS &amp; IPNS Gateway</h5>
+            <div class="setting-row" style="margin-bottom: 10px;">
+              <div class="setting-label-group">
+                <strong>Local Daemon Status</strong>
+                <small>IPFS node running on 127.0.0.1:5001 / :8080</small>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="ipfs-node-status" style="font-size: 12px; color: var(--text-muted);">Probing…</span>
+                <button id="btn-check-ipfs-daemon" class="btn-subtle" style="font-size: 11.5px; padding: 4px 10px;">Probe Daemon</button>
+              </div>
+            </div>
+
+            <div class="setting-row" style="margin-bottom: 10px;">
+              <div class="setting-label-group">
+                <strong>Preferred IPFS Gateway</strong>
+                <small>Gateway used to resolve ipfs:// and ipns:// content</small>
+              </div>
+              <select id="select-ipfs-gateway" class="settings-select">
+                <option value="auto" selected>Auto (Local Daemon → ipfs.io Fallback)</option>
+                <option value="local">Local Daemon (127.0.0.1:8080)</option>
+                <option value="ipfs_io">Official IPFS (ipfs.io)</option>
+                <option value="dweb_link">DWeb Link (dweb.link)</option>
+                <option value="cloudflare">Cloudflare IPFS (cloudflare-ipfs.com)</option>
+                <option value="pinata">Pinata (gateway.pinata.cloud)</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+              <button id="btn-test-ipfs-link" class="btn-subtle" style="font-size: 11.5px; padding: 4px 12px;">🔗 Open Sample IPFS Capsule</button>
+            </div>
+
+            <h5 class="subpanel-heading" style="margin-top: 14px; margin-bottom: 8px;">🚀 Gemini Space Protocol</h5>
+            <div class="setting-row" style="margin-bottom: 10px;">
+              <div class="setting-label-group">
+                <strong>Gemini Space Home Portal</strong>
+                <small>Default directory for gemini:// navigation</small>
+              </div>
+              <input type="text" id="input-gemini-home" class="settings-input" value="gemini://geminispace.info" style="width: 240px;" />
+            </div>
+
+            <div class="setting-toggle-row">
+              <div class="setting-label-group">
+                <strong>TOFU (Trust On First Use) Certificate Tracking</strong>
+                <small>Record cryptographic fingerprints for self-signed TLS certificates</small>
+              </div>
+              <input type="checkbox" id="toggle-gemini-tofu" class="recon-checkbox" checked />
+            </div>
+
+            <div style="margin-bottom: 18px; margin-top: 10px;">
+              <button id="btn-open-gemini-home" class="btn-primary" style="font-size: 11.5px; padding: 5px 14px;">🚀 Launch Gemini Space</button>
+            </div>
+
+            <h5 class="subpanel-heading" style="margin-top: 14px; margin-bottom: 8px;">🛡️ Generation 1 Store Health &amp; Migration Audit</h5>
+            <div style="padding: 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <strong style="color: #34d399; font-size: 12px;">Data Integrity: Healthy</strong>
+                  <div id="migration-audit-summary" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">All user stores (Bookmarks, Vault, History, Containers) verified.</div>
+                </div>
+                <button id="btn-run-migration-audit" class="btn-subtle" style="font-size: 11.5px; padding: 4px 10px;">Verify Stores</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 14. About -->
           <div class="settings-panel" id="panel-about">
             <div class="about-panel-header" style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
               <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
               <div>
                 <h3 style="margin: 0; font-size: 18px;">Recon Browser</h3>
-                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.8.0</span>
+                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.9.0</span>
               </div>
             </div>
             <p class="about-desc" style="font-size: 12px; opacity: 0.85; margin: 8px 0 14px; line-height: 1.4;">

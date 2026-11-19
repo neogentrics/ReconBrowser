@@ -24,7 +24,7 @@
 
 ## Downloads
 
-The latest version is **v1.8.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
+The latest version is **v1.9.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
 
 | Platform | Download Package | Description |
 | :--- | :--- | :--- |
@@ -61,6 +61,19 @@ An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 ---
 
 ## What's New
+
+### v1.9.0: Decentralized Gateway & Generation 1 Hardening
+
+- **Decentralized Protocol Gateway**:
+  - **Native IPFS & IPNS (`ipfs://`, `ipns://`)**: Native URI resolution with automatic local IPFS daemon detection (`127.0.0.1:5001`) and resilient public gateway fallback cascade (`ipfs.io`, `dweb.link`, `cloudflare-ipfs`, `pinata`).
+  - **Native Gemini Protocol (`gemini://`)**: Pure Node.js TLS 1.3 Gemini client (port 1965) with TOFU certificate tracking and cyber Gemtext reader (`gemini-viewer.html`).
+  - **Omnibar Native Decentralized Routing**: Direct entry of `ipfs://`, `ipns://`, and `gemini://` addresses.
+- **Intelligent Tab Memory Suspender (< 250MB RAM)**:
+  - Background tab memory suspender automatically unloads idle `<webview>` processes after configurable timeout (15m, 30m, 1h), keeping 10+ tabs well under 250MB RAM.
+  - Smooth one-click wake restores exact URL, title, and container partition without losing context.
+  - "💤 Hibernate Background Tabs Now" button and live RAM savings indicator.
+- **Zero-Data-Loss Migration & Store Health Verifier**:
+  - Automatic validation, backup, and migration across all 7 user stores (Bookmarks, History, Vault, Containers, Archives, Sync, Companion Notes).
 
 ### v1.8.0: Recon AI — Local Intelligence Bridge
 

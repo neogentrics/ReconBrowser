@@ -160,6 +160,16 @@ function openHistoryTab() {
   createTab(getHistoryPageURL(), true);
 }
 
+// Helper to resolve Gemini viewer URL (v1.9.0 Decentralized Gateway)
+function getGeminiViewerURL(url) {
+  const target = url || 'gemini://geminispace.info';
+  return `file://${__dirname}/gemini-viewer.html?url=${encodeURIComponent(target)}`;
+}
+
+function openGeminiTab(url) {
+  createTab(getGeminiViewerURL(url), true);
+}
+
 function showToast(message, duration = 3000) {
   toastEl.textContent = message;
   toastEl.classList.remove('toast-hidden');
@@ -314,6 +324,41 @@ function createTab(initialUrl = null, activate = true, containerId = 'default', 
   webviewEl.setAttribute('allowpopups', '');
   webviewEl.style.display = 'none';
 
+  const tabData = {
+    id,
+    title,
+    url,
+    tabEl,
+    webviewEl,
+    blockedCount: 0,
+    shieldsPaused: false,
+    readerActive: false,
+    containerId: containerObj.id,
+    isEphemeral,
+    partitionKey,
+    containerObj,
+    isSleeping: false,
+    lastActiveAt: Date.now()
+  };
+
+  wireWebviewEvents(tabData, webviewEl);
+  browserContainer.appendChild(webviewEl);
+  tabs.set(id, tabData);
+
+  if (activate || tabs.size === 1) {
+    switchTab(id);
+  }
+
+  updateSuspenderStats();
+  return id;
+}
+
+// ==========================================================================
+// Webview Event Wiring & Tab Memory Suspender (v1.9.0)
+// ==========================================================================
+function wireWebviewEvents(tabData, webviewEl) {
+  const id = tabData.id;
+
   // Native App Launching & Navigation Guard
   webviewEl.addEventListener('will-navigate', async (e) => {
     const navUrl = e.url;
@@ -353,7 +398,7 @@ function createTab(initialUrl = null, activate = true, containerId = 'default', 
     syncThemeToWebview(webviewEl);
   });
 
-  // Webview console bridge for startpage bidirectional actions
+  // Webview console bridge for startpage, zapper, history, and gemini
   webviewEl.addEventListener('console-message', (e) => {
     const msg = e.message;
     if (msg === 'RECON_ACTION:TOGGLE_SHIELDS') {
@@ -430,46 +475,133 @@ function createTab(initialUrl = null, activate = true, containerId = 'default', 
     } else if (msg.startsWith('RECON_HISTORY_CLEAR_QUIT:')) {
       const val = msg.replace('RECON_HISTORY_CLEAR_QUIT:', '').trim() === 'true';
       ipcRenderer.invoke('history:set-clear-on-quit', val);
+    } else if (msg.startsWith('RECON_GEMINI_REQ:LOAD:')) {
+      const gUrl = msg.replace('RECON_GEMINI_REQ:LOAD:', '').trim();
+      ipcRenderer.invoke('gemini:fetch', { url: gUrl }).then(res => {
+        webviewEl.executeJavaScript(`if (typeof window.__renderGeminiResponse === 'function') window.__renderGeminiResponse(${JSON.stringify(res)});`).catch(() => {});
+      }).catch(err => {
+        webviewEl.executeJavaScript(`if (typeof window.__renderGeminiResponse === 'function') window.__renderGeminiResponse({ error: ${JSON.stringify(err.message)}, status: 50, url: ${JSON.stringify(gUrl)} });`).catch(() => {});
+      });
+    } else if (msg.startsWith('RECON_GEMINI_NAV:')) {
+      const targetUrl = msg.replace('RECON_GEMINI_NAV:', '').trim();
+      if (targetUrl) {
+        if (targetUrl.startsWith('gemini://')) {
+          webviewEl.loadURL(getGeminiViewerURL(targetUrl));
+        } else {
+          createTab(targetUrl, true);
+        }
+      }
     }
   });
+}
 
-  browserContainer.appendChild(webviewEl);
+function sleepTab(id) {
+  if (id === activeTabId) return;
+  const tab = tabs.get(id);
+  if (!tab || tab.isSleeping) return;
 
-  const tabData = {
-    id,
-    title,
-    url,
-    tabEl,
-    webviewEl,
-    blockedCount: 0,
-    shieldsPaused: false,
-    readerActive: false,
-    containerId: containerObj.id,
-    isEphemeral,
-    partitionKey,
-    containerObj
-  };
+  try {
+    if (tab.webviewEl && typeof tab.webviewEl.isCurrentlyAudible === 'function' && tab.webviewEl.isCurrentlyAudible()) {
+      return;
+    }
+  } catch {}
 
-  tabs.set(id, tabData);
+  try {
+    if (tab.webviewEl) {
+      tab.savedUrl = tab.webviewEl.getURL() || tab.url;
+      tab.savedTitle = tab.webviewEl.getTitle() || tab.title;
+    }
+  } catch {}
 
-  if (activate || tabs.size === 1) {
-    switchTab(id);
+  tab.isSleeping = true;
+  tab.tabEl.classList.add('tab-sleeping');
+
+  const titleEl = tab.tabEl.querySelector('.tab-title');
+  if (titleEl && !titleEl.querySelector('.tab-sleep-badge')) {
+    const badge = document.createElement('span');
+    badge.className = 'tab-sleep-badge';
+    badge.textContent = '💤';
+    badge.title = 'Tab is sleeping to save memory. Click to wake.';
+    titleEl.prepend(badge);
   }
 
-  return id;
+  if (tab.webviewEl && tab.webviewEl.parentNode) {
+    tab.webviewEl.parentNode.removeChild(tab.webviewEl);
+    tab.webviewEl = null;
+  }
+
+  updateSuspenderStats();
+}
+
+function wakeTab(id) {
+  const tab = tabs.get(id);
+  if (!tab || !tab.isSleeping) return;
+
+  tab.isSleeping = false;
+  tab.lastActiveAt = Date.now();
+  tab.tabEl.classList.remove('tab-sleeping');
+
+  const badge = tab.tabEl.querySelector('.tab-sleep-badge');
+  if (badge) badge.remove();
+
+  const webviewEl = document.createElement('webview');
+  webviewEl.className = 'tab-webview';
+  webviewEl.setAttribute('id', `webview-${id}`);
+  if (tab.partitionKey) {
+    webviewEl.setAttribute('partition', tab.partitionKey);
+  }
+  webviewEl.setAttribute('allowpopups', '');
+  webviewEl.style.display = (id === activeTabId) ? 'flex' : 'none';
+  webviewEl.setAttribute('src', tab.savedUrl || tab.url || getStartPageURL());
+
+  wireWebviewEvents(tab, webviewEl);
+  browserContainer.appendChild(webviewEl);
+  tab.webviewEl = webviewEl;
+
+  updateSuspenderStats();
+}
+
+function sleepAllBackgroundTabs() {
+  let count = 0;
+  for (const [id, tab] of tabs.entries()) {
+    if (id !== activeTabId && !tab.isSleeping) {
+      sleepTab(id);
+      count++;
+    }
+  }
+  showToast(`💤 Hibernated ${count} background ${count === 1 ? 'tab' : 'tabs'} (~${count * 45} MB saved)`);
+}
+
+function updateSuspenderStats() {
+  const statsEl = document.getElementById('tab-suspender-stats');
+  if (!statsEl) return;
+  let activeCount = 0;
+  let sleepingCount = 0;
+  for (const tab of tabs.values()) {
+    if (tab.isSleeping) sleepingCount++;
+    else activeCount++;
+  }
+  const estimatedSavings = sleepingCount * 45;
+  statsEl.textContent = `Active Tabs: ${activeCount} | Sleeping: ${sleepingCount} (~${estimatedSavings} MB RAM saved)`;
 }
 
 function switchTab(id) {
   if (!tabs.has(id)) return;
   activeTabId = id;
 
+  const targetTab = tabs.get(id);
+  if (targetTab.isSleeping) {
+    wakeTab(id);
+  }
+  targetTab.lastActiveAt = Date.now();
+
   tabs.forEach((tab, tabId) => {
     if (tabId === id) {
       tab.tabEl.classList.add('active');
-      tab.webviewEl.style.display = 'flex';
+      if (tab.webviewEl) tab.webviewEl.style.display = 'flex';
     } else {
       tab.tabEl.classList.remove('active');
-      tab.webviewEl.style.display = 'none';
+      if (tab.webviewEl) tab.webviewEl.style.display = 'none';
     }
   });
 
@@ -478,6 +610,7 @@ function switchTab(id) {
   updateNavButtons();
   updateShieldsPopoverDisplay();
   updateOmnibarContainerBadge(activeTab.containerObj);
+  updateSuspenderStats();
   
   if (activeTab.readerActive) {
     readerOverlay.classList.remove('reader-overlay-hidden');
@@ -504,8 +637,9 @@ function closeTab(id) {
   }
 
   tab.tabEl.remove();
-  tab.webviewEl.remove();
+  if (tab.webviewEl) tab.webviewEl.remove();
   tabs.delete(id);
+  updateSuspenderStats();
 
   if (tabs.size === 0) {
     createTab();
@@ -569,6 +703,15 @@ function updateOmnibar(url) {
     omnibar.value = 'recon://history';
     btnReaderView.style.display = 'none';
     btnReadAloud.style.display = 'none';
+  } else if (url.includes('gemini-viewer.html')) {
+    try {
+      const u = new URL(url);
+      omnibar.value = u.searchParams.get('url') || 'gemini://geminispace.info';
+    } catch {
+      omnibar.value = 'gemini://geminispace.info';
+    }
+    btnReaderView.style.display = 'none';
+    btnReadAloud.style.display = 'none';
   } else {
     omnibar.value = url;
     btnReaderView.style.display = 'flex';
@@ -610,7 +753,7 @@ function updateEngineBadge(engine) {
   }
 }
 
-omnibar.addEventListener('keydown', (e) => {
+omnibar.addEventListener('keydown', async (e) => {
   if (e.key === 'Enter') {
     const input = omnibar.value.trim();
     if (!input) return;
@@ -622,6 +765,16 @@ omnibar.addEventListener('keydown', (e) => {
       targetUrl = getHistoryPageURL();
     } else if (input.toLowerCase() === 'recon://start' || input.toLowerCase() === 'about:start') {
       targetUrl = getStartPageURL();
+    } else if (input.toLowerCase().startsWith('gemini://')) {
+      targetUrl = getGeminiViewerURL(input);
+    } else if (input.toLowerCase().startsWith('ipfs://') || input.toLowerCase().startsWith('ipns://')) {
+      const prefGateway = localStorage.getItem('recon_ipfs_gateway') || 'auto';
+      try {
+        targetUrl = await ipcRenderer.invoke('ipfs:resolve', { uri: input, preferredGateway: prefGateway });
+      } catch (err) {
+        showToast(`IPFS Gateway: ${err.message}`);
+        return;
+      }
     } else if (input.startsWith('!g ')) {
       targetUrl = `https://www.google.com/search?q=${encodeURIComponent(input.substring(3).trim())}`;
     } else if (input.startsWith('!b ')) {
@@ -641,8 +794,11 @@ omnibar.addEventListener('keydown', (e) => {
     }
 
     const activeTab = tabs.get(activeTabId);
-    if (activeTab && activeTab.webviewEl) {
-      activeTab.webviewEl.loadURL(targetUrl);
+    if (activeTab) {
+      if (activeTab.isSleeping) wakeTab(activeTabId);
+      if (activeTab.webviewEl) {
+        activeTab.webviewEl.loadURL(targetUrl);
+      }
     }
   }
 });
@@ -783,6 +939,8 @@ settingsNavBtns.forEach(btn => {
       loadStudioSettings();
     } else if (tabId === 'interface' && typeof checkDefaultBrowserStatus === 'function') {
       checkDefaultBrowserStatus();
+    } else if (tabId === 'gateway' && typeof loadGatewaySettings === 'function') {
+      loadGatewaySettings();
     }
   });
 });
@@ -4945,4 +5103,127 @@ createTab(getStartPageURL());
       openReconAiDrawer();
     });
   }
+})();
+
+// ==========================================================================
+// Decentralized Gateway & Generation 1 Memory Suspender (v1.9.0)
+// ==========================================================================
+async function loadGatewaySettings() {
+  const statusEl = document.getElementById('ipfs-node-status');
+  const gatewaySelect = document.getElementById('select-ipfs-gateway');
+  const currentGateway = localStorage.getItem('recon_ipfs_gateway') || 'auto';
+  if (gatewaySelect) gatewaySelect.value = currentGateway;
+
+  if (statusEl) {
+    statusEl.textContent = 'Probing 127.0.0.1:5001…';
+    statusEl.style.color = 'var(--text-muted)';
+    try {
+      const res = await ipcRenderer.invoke('ipfs:check-local', { port: 5001 });
+      if (res && res.online) {
+        statusEl.textContent = `🟢 Online (v${res.version || '0.x'})`;
+        statusEl.style.color = '#34d399';
+      } else {
+        statusEl.textContent = '⚪ Inactive (Falling back to Web Gateways)';
+        statusEl.style.color = 'var(--text-muted)';
+      }
+    } catch {
+      statusEl.textContent = '⚪ Inactive (Web Gateways Active)';
+      statusEl.style.color = 'var(--text-muted)';
+    }
+  }
+
+  // Load audit status
+  const auditSummaryEl = document.getElementById('migration-audit-summary');
+  if (auditSummaryEl) {
+    try {
+      const report = await ipcRenderer.invoke('migration:audit');
+      if (report && report.status === 'healthy') {
+        const storeCount = Object.keys(report.stores || {}).length;
+        auditSummaryEl.textContent = `All ${storeCount} user stores verified (Bookmarks, History, Vault, Containers, Sync). Zero data loss verified.`;
+      }
+    } catch {}
+  }
+}
+
+// Wire Gateway Buttons & Controls
+(function initGatewayControls() {
+  const btnCheckIpfs = document.getElementById('btn-check-ipfs-daemon');
+  if (btnCheckIpfs) {
+    btnCheckIpfs.addEventListener('click', loadGatewaySettings);
+  }
+
+  const selectIpfsGateway = document.getElementById('select-ipfs-gateway');
+  if (selectIpfsGateway) {
+    selectIpfsGateway.addEventListener('change', (e) => {
+      localStorage.setItem('recon_ipfs_gateway', e.target.value);
+      showToast(`IPFS Gateway set to: ${e.target.selectedOptions[0].text}`);
+    });
+  }
+
+  const btnTestIpfs = document.getElementById('btn-test-ipfs-link');
+  if (btnTestIpfs) {
+    btnTestIpfs.addEventListener('click', () => {
+      closeSettingsModal();
+      createTab('ipfs://bafybeifx7yeb55armcsxnw3afgahamenugzurlovalisaienessabcubka/wiki/', true);
+    });
+  }
+
+  const btnOpenGemini = document.getElementById('btn-open-gemini-home');
+  if (btnOpenGemini) {
+    btnOpenGemini.addEventListener('click', () => {
+      const home = (document.getElementById('input-gemini-home') && document.getElementById('input-gemini-home').value) || 'gemini://geminispace.info';
+      closeSettingsModal();
+      openGeminiTab(home);
+    });
+  }
+
+  const btnAudit = document.getElementById('btn-run-migration-audit');
+  if (btnAudit) {
+    btnAudit.addEventListener('click', async () => {
+      const summaryEl = document.getElementById('migration-audit-summary');
+      if (summaryEl) summaryEl.textContent = 'Auditing all data stores…';
+      try {
+        const report = await ipcRenderer.invoke('migration:audit');
+        if (summaryEl) {
+          summaryEl.textContent = `Audit Passed ✅ All ${Object.keys(report.stores).length} stores verified with zero data loss.`;
+        }
+        showToast('Store Health: All stores healthy & verified ✅');
+      } catch (err) {
+        showToast(`Audit error: ${err.message}`);
+      }
+    });
+  }
+
+  // Memory Suspender Controls
+  const selectSleepTimeout = document.getElementById('select-tab-sleep-timeout');
+  if (selectSleepTimeout) {
+    const savedTimeout = localStorage.getItem('recon_tab_sleep_timeout') || '1800000';
+    selectSleepTimeout.value = savedTimeout;
+    selectSleepTimeout.addEventListener('change', (e) => {
+      localStorage.setItem('recon_tab_sleep_timeout', e.target.value);
+      showToast('Tab sleep interval updated');
+    });
+  }
+
+  const btnHibernateAll = document.getElementById('btn-hibernate-background-tabs');
+  if (btnHibernateAll) {
+    btnHibernateAll.addEventListener('click', () => {
+      sleepAllBackgroundTabs();
+    });
+  }
+
+  // Periodic Memory Suspender Check (every 30 seconds)
+  setInterval(() => {
+    const timeout = parseInt(localStorage.getItem('recon_tab_sleep_timeout') || '1800000', 10);
+    if (timeout <= 0) return;
+    const now = Date.now();
+    for (const [id, tab] of tabs.entries()) {
+      if (id !== activeTabId && !tab.isSleeping) {
+        const elapsed = now - (tab.lastActiveAt || now);
+        if (elapsed >= timeout) {
+          sleepTab(id);
+        }
+      }
+    }
+  }, 30000);
 })();

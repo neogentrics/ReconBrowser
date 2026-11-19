@@ -13,6 +13,12 @@ const { AudioGrabberManager } = require('./audio-grabber');
 const { ContainerManager } = require('./containers');
 const { OllamaManager } = require('./ollama');
 const ollamaManager = new OllamaManager();
+const { IPFSManager } = require('./ipfs');
+const { GeminiManager } = require('./gemini');
+const { MigrationManager } = require('./migration');
+const ipfsManager = new IPFSManager();
+const geminiManager = new GeminiManager();
+const migrationManager = new MigrationManager();
 const { exportBookmarksToHtml, parseBookmarksHtml, exportVaultToCsv, parseVaultCsv } = require('./importer-exporter');
 const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link');
 const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
@@ -1196,6 +1202,23 @@ ipcMain.handle('ollama:extract-claims', (event, { text, model }) => ollamaManage
 ipcMain.handle('ollama:ask', (event, { question, context, model }) => ollamaManager.askQuestion(question, context, model));
 ipcMain.handle('ollama:rewrite', (event, { text, instruction, model }) => ollamaManager.rewriteSelection(text, instruction, model));
 
+// Decentralized Gateway IPC Handlers (v1.9.0)
+ipcMain.handle('ipfs:resolve', async (event, { uri, preferredGateway }) => {
+  return await ipfsManager.resolveUrl(uri, preferredGateway);
+});
+ipcMain.handle('ipfs:check-local', async (event, { port }) => {
+  return await ipfsManager.checkLocalNode(port);
+});
+ipcMain.handle('ipfs:get-gateways', () => {
+  return ipfsManager.getGatewayList();
+});
+ipcMain.handle('gemini:fetch', async (event, { url }) => {
+  return await geminiManager.fetch(url);
+});
+ipcMain.handle('migration:audit', async () => {
+  return await migrationManager.runAuditAndMigrate();
+});
+
 // Context menu & history logging on web contents
 app.on('web-contents-created', (event, contents) => {
   if (contents.getType() === 'webview') {
@@ -1439,6 +1462,11 @@ app.on('web-contents-created', (event, contents) => {
 });
 
 app.whenReady().then(async () => {
+  try {
+    await migrationManager.runAuditAndMigrate();
+  } catch (err) {
+    console.warn('[Recon Migration] Startup audit warning:', err.message);
+  }
   applyDohConfig(dohEnabled);
   await initAppLink();
   createWindow();

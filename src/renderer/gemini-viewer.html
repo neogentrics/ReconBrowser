@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recon Gemini Viewer</title>
+  <link rel="stylesheet" href="startpage.css">
+  <style>
+    body {
+      background: var(--start-bg, #0b0f19);
+      color: var(--text-main, #f1f5f9);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 20px 80px;
+      overflow-y: auto;
+      margin: 0;
+    }
+
+    .gemini-container {
+      width: 100%;
+      max-width: 860px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Top Capsule Header */
+    .capsule-header {
+      background: var(--card-bg, #111827);
+      border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .capsule-identity {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .capsule-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid #3b82f6;
+      color: #60a5fa;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .capsule-url-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-main, #f1f5f9);
+      word-break: break-all;
+    }
+
+    .capsule-meta-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cert-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid #10b981;
+      color: #34d399;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: help;
+    }
+
+    .cert-pill.unverified {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: #f59e0b;
+      color: #fbbf24;
+    }
+
+    .capsule-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      background: var(--btn-bg, #1f2937);
+      border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+      color: var(--text-main, #f1f5f9);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .action-btn:hover {
+      background: var(--btn-hover, #374151);
+      border-color: #3b82f6;
+    }
+
+    /* Content Area */
+    .capsule-card {
+      background: var(--card-bg, #111827);
+      border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+      border-radius: 14px;
+      padding: 28px 36px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      line-height: 1.7;
+      min-height: 380px;
+    }
+
+    /* Gemtext Styles */
+    .gemini-h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--accent-color, #60a5fa);
+      margin: 24px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.12));
+      letter-spacing: -0.3px;
+    }
+    .gemini-h1:first-child { margin-top: 0; }
+
+    .gemini-h2 {
+      font-size: 19px;
+      font-weight: 700;
+      color: #93c5fd;
+      margin: 20px 0 10px;
+    }
+
+    .gemini-h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #bfdbfe;
+      margin: 16px 0 8px;
+    }
+
+    .gemini-para {
+      font-size: 14.5px;
+      color: var(--text-main, #f1f5f9);
+      margin: 10px 0;
+    }
+
+    .gemini-quote {
+      margin: 14px 0;
+      padding: 10px 16px;
+      border-left: 3px solid #3b82f6;
+      background: rgba(59, 130, 246, 0.08);
+      border-radius: 0 8px 8px 0;
+      font-style: italic;
+      color: #cbd5e1;
+    }
+
+    .gemini-list {
+      margin: 12px 0;
+      padding-left: 24px;
+      color: var(--text-main, #f1f5f9);
+      font-size: 14.5px;
+    }
+
+    .gemini-list li {
+      margin-bottom: 6px;
+    }
+
+    .gemini-code-block {
+      background: #030712;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 14px 18px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      color: #38bdf8;
+      margin: 16px 0;
+      line-height: 1.5;
+    }
+
+    .gemini-plain-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: var(--text-main, #f1f5f9);
+    }
+
+    .gemini-link-row {
+      margin: 8px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .gemini-link {
+      color: #38bdf8;
+      text-decoration: none;
+      font-size: 14.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      transition: all 0.15s ease;
+    }
+
+    .gemini-link:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+      text-decoration: underline;
+    }
+
+    .gemini-link-meta {
+      font-size: 11.5px;
+      color: var(--text-muted, #94a3b8);
+      font-family: ui-monospace, monospace;
+    }
+
+    .gemini-spacer {
+      height: 12px;
+    }
+
+    /* Loading state */
+    .gemini-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      gap: 16px;
+      color: var(--text-muted, #94a3b8);
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(59, 130, 246, 0.2);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Input Prompt */
+    .gemini-prompt-card {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid #3b82f6;
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .prompt-input {
+      background: #030712;
+      border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-main, #f1f5f9);
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
+      outline: none;
+    }
+
+    .prompt-submit {
+      align-self: flex-start;
+      background: #3b82f6;
+      border: none;
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Error card */
+    .gemini-error-card {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid #ef4444;
+      border-radius: 12px;
+      padding: 24px;
+      color: #fca5a5;
+    }
+
+    .gemini-error-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #f87171;
+    }
+  </style>
+</head>
+<body>
+  <div class="gemini-container">
+    <div class="capsule-header">
+      <div class="capsule-identity">
+        <span class="capsule-badge">🚀 Gemini Space</span>
+        <span class="capsule-url-text" id="capsule-url">Connecting...</span>
+      </div>
+      <div class="capsule-meta-pills">
+        <span class="cert-pill" id="capsule-cert" title="TOFU (Trust On First Use) TLS Fingerprint">🔒 TLS 1.3 Verified</span>
+      </div>
+      <div class="capsule-actions">
+        <button class="action-btn" id="btn-copy-url" title="Copy Gemini URL">📋 Copy URL</button>
+        <button class="action-btn" id="btn-view-raw" title="Toggle Raw Gemtext">📄 Raw Source</button>
+        <button class="action-btn" id="btn-reload-gemini" title="Reload Capsule">🔄 Reload</button>
+      </div>
+    </div>
+
+    <div class="capsule-card" id="capsule-body">
+      <div class="gemini-loading">
+        <div class="spinner"></div>
+        <div>Navigating Gemini capsule space...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentGeminiUrl = urlParams.get('url') || 'gemini://geminispace.info';
+    let rawGemtextSource = '';
+    let isRawMode = false;
+    let parsedHtmlContent = '';
+
+    const elUrl = document.getElementById('capsule-url');
+    const elCert = document.getElementById('capsule-cert');
+    const elBody = document.getElementById('capsule-body');
+    const btnCopy = document.getElementById('btn-copy-url');
+    const btnRaw = document.getElementById('btn-view-raw');
+    const btnReload = document.getElementById('btn-reload-gemini');
+
+    function updateUrlDisplay(url) {
+      currentGeminiUrl = url;
+      elUrl.textContent = url;
+    }
+
+    updateUrlDisplay(currentGeminiUrl);
+
+    // Initial request trigger via console bridge to host webview
+    console.log('RECON_GEMINI_REQ:LOAD:' + currentGeminiUrl);
+
+    // Global callback invoked by parent renderer when Gemini response resolves
+    window.__renderGeminiResponse = function(response) {
+      if (!response) {
+        renderError('Empty response received from decentralized network.');
+        return;
+      }
+
+      updateUrlDisplay(response.url || currentGeminiUrl);
+
+      // Certificate display
+      if (response.cert && response.cert.fingerprint) {
+        elCert.textContent = `🔒 ${response.cert.issuer || 'TOFU'} · ${response.cert.fingerprint.slice(0, 14)}...`;
+        elCert.title = `Fingerprint: ${response.cert.fingerprint}\nValid To: ${response.cert.validTo || 'N/A'}`;
+        elCert.classList.remove('unverified');
+      } else {
+        elCert.textContent = '🔓 Unverified TLS';
+        elCert.classList.add('unverified');
+      }
+
+      // Input requested (Status 10 or 11)
+      if (response.status >= 10 && response.status <= 19) {
+        const isSecret = response.status === 11 || response.isSensitive;
+        elBody.innerHTML = `
+          <div class="gemini-prompt-card">
+            <h3>${escapeHtml(response.prompt || 'Input requested by capsule')}</h3>
+            <form id="gemini-prompt-form">
+              <input type="${isSecret ? 'password' : 'text'}" id="gemini-prompt-input" class="prompt-input" autofocus placeholder="Type response and press enter..." />
+              <button type="submit" class="prompt-submit">Submit Query</button>
+            </form>
+          </div>
+        `;
+        const form = document.getElementById('gemini-prompt-form');
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const val = document.getElementById('gemini-prompt-input').value.trim();
+          const target = currentGeminiUrl + (currentGeminiUrl.includes('?') ? '&' : '?') + encodeURIComponent(val);
+          console.log('RECON_GEMINI_NAV:' + target);
+        });
+        return;
+      }
+
+      // Error / Failure
+      if (response.error || response.status >= 40) {
+        renderError(response.error || `Gemini Status: ${response.status} (${response.meta || ''})`);
+        return;
+      }
+
+      // Success
+      rawGemtextSource = response.text || '';
+      parsedHtmlContent = response.html || '<p>No content.</p>';
+      isRawMode = false;
+      btnRaw.textContent = '📄 Raw Source';
+      elBody.innerHTML = parsedHtmlContent;
+
+      wireLinkClicks();
+    };
+
+    function renderError(msg) {
+      elBody.innerHTML = `
+        <div class="gemini-error-card">
+          <div class="gemini-error-title">⚠️ Gemini Connection Error</div>
+          <p>${escapeHtml(msg)}</p>
+          <button class="action-btn" onclick="console.log('RECON_GEMINI_REQ:LOAD:' + currentGeminiUrl)">Try Again</button>
+        </div>
+      `;
+    }
+
+    function wireLinkClicks() {
+      elBody.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          const href = a.getAttribute('href') || a.getAttribute('data-url');
+          if (href) {
+            console.log('RECON_GEMINI_NAV:' + href);
+          }
+        });
+      });
+    }
+
+    btnCopy.addEventListener('click', () => {
+      navigator.clipboard.writeText(currentGeminiUrl);
+      btnCopy.textContent = '✅ Copied!';
+      setTimeout(() => { btnCopy.textContent = '📋 Copy URL'; }, 2000);
+    });
+
+    btnRaw.addEventListener('click', () => {
+      if (!isRawMode) {
+        elBody.innerHTML = `<pre class="gemini-plain-text">${escapeHtml(rawGemtextSource)}</pre>`;
+        btnRaw.textContent = '📖 Formatted View';
+        isRawMode = true;
+      } else {
+        elBody.innerHTML = parsedHtmlContent;
+        btnRaw.textContent = '📄 Raw Source';
+        isRawMode = false;
+        wireLinkClicks();
+      }
+    });
+
+    btnReload.addEventListener('click', () => {
+      elBody.innerHTML = `
+        <div class="gemini-loading">
+          <div class="spinner"></div>
+          <div>Refreshing Gemini capsule...</div>
+        </div>
+      `;
+      console.log('RECON_GEMINI_REQ:LOAD:' + currentGeminiUrl);
+    });
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>

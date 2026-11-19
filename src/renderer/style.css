@@ -563,6 +563,29 @@ body {
   cursor: grab;
 }
 
+/* Sleeping Tab Styling (v1.9.0 Tab Memory Suspender) */
+.tab.tab-sleeping {
+  opacity: 0.68;
+  filter: grayscale(35%);
+  border-style: dashed;
+}
+.tab.tab-sleeping:hover {
+  opacity: 0.95;
+  filter: none;
+}
+.tab-sleep-badge {
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.85;
+  margin-right: 2px;
+  display: inline-block;
+  animation: pulse-sleep 2.5s infinite ease-in-out;
+}
+@keyframes pulse-sleep {
+  0%, 100% { opacity: 0.5; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
 .tab.tab-dragging {
   opacity: 0.4;
   cursor: grabbing;

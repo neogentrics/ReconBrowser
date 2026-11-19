@@ -727,11 +727,12 @@ textarea::placeholder {
 }
 
 #btn-toggle-companion-rail { right: 8px; }
-#btn-audio-grabber { right: 34px; }
-#btn-clip-research { right: 60px; }
-#btn-archive-page { right: 86px; }
-#btn-read-aloud { right: 112px; }
-#btn-reader-view { right: 138px; }
+#btn-recon-ai { right: 34px; }
+#btn-audio-grabber { right: 60px; }
+#btn-clip-research { right: 86px; }
+#btn-archive-page { right: 112px; }
+#btn-read-aloud { right: 138px; }
+#btn-reader-view { right: 164px; }
 
 .omnibar-action-btn:hover {
   color: var(--text-main);
@@ -3096,4 +3097,43 @@ textarea::placeholder {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   v1.8.0: Recon AI Drawer & Local Intelligence Bridge
+   ========================================================================== */
+
+#recon-ai-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 340px;
+  background-color: var(--bg-primary);
+  border-top: 2px solid var(--accent-purple);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  z-index: 1200;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#recon-ai-drawer.inspector-drawer-hidden {
+  transform: translateY(100%);
+  pointer-events: none;
+}
+
+#recon-ai-drawer.inspector-drawer-visible {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.ai-tab-panel {
+  flex: 1;
+  overflow-y: auto;
 }

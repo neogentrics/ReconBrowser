@@ -38,7 +38,7 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 | **v1.6.0** | ✅ **Live** | Creative Suite Dock & Audio Grabber | Docked Author Desk companion rail, multi-note scratchpad, contextual citations (`Ctrl+Shift+E`), in-page audio stream sniffer & RT Audio Studio grabber |
 | **v1.7.0** | ✅ **Live** | Containers & Ephemeral Personas | Isolated cookie & cache containers, per-container SOCKS5/Tor routing, ephemeral disposable tabs (`Ctrl+Shift+N`) with cryptographic wipe on close |
 | **v1.7.1** | ✅ **Live** | High-Contrast Theme & Text Legibility | Universal WCAG AAA contrast overhaul across all 19 themes, eliminated dark metallic sludge smears on light themes, explicit high-contrast placeholder styling, high-visibility controls |
-| **v1.8.0** | 📋 Planned | Local AI Integration | Ollama bridge (`localhost:11434`), zero-cloud summarization & claim extraction |
+| **v1.8.0** | ✅ Live | Local AI Integration | Ollama bridge (`localhost:11434`), zero-cloud summarization & claim extraction |
 | **v1.9.0** | 📋 Planned | Decentralized Gateway | Native IPFS (`ipfs://`) and Gemini (`gemini://`) protocol handlers |
 | **v2.0.0** | 🎯 Milestone | The Connected Studio Browser | **All Gen 1 features graduate to permanent production**; unified Recon Spotlight (`Ctrl+K`) |
 | **v2.1.0** | 📋 Planned | Workspaces & Tree Tabs | Collapsible tab trees, project workspaces, intelligent tab memory sleep |

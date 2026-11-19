@@ -52,6 +52,7 @@
       <button id="btn-clip-research" class="omnibar-action-btn" title="Send Research Clip to Recon Apps (Ctrl+Shift+C)">📎</button>
       <button id="btn-audio-grabber" class="omnibar-action-btn" title="Audio Studio Grabber (Ctrl+Shift+G)">🎙️</button>
       <button id="btn-toggle-companion-rail" class="omnibar-action-btn" title="Toggle Author Desk Companion Rail (Ctrl+Shift+D)">✍️</button>
+      <button id="btn-recon-ai" class="omnibar-action-btn" title="Recon AI — Local Intelligence Bridge (Ctrl+Shift+I)">🤖</button>
     </div>
 
     <!-- Recon Shields Status Widget -->
@@ -379,6 +380,9 @@
           </button>
           <button class="settings-nav-btn" data-tab="studio">
             <span class="nav-icon">✍️</span> Studio Suite
+          </button>
+          <button class="settings-nav-btn" data-tab="ai">
+            <span class="nav-icon">🤖</span> Recon AI
           </button>
           <button class="settings-nav-btn" data-tab="about">
             <span class="nav-icon">ℹ️</span> About
@@ -977,13 +981,51 @@
             </div>
           </div>
 
-          <!-- 11. About -->
+          <!-- 11. Recon AI -->
+          <div class="settings-panel" id="panel-ai">
+            <h4 class="panel-heading" style="margin-bottom: 12px;">Recon AI — Local Intelligence Bridge</h4>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+              Connect to a local <strong>Ollama</strong> instance for zero-cloud AI summarization, claim extraction, and research assistance. No data ever leaves your machine.
+            </p>
+            <div class="setting-row" style="margin-bottom: 12px;">
+              <div class="setting-label-group">
+                <strong>Connection Status</strong>
+                <span style="font-size: 11px; color: var(--text-muted);">Ollama at localhost:11434</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="ai-settings-status" style="font-size: 12px; color: var(--text-muted);">Checking…</span>
+                <button id="btn-ai-settings-test" class="btn-subtle" style="font-size: 11.5px; padding: 4px 12px;">🔌 Test Connection</button>
+              </div>
+            </div>
+            <div class="setting-row" style="margin-bottom: 12px;">
+              <div class="setting-label-group">
+                <strong>Available Models</strong>
+                <span style="font-size: 11px; color: var(--text-muted);">Locally installed Ollama models</span>
+              </div>
+              <div id="ai-settings-model-list" style="font-size: 12px; color: var(--text-muted); font-style: italic;">No models loaded yet.</div>
+            </div>
+            <div class="setting-row" style="margin-bottom: 12px;">
+              <div class="setting-label-group">
+                <strong>Ollama Endpoint</strong>
+                <span style="font-size: 11px; color: var(--text-muted);">Default: localhost:11434</span>
+              </div>
+              <input type="text" id="ai-endpoint-input" value="localhost:11434" style="font-size: 12px; padding: 5px 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-main); width: 200px;" readonly>
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); border-radius: 6px; font-size: 11.5px; line-height: 1.5;">
+              <strong>🔒 Privacy Guarantee:</strong> All AI processing happens entirely on your local machine. No text, queries, or results are sent to any external server or cloud service.
+            </div>
+            <div style="margin-top: 12px;">
+              <button id="btn-open-recon-ai-from-settings" class="btn-primary" style="font-size: 12px; padding: 6px 16px;">🤖 Open Recon AI</button>
+            </div>
+          </div>
+
+          <!-- 12. About -->
           <div class="settings-panel" id="panel-about">
             <div class="about-panel-header" style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
               <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
               <div>
                 <h3 style="margin: 0; font-size: 18px;">Recon Browser</h3>
-                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.7.1</span>
+                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.8.0</span>
               </div>
             </div>
             <p class="about-desc" style="font-size: 12px; opacity: 0.85; margin: 8px 0 14px; line-height: 1.4;">
@@ -1038,7 +1080,7 @@
         <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
         <div>
           <h2>Recon Browser</h2>
-          <span id="about-version" class="about-ver">Version 1.7.1</span>
+          <span id="about-version" class="about-ver">Version 1.8.0</span>
         </div>
       </div>
 
@@ -1263,6 +1305,123 @@
       <div id="audio-grabber-content-saved" style="display: none;">
         <div id="audio-saved-list" style="display: flex; flex-direction: column; gap: 8px;">
           <div style="text-align: center; color: var(--text-muted); padding: 25px; font-size: 12px;">No saved clips in RT Audio Studio library yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recon AI Drawer (v1.8.0) -->
+  <div id="recon-ai-drawer" class="inspector-drawer-hidden">
+    <div class="inspector-drawer-header">
+      <div class="inspector-header-left">
+        <span class="inspector-badge-icon">🤖</span>
+        <strong>Recon AI — Local Intelligence Bridge</strong>
+        <span id="ai-status-pill" class="inspector-domain-pill" style="background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.3);">🔴 Offline</span>
+      </div>
+      <div class="inspector-filters">
+        <button class="inspector-filter-btn active" data-ai-tab="summarize">Summarize</button>
+        <button class="inspector-filter-btn" data-ai-tab="claims">Extract Claims</button>
+        <button class="inspector-filter-btn" data-ai-tab="ask">Ask AI</button>
+        <button class="inspector-filter-btn" data-ai-tab="rewrite">Rewrite</button>
+      </div>
+      <div class="inspector-header-right" style="display: flex; align-items: center; gap: 8px;">
+        <select id="ai-model-select" style="font-size: 11px; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-main); min-width: 130px;">
+          <option value="">— select model —</option>
+        </select>
+        <button id="btn-close-recon-ai" class="modal-close-btn" title="Close Drawer (Esc)">×</button>
+      </div>
+    </div>
+
+    <!-- Spinner -->
+    <div id="ai-spinner" style="display: none; text-align: center; padding: 20px; font-size: 12px; color: var(--text-muted);">
+      <span style="animation: spin 1s linear infinite; display: inline-block;">⏳</span> Processing with AI…
+    </div>
+
+    <!-- Tab Panels -->
+    <div id="ai-tab-summarize" class="ai-tab-panel" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; overflow-y: auto;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Page / Selected Text</label>
+        <textarea id="ai-summarize-input" rows="5" style="font-size: 12px; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-main); resize: vertical;" placeholder="Paste or select text from the page…"></textarea>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <label style="font-size: 11px; color: var(--text-muted);">Max words:</label>
+        <select id="ai-summarize-words" style="font-size: 11px; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-main);">
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+          <option value="200">200</option>
+          <option value="500">500</option>
+        </select>
+        <button id="btn-ai-summarize" class="btn-primary" style="font-size: 11.5px; padding: 5px 14px;">▶ Run</button>
+      </div>
+      <div id="ai-summarize-output" style="display: none;">
+        <div id="ai-summarize-result" style="font-size: 12px; padding: 10px; border-radius: 4px; background: var(--bg-secondary); border: 1px solid var(--border-color); line-height: 1.5; white-space: pre-wrap;"></div>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button class="btn-subtle ai-copy-btn" data-source="ai-summarize-result" style="font-size: 11px; padding: 4px 10px;">📋 Copy</button>
+          <button class="btn-subtle ai-send-rail-btn" data-source="ai-summarize-result" style="font-size: 11px; padding: 4px 10px;">✍️ Send to Companion Rail</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ai-tab-claims" class="ai-tab-panel" style="display: none; flex-direction: column; gap: 10px; padding: 14px 16px; overflow-y: auto;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Text to Analyze</label>
+        <textarea id="ai-claims-input" rows="6" style="font-size: 12px; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-main); resize: vertical;" placeholder="Paste text to extract factual claims from…"></textarea>
+      </div>
+      <div>
+        <button id="btn-ai-claims" class="btn-primary" style="font-size: 11.5px; padding: 5px 14px;">▶ Extract Claims</button>
+      </div>
+      <div id="ai-claims-output" style="display: none;">
+        <div id="ai-claims-result" style="font-size: 12px; padding: 10px; border-radius: 4px; background: var(--bg-secondary); border: 1px solid var(--border-color); line-height: 1.5; white-space: pre-wrap;"></div>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button class="btn-subtle ai-copy-btn" data-source="ai-claims-result" style="font-size: 11px; padding: 4px 10px;">📋 Copy</button>
+          <button class="btn-subtle ai-send-rail-btn" data-source="ai-claims-result" style="font-size: 11px; padding: 4px 10px;">✍️ Send to Companion Rail</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ai-tab-ask" class="ai-tab-panel" style="display: none; flex-direction: column; gap: 10px; padding: 14px 16px; overflow-y: auto;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Context (Page Text)</label>
+        <textarea id="ai-ask-context" rows="4" style="font-size: 12px; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-main); resize: vertical;" placeholder="Paste the page or article text as context…"></textarea>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Your Question</label>
+        <input id="ai-ask-question" type="text" style="font-size: 12px; padding: 7px 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-main);" placeholder="What do you want to know?">
+      </div>
+      <div>
+        <button id="btn-ai-ask" class="btn-primary" style="font-size: 11.5px; padding: 5px 14px;">▶ Ask AI</button>
+      </div>
+      <div id="ai-ask-output" style="display: none;">
+        <div id="ai-ask-result" style="font-size: 12px; padding: 10px; border-radius: 4px; background: var(--bg-secondary); border: 1px solid var(--border-color); line-height: 1.5; white-space: pre-wrap;"></div>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button class="btn-subtle ai-copy-btn" data-source="ai-ask-result" style="font-size: 11px; padding: 4px 10px;">📋 Copy</button>
+          <button class="btn-subtle ai-send-rail-btn" data-source="ai-ask-result" style="font-size: 11px; padding: 4px 10px;">✍️ Send to Companion Rail</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="ai-tab-rewrite" class="ai-tab-panel" style="display: none; flex-direction: column; gap: 10px; padding: 14px 16px; overflow-y: auto;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Selected Text</label>
+        <textarea id="ai-rewrite-input" rows="5" style="font-size: 12px; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-main); resize: vertical;" placeholder="Paste or select text to rewrite…"></textarea>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <label style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Instruction</label>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px;">
+          <button class="btn-subtle ai-preset-btn" data-preset="Make it more concise" style="font-size: 11px; padding: 3px 8px;">Concise</button>
+          <button class="btn-subtle ai-preset-btn" data-preset="Make it more formal" style="font-size: 11px; padding: 3px 8px;">Formal</button>
+          <button class="btn-subtle ai-preset-btn" data-preset="Simplify for a general audience" style="font-size: 11px; padding: 3px 8px;">Simplify</button>
+        </div>
+        <input id="ai-rewrite-instruction" type="text" style="font-size: 12px; padding: 7px 10px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-main);" placeholder="e.g. Make it more concise">
+      </div>
+      <div>
+        <button id="btn-ai-rewrite" class="btn-primary" style="font-size: 11.5px; padding: 5px 14px;">▶ Rewrite</button>
+      </div>
+      <div id="ai-rewrite-output" style="display: none;">
+        <div id="ai-rewrite-result" style="font-size: 12px; padding: 10px; border-radius: 4px; background: var(--bg-secondary); border: 1px solid var(--border-color); line-height: 1.5; white-space: pre-wrap;"></div>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">
+          <button class="btn-subtle ai-copy-btn" data-source="ai-rewrite-result" style="font-size: 11px; padding: 4px 10px;">📋 Copy</button>
+          <button class="btn-subtle ai-send-rail-btn" data-source="ai-rewrite-result" style="font-size: 11px; padding: 4px 10px;">✍️ Send to Companion Rail</button>
         </div>
       </div>
     </div>

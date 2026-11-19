@@ -5,6 +5,22 @@ All notable changes to **Recon Browser** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-11-19
+
+### Added
+- **Recon AI — Local Intelligence Bridge** (`🤖` / `Ctrl+Shift+I`):
+  - Zero-cloud AI integration via a local **Ollama** instance at `localhost:11434`. No data ever leaves your machine.
+  - New backend module `src/main/ollama.js` — `OllamaManager` class using Node.js built-in `http` module for full Electron compatibility (no fetch, no axios).
+  - **Summarize**: paste or select page text, choose 50/100/200/500 word targets, receive concise AI-generated summaries.
+  - **Extract Claims**: extract numbered factual claims from any article or document.
+  - **Ask AI**: provide context (page text) and ask a free-form research question — the local model answers based on your context only.
+  - **Rewrite**: rewrite selected text with preset instructions ("Make it more concise", "Make it formal", "Simplify for a general audience") or custom instructions.
+  - **Copy** and **Send to Companion Rail** output buttons on every AI result panel.
+  - Live model selector auto-populated from connected Ollama instance.
+  - 🟢 / 🔴 connection status pill with live model count.
+  - Recon AI Settings panel (`panel-ai`) in Settings → Recon AI: connection status, endpoint display, model list, test button, and privacy guarantee notice.
+  - 6 new IPC handlers: `ollama:check`, `ollama:list-models`, `ollama:summarize`, `ollama:extract-claims`, `ollama:ask`, `ollama:rewrite`.
+
 ## [1.7.1] - 2026-11-19
 
 ### Fixed

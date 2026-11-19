@@ -24,7 +24,7 @@
 
 ## Downloads
 
-The latest version is **v1.7.1**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
+The latest version is **v1.8.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
 
 | Platform | Download Package | Description |
 | :--- | :--- | :--- |
@@ -61,6 +61,16 @@ An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 ---
 
 ## What's New
+
+### v1.8.0: Recon AI — Local Intelligence Bridge
+
+- **Recon AI (`🤖` / `Ctrl+Shift+I`)**: A fully local AI research assistant powered by your own **Ollama** instance. Zero data leaves your machine.
+  - **Summarize** any page or selected text in 50, 100, 200, or 500 words.
+  - **Extract Claims**: pulls out numbered factual claims from articles and documents.
+  - **Ask AI**: answer research questions using page text as context — entirely local.
+  - **Rewrite**: reshape selected text with presets (Concise, Formal, Simplify) or custom instructions.
+  - Live Ollama connection status (🟢 / 🔴) and automatic model discovery from `localhost:11434`.
+  - New **Recon AI** Settings panel with connection test, model list, and privacy guarantee.
 
 ### v1.7.1: Universal High-Contrast Theme & Text Legibility Overhaul
 

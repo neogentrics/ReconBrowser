@@ -11,6 +11,8 @@ const { ShieldsManager } = require('./shields2');
 const { CompanionRailManager } = require('./companion-rail');
 const { AudioGrabberManager } = require('./audio-grabber');
 const { ContainerManager } = require('./containers');
+const { OllamaManager } = require('./ollama');
+const ollamaManager = new OllamaManager();
 const { exportBookmarksToHtml, parseBookmarksHtml, exportVaultToCsv, parseVaultCsv } = require('./importer-exporter');
 const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link');
 const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
@@ -1068,6 +1070,14 @@ ipcMain.handle('app-link:send-clip', async (event, { appId, clipOptions }) => {
     };
   }
 });
+
+// Recon AI — Ollama IPC Handlers (v1.8.0)
+ipcMain.handle('ollama:check', () => ollamaManager.checkConnection());
+ipcMain.handle('ollama:list-models', () => ollamaManager.listModels());
+ipcMain.handle('ollama:summarize', (event, { text, model, maxWords }) => ollamaManager.summarize(text, model, maxWords));
+ipcMain.handle('ollama:extract-claims', (event, { text, model }) => ollamaManager.extractClaims(text, model));
+ipcMain.handle('ollama:ask', (event, { question, context, model }) => ollamaManager.askQuestion(question, context, model));
+ipcMain.handle('ollama:rewrite', (event, { text, instruction, model }) => ollamaManager.rewriteSelection(text, instruction, model));
 
 // Context menu & history logging on web contents
 app.on('web-contents-created', (event, contents) => {

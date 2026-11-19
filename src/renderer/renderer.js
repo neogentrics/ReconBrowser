@@ -4529,3 +4529,308 @@ generatePasswordWithOptions();
 
 // Create First Tab
 createTab(getStartPageURL());
+
+
+// =============================================================================
+// v1.8.0: Recon AI — Local Intelligence Bridge
+// =============================================================================
+
+(function () {
+  const reconAiDrawer = document.getElementById('recon-ai-drawer');
+  const btnReconAi = document.getElementById('btn-recon-ai');
+  const btnCloseReconAi = document.getElementById('btn-close-recon-ai');
+  const aiModelSelect = document.getElementById('ai-model-select');
+  const aiStatusPill = document.getElementById('ai-status-pill');
+  const aiSpinner = document.getElementById('ai-spinner');
+
+  if (!reconAiDrawer) return;
+
+  // ── Drawer open/close ──────────────────────────────────────────────────────
+  function openReconAiDrawer() {
+    reconAiDrawer.classList.remove('inspector-drawer-hidden');
+    reconAiDrawer.classList.add('inspector-drawer-visible');
+    // Auto-fill selected text in all text inputs
+    const activeWv = document.querySelector('.tab-webview.active-webview') ||
+                     document.querySelector('webview');
+    if (activeWv) {
+      activeWv.executeJavaScript('window.getSelection().toString()')
+        .then((sel) => {
+          if (sel && sel.trim()) {
+            const fields = ['ai-summarize-input', 'ai-claims-input', 'ai-rewrite-input', 'ai-ask-context'];
+            fields.forEach(id => {
+              const el = document.getElementById(id);
+              if (el && !el.value) el.value = sel.trim();
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }
+
+  function closeReconAiDrawer() {
+    reconAiDrawer.classList.add('inspector-drawer-hidden');
+    reconAiDrawer.classList.remove('inspector-drawer-visible');
+  }
+
+  if (btnReconAi) btnReconAi.addEventListener('click', () => {
+    if (reconAiDrawer.classList.contains('inspector-drawer-visible')) {
+      closeReconAiDrawer();
+    } else {
+      openReconAiDrawer();
+    }
+  });
+  if (btnCloseReconAi) btnCloseReconAi.addEventListener('click', closeReconAiDrawer);
+
+  // Keyboard shortcut Ctrl+Shift+I
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+      e.preventDefault();
+      if (reconAiDrawer.classList.contains('inspector-drawer-visible')) {
+        closeReconAiDrawer();
+      } else {
+        openReconAiDrawer();
+      }
+    }
+  });
+
+  // ── Status & model loading ─────────────────────────────────────────────────
+  async function loadOllamaStatus() {
+    try {
+      const result = await ipcRenderer.invoke('ollama:check');
+      if (result.connected) {
+        aiStatusPill.textContent = `🟢 Ollama Connected — ${result.models.length} model${result.models.length === 1 ? '' : 's'} available`;
+        aiStatusPill.style.background = 'rgba(34,197,94,0.15)';
+        aiStatusPill.style.color = '#4ade80';
+        aiStatusPill.style.borderColor = 'rgba(34,197,94,0.3)';
+
+        // Populate model selects
+        const selects = document.querySelectorAll('#ai-model-select');
+        selects.forEach(sel => {
+          sel.innerHTML = '';
+          result.models.forEach((m) => {
+            const opt = document.createElement('option');
+            opt.value = m.name;
+            opt.textContent = m.name;
+            sel.appendChild(opt);
+          });
+        });
+
+        // Update settings panel
+        const settingsStatus = document.getElementById('ai-settings-status');
+        if (settingsStatus) {
+          settingsStatus.textContent = `🟢 Connected — ${result.models.length} model(s)`;
+          settingsStatus.style.color = '#4ade80';
+        }
+        const settingsModelList = document.getElementById('ai-settings-model-list');
+        if (settingsModelList) {
+          settingsModelList.innerHTML = result.models.map(m => `<div style="font-size:11.5px;padding:2px 0;">• ${m.name}</div>`).join('') || '<em>No models installed.</em>';
+          settingsModelList.style.color = 'var(--text-main)';
+          settingsModelList.style.fontStyle = 'normal';
+        }
+      } else {
+        aiStatusPill.textContent = '🔴 Ollama Offline';
+        aiStatusPill.style.background = 'rgba(239,68,68,0.15)';
+        aiStatusPill.style.color = '#f87171';
+        aiStatusPill.style.borderColor = 'rgba(239,68,68,0.3)';
+
+        const settingsStatus = document.getElementById('ai-settings-status');
+        if (settingsStatus) {
+          settingsStatus.textContent = `🔴 Offline — ${result.error || 'Cannot reach Ollama'}`;
+          settingsStatus.style.color = '#f87171';
+        }
+      }
+    } catch (err) {
+      aiStatusPill.textContent = '🔴 Ollama Offline';
+    }
+  }
+
+  loadOllamaStatus();
+
+  // ── Tab switching ──────────────────────────────────────────────────────────
+  document.querySelectorAll('[data-ai-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-ai-tab]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.aiTab;
+      document.querySelectorAll('.ai-tab-panel').forEach(p => { p.style.display = 'none'; });
+      const panel = document.getElementById(`ai-tab-${tab}`);
+      if (panel) panel.style.display = 'flex';
+    });
+  });
+
+  // ── Spinner helpers ────────────────────────────────────────────────────────
+  function showSpinner() {
+    aiSpinner.style.display = 'block';
+    document.querySelectorAll('.ai-tab-panel').forEach(p => { p.style.display = 'none'; });
+  }
+  function hideSpinner() {
+    aiSpinner.style.display = 'none';
+    // Re-show active tab
+    const activeTab = document.querySelector('[data-ai-tab].active');
+    if (activeTab) {
+      const panel = document.getElementById(`ai-tab-${activeTab.dataset.aiTab}`);
+      if (panel) panel.style.display = 'flex';
+    } else {
+      const first = document.getElementById('ai-tab-summarize');
+      if (first) first.style.display = 'flex';
+    }
+  }
+
+  function showError(outputId, msg) {
+    const output = document.getElementById(outputId);
+    const result = document.getElementById(outputId.replace('-output', '-result'));
+    if (output && result) {
+      result.textContent = `⚠️ Error: ${msg}`;
+      result.style.color = '#f87171';
+      output.style.display = 'block';
+    }
+  }
+
+  function showResult(outputId, text) {
+    const output = document.getElementById(outputId);
+    const result = document.getElementById(outputId.replace('-output', '-result'));
+    if (output && result) {
+      result.textContent = text;
+      result.style.color = '';
+      output.style.display = 'block';
+    }
+  }
+
+  function getSelectedModel() {
+    return aiModelSelect ? aiModelSelect.value : '';
+  }
+
+  // ── Summarize ──────────────────────────────────────────────────────────────
+  const btnSummarize = document.getElementById('btn-ai-summarize');
+  if (btnSummarize) {
+    btnSummarize.addEventListener('click', async () => {
+      const text = document.getElementById('ai-summarize-input').value.trim();
+      const maxWords = parseInt(document.getElementById('ai-summarize-words').value, 10) || 100;
+      const model = getSelectedModel();
+      if (!text) return;
+      showSpinner();
+      try {
+        const res = await ipcRenderer.invoke('ollama:summarize', { text, model, maxWords });
+        hideSpinner();
+        showResult('ai-summarize-output', res.summary);
+      } catch (err) {
+        hideSpinner();
+        showError('ai-summarize-output', err.message);
+      }
+    });
+  }
+
+  // ── Extract Claims ─────────────────────────────────────────────────────────
+  const btnClaims = document.getElementById('btn-ai-claims');
+  if (btnClaims) {
+    btnClaims.addEventListener('click', async () => {
+      const text = document.getElementById('ai-claims-input').value.trim();
+      const model = getSelectedModel();
+      if (!text) return;
+      showSpinner();
+      try {
+        const res = await ipcRenderer.invoke('ollama:extract-claims', { text, model });
+        hideSpinner();
+        showResult('ai-claims-output', res.claims);
+      } catch (err) {
+        hideSpinner();
+        showError('ai-claims-output', err.message);
+      }
+    });
+  }
+
+  // ── Ask AI ─────────────────────────────────────────────────────────────────
+  const btnAsk = document.getElementById('btn-ai-ask');
+  if (btnAsk) {
+    btnAsk.addEventListener('click', async () => {
+      const context = document.getElementById('ai-ask-context').value.trim();
+      const question = document.getElementById('ai-ask-question').value.trim();
+      const model = getSelectedModel();
+      if (!question) return;
+      showSpinner();
+      try {
+        const res = await ipcRenderer.invoke('ollama:ask', { question, context, model });
+        hideSpinner();
+        showResult('ai-ask-output', res.answer);
+      } catch (err) {
+        hideSpinner();
+        showError('ai-ask-output', err.message);
+      }
+    });
+  }
+
+  // ── Rewrite ────────────────────────────────────────────────────────────────
+  const btnRewrite = document.getElementById('btn-ai-rewrite');
+  if (btnRewrite) {
+    btnRewrite.addEventListener('click', async () => {
+      const text = document.getElementById('ai-rewrite-input').value.trim();
+      const instruction = document.getElementById('ai-rewrite-instruction').value.trim();
+      const model = getSelectedModel();
+      if (!text || !instruction) return;
+      showSpinner();
+      try {
+        const res = await ipcRenderer.invoke('ollama:rewrite', { text, instruction, model });
+        hideSpinner();
+        showResult('ai-rewrite-output', res.result);
+      } catch (err) {
+        hideSpinner();
+        showError('ai-rewrite-output', err.message);
+      }
+    });
+  }
+
+  // ── Preset buttons ─────────────────────────────────────────────────────────
+  document.querySelectorAll('.ai-preset-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const instructionInput = document.getElementById('ai-rewrite-instruction');
+      if (instructionInput) instructionInput.value = btn.dataset.preset;
+    });
+  });
+
+  // ── Copy buttons ───────────────────────────────────────────────────────────
+  document.querySelectorAll('.ai-copy-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const src = document.getElementById(btn.dataset.source);
+      if (src) {
+        ipcRenderer.send('copy-to-clipboard', src.textContent);
+      }
+    });
+  });
+
+  // ── Send to Companion Rail ─────────────────────────────────────────────────
+  document.querySelectorAll('.ai-send-rail-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const src = document.getElementById(btn.dataset.source);
+      if (!src || !src.textContent.trim()) return;
+      const railInput = document.getElementById('companion-input') ||
+                        document.getElementById('rail-editor') ||
+                        document.querySelector('.companion-rail textarea') ||
+                        document.querySelector('#companion-rail textarea');
+      if (railInput) {
+        railInput.value = (railInput.value ? railInput.value + '\n\n' : '') + src.textContent.trim();
+        // Open companion rail if not already open
+        const rail = document.getElementById('companion-rail');
+        if (rail && rail.classList.contains('companion-rail-hidden')) {
+          const toggleBtn = document.getElementById('btn-toggle-companion-rail');
+          if (toggleBtn) toggleBtn.click();
+        }
+      }
+    });
+  });
+
+  // ── Settings panel buttons ─────────────────────────────────────────────────
+  const btnTestSettings = document.getElementById('btn-ai-settings-test');
+  if (btnTestSettings) {
+    btnTestSettings.addEventListener('click', loadOllamaStatus);
+  }
+
+  const btnOpenFromSettings = document.getElementById('btn-open-recon-ai-from-settings');
+  if (btnOpenFromSettings) {
+    btnOpenFromSettings.addEventListener('click', () => {
+      // Close settings modal if open
+      const settingsModal = document.getElementById('settings-modal');
+      if (settingsModal) settingsModal.style.display = 'none';
+      openReconAiDrawer();
+    });
+  }
+})();

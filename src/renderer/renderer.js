@@ -584,11 +584,21 @@ btnSettingsToggle.addEventListener('click', (e) => {
 function openSettingsModal(tabId = 'appearance') {
   shieldsPopover.classList.add('popover-hidden');
   ecosystemDropdown.style.display = 'none';
+  const bDrop = document.getElementById('bookmarks-dropdown');
+  if (bDrop) bDrop.style.display = 'none';
+  const vDrop = document.getElementById('vault-dropdown');
+  if (vDrop) vDrop.style.display = 'none';
 
   switchSettingsTab(tabId);
 
   if (tabId === 'about') {
     loadAboutSettingsInfo();
+  } else if (tabId === 'history' && typeof loadAndRenderHistory === 'function') {
+    loadAndRenderHistory();
+  } else if (tabId === 'vault' && typeof loadAndRenderVault === 'function') {
+    loadAndRenderVault();
+  } else if (tabId === 'interface' && typeof checkDefaultBrowserStatus === 'function') {
+    checkDefaultBrowserStatus();
   }
 
   if (settingsModal && !settingsModal.open) {
@@ -603,10 +613,12 @@ function closeSettingsModal() {
 }
 
 function switchSettingsTab(tabId) {
-  settingsNavBtns.forEach(btn => {
+  const navBtns = document.querySelectorAll('.settings-nav-btn');
+  const panels = document.querySelectorAll('.settings-panel');
+  navBtns.forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
   });
-  settingsPanels.forEach(panel => {
+  panels.forEach(panel => {
     panel.classList.toggle('active', panel.id === `panel-${tabId}`);
   });
 }
@@ -624,6 +636,12 @@ settingsNavBtns.forEach(btn => {
     switchSettingsTab(tabId);
     if (tabId === 'about') {
       loadAboutSettingsInfo();
+    } else if (tabId === 'history' && typeof loadAndRenderHistory === 'function') {
+      loadAndRenderHistory();
+    } else if (tabId === 'vault' && typeof loadAndRenderVault === 'function') {
+      loadAndRenderVault();
+    } else if (tabId === 'interface' && typeof checkDefaultBrowserStatus === 'function') {
+      checkDefaultBrowserStatus();
     }
   });
 });
@@ -737,8 +755,15 @@ document.addEventListener('click', (e) => {
   if (!btnEcosystem.contains(e.target) && !ecosystemDropdown.contains(e.target)) {
     ecosystemDropdown.style.display = 'none';
   }
-  if (bookmarksDropdown && !btnBookmarksToggle.contains(e.target) && !bookmarksDropdown.contains(e.target)) {
-    bookmarksDropdown.style.display = 'none';
+  const bToggle = document.getElementById('btn-bookmarks-toggle');
+  const bDrop = document.getElementById('bookmarks-dropdown');
+  if (bDrop && bToggle && !bToggle.contains(e.target) && !bDrop.contains(e.target)) {
+    bDrop.style.display = 'none';
+  }
+  const vToggle = document.getElementById('btn-vault-toggle');
+  const vDrop = document.getElementById('vault-dropdown');
+  if (vDrop && vToggle && !vToggle.contains(e.target) && !vDrop.contains(e.target)) {
+    vDrop.style.display = 'none';
   }
 });
 
@@ -1788,10 +1813,25 @@ document.addEventListener('keydown', (e) => {
     if (modalResearchClip && modalResearchClip.open) {
       modalResearchClip.close();
     }
+    const mLogin = document.getElementById('modal-add-login');
+    if (mLogin && mLogin.open) {
+      mLogin.close();
+    }
     const activeTab = tabs.get(activeTabId);
     if (activeTab && activeTab.readerActive) {
       toggleReaderView();
     }
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'h') {
+    e.preventDefault();
+    openSettingsModal('history');
+  } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'l') {
+    e.preventDefault();
+    const vToggle = document.getElementById('btn-vault-toggle');
+    if (vToggle) vToggle.click();
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b' && !e.shiftKey) {
+    e.preventDefault();
+    const bToggle = document.getElementById('btn-bookmarks-toggle');
+    if (bToggle) bToggle.click();
   } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
     e.preventDefault();
     const activeTab = tabs.get(activeTabId);
@@ -1816,16 +1856,20 @@ document.addEventListener('keydown', (e) => {
 const btnBookmarksToggle = document.getElementById('btn-bookmarks-toggle');
 const bookmarksDropdown = document.getElementById('bookmarks-dropdown');
 const btnAddBookmark = document.getElementById('btn-add-bookmark');
+const btnNewBookmarkFolder = document.getElementById('btn-new-bookmark-folder');
+const selectBookmarkSort = document.getElementById('select-bookmark-sort');
+const selectBookmarkFolder = document.getElementById('select-bookmark-folder');
 const bookmarksList = document.getElementById('bookmarks-list');
 const toggleBookmarksBar = document.getElementById('toggle-bookmarks-bar');
+const settingsToggleBookmarksBar = document.getElementById('settings-toggle-bookmarks-bar');
 const bookmarksBar = document.getElementById('bookmarks-bar');
 
 const DEFAULT_BOOKMARKS = [
-  { id: 'bm_1', title: 'Recon Towers Hub', url: 'https://recontowers.com', favicon: '⚡' },
-  { id: 'bm_2', title: 'Neo Gentrics', url: 'https://neogentrics.com', favicon: '🏢' },
-  { id: 'bm_3', title: 'RT Markdown Reader', url: 'https://recontowers.com/apps/rt-markdown-reader/', favicon: '📝' },
-  { id: 'bm_4', title: 'RT Story Tracker', url: 'https://recontowers.com/apps/rt-story-tracker/', favicon: '📚' },
-  { id: 'bm_5', title: 'DuckDuckGo', url: 'https://duckduckgo.com', favicon: '🦆' }
+  { id: 'bm_1', title: 'Recon Towers Hub', url: 'https://recontowers.com', folder: 'Favorites', favicon: '⚡', createdAt: 1000 },
+  { id: 'bm_2', title: 'Neo Gentrics', url: 'https://neogentrics.com', folder: 'Favorites', favicon: '🏢', createdAt: 2000 },
+  { id: 'bm_3', title: 'RT Markdown Reader', url: 'https://recontowers.com/apps/rt-markdown-reader/', folder: 'Recon Apps', favicon: '📝', createdAt: 3000 },
+  { id: 'bm_4', title: 'RT Story Tracker', url: 'https://recontowers.com/apps/rt-story-tracker/', folder: 'Recon Apps', favicon: '📚', createdAt: 4000 },
+  { id: 'bm_5', title: 'DuckDuckGo', url: 'https://duckduckgo.com', folder: 'Search', favicon: '🦆', createdAt: 5000 }
 ];
 
 function loadBookmarks() {
@@ -1846,27 +1890,30 @@ function saveBookmarks(bms) {
   renderBookmarks();
 }
 
-function addBookmark(url, title, favicon = '★') {
+function addBookmark(url, title, folder = null, favicon = '★') {
   if (!url) return;
   const bms = loadBookmarks();
   const existingIdx = bms.findIndex(b => b.url === url);
   if (existingIdx !== -1) {
     bms[existingIdx].title = title || bms[existingIdx].title;
+    if (folder) bms[existingIdx].folder = folder;
     saveBookmarks(bms);
     showToast(`★ Updated bookmark: ${bms[existingIdx].title}`);
     return;
   }
   const cleanTitle = title || (url.includes('startpage.html') ? 'Recon Start' : url);
+  const targetFolder = folder || (selectBookmarkFolder && selectBookmarkFolder.value !== 'all' ? selectBookmarkFolder.value : 'Favorites');
   const newBm = {
     id: `bm_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
     title: cleanTitle,
     url,
+    folder: targetFolder,
     favicon: favicon || (url.includes('startpage.html') ? '⚡' : '🌐'),
     createdAt: Date.now()
   };
   bms.push(newBm);
   saveBookmarks(bms);
-  showToast(`★ Bookmarked: ${newBm.title}`);
+  showToast(`★ Bookmarked: ${newBm.title} in [${newBm.folder}]`);
 }
 
 function deleteBookmark(id) {
@@ -1878,20 +1925,56 @@ function deleteBookmark(id) {
 function renderBookmarks() {
   const bms = loadBookmarks();
 
+  // Populate folder select filter
+  if (selectBookmarkFolder) {
+    const currentFolder = selectBookmarkFolder.value || 'all';
+    const folders = Array.from(new Set(bms.map(b => b.folder || 'Favorites'))).sort();
+    selectBookmarkFolder.innerHTML = `<option value="all">All Folders</option>` +
+      folders.map(f => `<option value="${escapeHtml(f)}" ${currentFolder === f ? 'selected' : ''}>📁 ${escapeHtml(f)}</option>`).join('');
+  }
+
+  const sortMode = selectBookmarkSort ? selectBookmarkSort.value : 'recent';
+  const folderFilter = selectBookmarkFolder ? selectBookmarkFolder.value : 'all';
+
+  let filtered = [...bms];
+  if (folderFilter !== 'all') {
+    filtered = filtered.filter(b => (b.folder || 'Favorites') === folderFilter);
+  }
+
+  if (sortMode === 'az') {
+    filtered.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  } else if (sortMode === 'folder') {
+    filtered.sort((a, b) => (a.folder || 'Favorites').localeCompare(b.folder || 'Favorites') || (a.title || '').localeCompare(b.title || ''));
+  } else {
+    // Recent
+    filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  }
+
   // 1. Render Dropdown List
   if (bookmarksList) {
-    if (bms.length === 0) {
-      bookmarksList.innerHTML = `<div class="bookmark-empty" style="padding: 10px; color: var(--text-muted); text-align: center; font-size: 11.5px;">No bookmarks yet. Press + or Ctrl+D to bookmark the active tab.</div>`;
+    if (filtered.length === 0) {
+      bookmarksList.innerHTML = `<div class="bookmark-empty" style="padding: 10px; color: var(--text-muted); text-align: center; font-size: 11.5px;">No bookmarks in this view. Press + or Ctrl+D to bookmark.</div>`;
     } else {
-      bookmarksList.innerHTML = bms.map(b => `
-        <div class="bookmark-dropdown-item" data-url="${escapeHtml(b.url)}">
-          <div class="bm-info" title="${escapeHtml(b.url)}">
-            <span class="bm-favicon">${b.favicon || '★'}</span>
-            <span class="bm-title">${escapeHtml(b.title)}</span>
+      let lastFolder = null;
+      let html = '';
+      filtered.forEach(b => {
+        const fName = b.folder || 'Favorites';
+        if (sortMode === 'folder' && fName !== lastFolder) {
+          html += `<div class="bookmark-folder-header">📁 ${escapeHtml(fName)}</div>`;
+          lastFolder = fName;
+        }
+        html += `
+          <div class="bookmark-dropdown-item" data-url="${escapeHtml(b.url)}">
+            <div class="bm-info" title="${escapeHtml(b.url)}">
+              <span class="bm-favicon">${b.favicon || '★'}</span>
+              <span class="bm-title">${escapeHtml(b.title)}</span>
+              ${sortMode !== 'folder' && b.folder ? `<span class="bookmark-folder-badge">${escapeHtml(b.folder)}</span>` : ''}
+            </div>
+            <button class="bm-del-btn" data-del-id="${b.id}" title="Delete Bookmark">×</button>
           </div>
-          <button class="bm-del-btn" data-del-id="${b.id}" title="Delete Bookmark">×</button>
-        </div>
-      `).join('');
+        `;
+      });
+      bookmarksList.innerHTML = html;
 
       bookmarksList.querySelectorAll('.bookmark-dropdown-item').forEach(el => {
         el.addEventListener('click', (e) => {
@@ -1949,6 +2032,27 @@ function setBookmarksBarVisibility(show) {
   localStorage.setItem('recon_show_bookmarks_bar', String(show));
   if (bookmarksBar) bookmarksBar.style.display = show ? 'flex' : 'none';
   if (toggleBookmarksBar) toggleBookmarksBar.checked = show;
+  if (settingsToggleBookmarksBar) settingsToggleBookmarksBar.checked = show;
+}
+
+if (selectBookmarkSort) selectBookmarkSort.addEventListener('change', renderBookmarks);
+if (selectBookmarkFolder) selectBookmarkFolder.addEventListener('change', renderBookmarks);
+if (btnNewBookmarkFolder) {
+  btnNewBookmarkFolder.addEventListener('click', () => {
+    const fName = prompt('Enter new bookmark folder name:');
+    if (fName && fName.trim()) {
+      const activeTab = tabs.get(activeTabId);
+      if (activeTab) {
+        addBookmark(activeTab.url, activeTab.title, fName.trim());
+      }
+    }
+  });
+}
+if (settingsToggleBookmarksBar) {
+  settingsToggleBookmarksBar.checked = localStorage.getItem('recon_show_bookmarks_bar') === 'true';
+  settingsToggleBookmarksBar.addEventListener('change', (e) => {
+    setBookmarksBarVisibility(e.target.checked);
+  });
 }
 
 if (btnBookmarksToggle) {
@@ -1956,6 +2060,8 @@ if (btnBookmarksToggle) {
     e.stopPropagation();
     shieldsPopover.classList.add('popover-hidden');
     ecosystemDropdown.style.display = 'none';
+    const vDrop = document.getElementById('vault-dropdown');
+    if (vDrop) vDrop.style.display = 'none';
     closeSettingsModal();
     const isShown = bookmarksDropdown.style.display === 'block';
     bookmarksDropdown.style.display = isShown ? 'none' : 'block';
@@ -2001,6 +2107,608 @@ ipcRenderer.on('open-link-new-tab', (event, { url }) => {
 });
 
 // ==========================================================================
+// Browsing History Tracking System (v1.4.0)
+// ==========================================================================
+const btnHistoryToggle = document.getElementById('btn-history-toggle');
+const inputHistorySearch = document.getElementById('input-history-search');
+const selectClearHistoryRange = document.getElementById('select-clear-history-range');
+const btnClearHistory = document.getElementById('btn-clear-history');
+const toggleHistoryClearOnQuit = document.getElementById('toggle-history-clear-on-quit');
+const historyGroupsContainer = document.getElementById('history-groups-container');
+
+async function loadAndRenderHistory(query = '') {
+  if (!historyGroupsContainer) return;
+  try {
+    const groups = await ipcRenderer.invoke('history:get-grouped', query);
+    if (!groups || groups.length === 0) {
+      historyGroupsContainer.innerHTML = `
+        <div style="text-align: center; color: var(--text-muted); padding: 32px 16px; font-size: 12px;">
+          ${query ? 'No history matching your search.' : 'No browsing history recorded yet.'}
+        </div>`;
+      return;
+    }
+
+    historyGroupsContainer.innerHTML = groups.map(group => {
+      const itemsHtml = group.items.map(item => {
+        const d = new Date(item.timestamp);
+        const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `
+          <div class="history-item-row" data-url="${escapeHtml(item.url)}">
+            <span class="history-time">${timeStr}</span>
+            <div class="history-item-info">
+              <span class="history-item-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</span>
+              <span class="history-item-url" title="${escapeHtml(item.url)}">${escapeHtml(item.url)}</span>
+            </div>
+            <button class="history-item-del" data-id="${item.id}" title="Remove from history">×</button>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="history-day-card">
+          <div class="history-day-header">
+            <div class="history-day-left">
+              <span class="day-toggle-arrow">▼</span>
+              <span class="day-title">${escapeHtml(group.label)}</span>
+            </div>
+            <span class="day-count">${group.items.length} ${group.items.length === 1 ? 'page' : 'pages'}</span>
+          </div>
+          <div class="history-items-list">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Wire day card collapsible toggle
+    historyGroupsContainer.querySelectorAll('.history-day-header').forEach(hdr => {
+      hdr.addEventListener('click', () => {
+        const card = hdr.closest('.history-day-card');
+        if (card) card.classList.toggle('collapsed');
+      });
+    });
+
+    // Wire click to navigate and delete
+    historyGroupsContainer.querySelectorAll('.history-item-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.history-item-del')) {
+          e.stopPropagation();
+          const delId = e.target.closest('.history-item-del').getAttribute('data-id');
+          if (delId) deleteHistoryItem(delId);
+          return;
+        }
+        const url = row.getAttribute('data-url');
+        if (url) {
+          closeSettingsModal();
+          const activeTab = tabs.get(activeTabId);
+          if (activeTab && activeTab.webviewEl) {
+            activeTab.webviewEl.loadURL(url);
+          } else {
+            createTab(url, true);
+          }
+        }
+      });
+    });
+  } catch (err) {
+    console.error('[Recon History] Failed to load history:', err);
+    historyGroupsContainer.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px;">Failed to load history</div>`;
+  }
+}
+
+async function deleteHistoryItem(id) {
+  try {
+    await ipcRenderer.invoke('history:delete', id);
+    const q = inputHistorySearch ? inputHistorySearch.value.trim() : '';
+    await loadAndRenderHistory(q);
+    showToast('Entry removed from history');
+  } catch (err) {
+    showToast('Failed to delete history entry');
+  }
+}
+
+if (btnClearHistory) {
+  btnClearHistory.addEventListener('click', async () => {
+    const range = selectClearHistoryRange ? selectClearHistoryRange.value : '24h';
+    const rangeLabels = { '1h': 'last hour', '24h': 'last 24 hours', '7d': 'last 7 days', 'all': 'all time' };
+    try {
+      await ipcRenderer.invoke('history:clear', range);
+      await loadAndRenderHistory();
+      showToast(`Browsing history cleared (${rangeLabels[range] || range})`);
+    } catch (err) {
+      showToast('Failed to clear history');
+    }
+  });
+}
+
+let historySearchTimer = null;
+if (inputHistorySearch) {
+  inputHistorySearch.addEventListener('input', (e) => {
+    clearTimeout(historySearchTimer);
+    historySearchTimer = setTimeout(() => {
+      loadAndRenderHistory(e.target.value.trim());
+    }, 200);
+  });
+}
+
+if (toggleHistoryClearOnQuit) {
+  const savedVal = localStorage.getItem('recon_history_clear_on_quit') === 'true';
+  toggleHistoryClearOnQuit.checked = savedVal;
+  ipcRenderer.invoke('history:set-clear-on-quit', savedVal);
+  toggleHistoryClearOnQuit.addEventListener('change', (e) => {
+    localStorage.setItem('recon_history_clear_on_quit', String(e.target.checked));
+    ipcRenderer.invoke('history:set-clear-on-quit', e.target.checked);
+  });
+}
+
+if (btnHistoryToggle) {
+  btnHistoryToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openSettingsModal('history');
+  });
+}
+
+// ==========================================================================
+// Encrypted Password Vault & Opt-In Autofill (v1.4.0)
+// ==========================================================================
+const btnVaultToggle = document.getElementById('btn-vault-toggle');
+const vaultDropdown = document.getElementById('vault-dropdown');
+const btnVaultOpenSettings = document.getElementById('btn-vault-open-settings');
+const vaultDropdownDomainLabel = document.getElementById('vault-dropdown-domain-label');
+const vaultDropdownLoginsList = document.getElementById('vault-dropdown-logins-list');
+const btnVaultQuickAdd = document.getElementById('btn-vault-quick-add');
+const btnVaultQuickGenerate = document.getElementById('btn-vault-quick-generate');
+
+// Settings Vault Elements
+const inputVaultSearch = document.getElementById('input-vault-search');
+const btnVaultAddLogin = document.getElementById('btn-vault-add-login');
+const vaultLoginsContainer = document.getElementById('vault-logins-container');
+const inputGeneratedPassword = document.getElementById('input-generated-password');
+const btnGeneratorCopy = document.getElementById('btn-generator-copy');
+const btnGeneratorCreate = document.getElementById('btn-generator-create');
+const sliderPasswordLength = document.getElementById('slider-password-length');
+const labelPassLength = document.getElementById('label-pass-length');
+const genOptUpper = document.getElementById('gen-opt-upper');
+const genOptLower = document.getElementById('gen-opt-lower');
+const genOptNum = document.getElementById('gen-opt-num');
+const genOptSym = document.getElementById('gen-opt-sym');
+
+// Add Login Modal Elements
+const modalAddLogin = document.getElementById('modal-add-login');
+const vaultModalTitle = document.getElementById('vault-modal-title');
+const vaultFormId = document.getElementById('vault-form-id');
+const vaultFormDomain = document.getElementById('vault-form-domain');
+const vaultFormUsername = document.getElementById('vault-form-username');
+const vaultFormPassword = document.getElementById('vault-form-password');
+const vaultFormNotes = document.getElementById('vault-form-notes');
+const btnVaultFormGenerate = document.getElementById('btn-vault-form-generate');
+const btnVaultFormTogglePass = document.getElementById('btn-vault-form-toggle-pass');
+const btnVaultModalClose = document.getElementById('btn-vault-modal-close');
+const btnVaultModalCancel = document.getElementById('btn-vault-modal-cancel');
+const btnVaultModalSave = document.getElementById('btn-vault-modal-save');
+
+async function generatePasswordWithOptions() {
+  const options = {
+    length: sliderPasswordLength ? parseInt(sliderPasswordLength.value, 10) : 18,
+    uppercase: genOptUpper ? genOptUpper.checked : true,
+    lowercase: genOptLower ? genOptLower.checked : true,
+    numbers: genOptNum ? genOptNum.checked : true,
+    symbols: genOptSym ? genOptSym.checked : true
+  };
+  try {
+    const pw = await ipcRenderer.invoke('vault:generate-password', options);
+    if (inputGeneratedPassword) inputGeneratedPassword.value = pw;
+    return pw;
+  } catch (err) {
+    console.error('[Recon Vault] Password generator error:', err);
+    return '';
+  }
+}
+
+if (sliderPasswordLength) {
+  sliderPasswordLength.addEventListener('input', (e) => {
+    if (labelPassLength) labelPassLength.textContent = `Length: ${e.target.value}`;
+    generatePasswordWithOptions();
+  });
+}
+[genOptUpper, genOptLower, genOptNum, genOptSym].forEach(chk => {
+  if (chk) chk.addEventListener('change', generatePasswordWithOptions);
+});
+if (btnGeneratorCreate) btnGeneratorCreate.addEventListener('click', generatePasswordWithOptions);
+if (btnGeneratorCopy) {
+  btnGeneratorCopy.addEventListener('click', () => {
+    if (inputGeneratedPassword && inputGeneratedPassword.value) {
+      ipcRenderer.send('copy-to-clipboard', inputGeneratedPassword.value);
+      showToast('Generated password copied to clipboard');
+    }
+  });
+}
+
+async function loadAndRenderVault(query = '') {
+  if (!vaultLoginsContainer) return;
+  try {
+    const all = await ipcRenderer.invoke('vault:get-all');
+    let items = Array.isArray(all) ? all : [];
+    if (query) {
+      const q = query.toLowerCase();
+      items = items.filter(i => 
+        (i.domain && i.domain.toLowerCase().includes(q)) ||
+        (i.username && i.username.toLowerCase().includes(q)) ||
+        (i.notes && i.notes.toLowerCase().includes(q))
+      );
+    }
+
+    if (items.length === 0) {
+      vaultLoginsContainer.innerHTML = `
+        <div style="text-align: center; color: var(--text-muted); padding: 24px; font-size: 12px;">
+          ${query ? 'No logins match your search.' : 'No saved credentials in vault. Click "+ Add Login" to create one.'}
+        </div>`;
+      return;
+    }
+
+    vaultLoginsContainer.innerHTML = items.map(item => `
+      <div class="vault-login-card" data-id="${item.id}">
+        <div class="vault-login-header">
+          <span class="vault-login-domain">🌐 ${escapeHtml(item.domain)}</span>
+          <div class="vault-login-actions">
+            <button class="vault-action-btn btn-edit-login" data-id="${item.id}" title="Edit login">✏️ Edit</button>
+            <button class="vault-action-btn btn-del-login" data-id="${item.id}" title="Delete login">🗑️</button>
+          </div>
+        </div>
+        <div class="vault-login-row">
+          <div class="vault-login-field-val">
+            <span style="color: var(--text-muted); width: 65px;">User:</span>
+            <strong>${escapeHtml(item.username)}</strong>
+          </div>
+          <button class="vault-action-btn btn-copy-user" data-user="${escapeHtml(item.username)}" title="Copy username">📋 Copy</button>
+        </div>
+        <div class="vault-login-row">
+          <div class="vault-login-field-val">
+            <span style="color: var(--text-muted); width: 65px;">Password:</span>
+            <span class="vault-pass-masked" data-pass="${escapeHtml(item.password)}">••••••••••••</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button class="vault-action-btn btn-reveal-pass" title="Reveal/Mask password">👁️</button>
+            <button class="vault-action-btn btn-copy-pass" data-pass="${escapeHtml(item.password)}" title="Copy password">📋 Copy</button>
+          </div>
+        </div>
+        ${item.notes ? `<div style="font-size: 11px; color: var(--text-muted); font-style: italic; padding: 2px 4px;">Note: ${escapeHtml(item.notes)}</div>` : ''}
+      </div>
+    `).join('');
+
+    // Wire card buttons
+    vaultLoginsContainer.querySelectorAll('.btn-copy-user').forEach(btn => {
+      btn.addEventListener('click', () => {
+        ipcRenderer.send('copy-to-clipboard', btn.getAttribute('data-user') || '');
+        showToast('Username copied to clipboard');
+      });
+    });
+
+    vaultLoginsContainer.querySelectorAll('.btn-copy-pass').forEach(btn => {
+      btn.addEventListener('click', () => {
+        ipcRenderer.send('copy-to-clipboard', btn.getAttribute('data-pass') || '');
+        showToast('Password copied to clipboard');
+      });
+    });
+
+    vaultLoginsContainer.querySelectorAll('.btn-reveal-pass').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const row = btn.closest('.vault-login-row');
+        const passSpan = row?.querySelector('.vault-pass-masked');
+        if (!passSpan) return;
+        const realPass = passSpan.getAttribute('data-pass') || '';
+        if (passSpan.textContent === '••••••••••••') {
+          passSpan.textContent = realPass;
+          btn.textContent = '🙈';
+        } else {
+          passSpan.textContent = '••••••••••••';
+          btn.textContent = '👁️';
+        }
+      });
+    });
+
+    vaultLoginsContainer.querySelectorAll('.btn-del-login').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        if (id) {
+          await ipcRenderer.invoke('vault:delete', id);
+          showToast('Login deleted from vault');
+          loadAndRenderVault(inputVaultSearch ? inputVaultSearch.value.trim() : '');
+        }
+      });
+    });
+
+    vaultLoginsContainer.querySelectorAll('.btn-edit-login').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const item = items.find(i => i.id === id);
+        if (item) openAddLoginModal(item);
+      });
+    });
+
+  } catch (err) {
+    console.error('[Recon Vault] Failed to load vault:', err);
+    vaultLoginsContainer.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 20px;">Failed to load vault</div>`;
+  }
+}
+
+let vaultSearchTimer = null;
+if (inputVaultSearch) {
+  inputVaultSearch.addEventListener('input', (e) => {
+    clearTimeout(vaultSearchTimer);
+    vaultSearchTimer = setTimeout(() => {
+      loadAndRenderVault(e.target.value.trim());
+    }, 200);
+  });
+}
+
+function openAddLoginModal(editItem = null) {
+  if (!modalAddLogin) return;
+  if (editItem) {
+    if (vaultModalTitle) vaultModalTitle.textContent = 'Edit Login Credential';
+    if (vaultFormId) vaultFormId.value = editItem.id || '';
+    if (vaultFormDomain) vaultFormDomain.value = editItem.domain || '';
+    if (vaultFormUsername) vaultFormUsername.value = editItem.username || '';
+    if (vaultFormPassword) vaultFormPassword.value = editItem.password || '';
+    if (vaultFormNotes) vaultFormNotes.value = editItem.notes || '';
+  } else {
+    if (vaultModalTitle) vaultModalTitle.textContent = 'Save Login Credential';
+    if (vaultFormId) vaultFormId.value = '';
+    const activeTab = tabs.get(activeTabId);
+    let host = '';
+    if (activeTab && activeTab.url && !activeTab.url.includes('startpage.html')) {
+      try { host = new URL(activeTab.url).hostname; } catch {}
+    }
+    if (vaultFormDomain) vaultFormDomain.value = host;
+    if (vaultFormUsername) vaultFormUsername.value = '';
+    if (vaultFormPassword) vaultFormPassword.value = '';
+    if (vaultFormNotes) vaultFormNotes.value = '';
+  }
+  modalAddLogin.showModal();
+}
+
+if (btnVaultAddLogin) btnVaultAddLogin.addEventListener('click', () => openAddLoginModal());
+if (btnVaultQuickAdd) {
+  btnVaultQuickAdd.addEventListener('click', () => {
+    if (vaultDropdown) vaultDropdown.style.display = 'none';
+    openAddLoginModal();
+  });
+}
+if (btnVaultModalClose) btnVaultModalClose.addEventListener('click', () => modalAddLogin?.close());
+if (btnVaultModalCancel) btnVaultModalCancel.addEventListener('click', () => modalAddLogin?.close());
+
+if (btnVaultFormGenerate) {
+  btnVaultFormGenerate.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const pw = await ipcRenderer.invoke('vault:generate-password', { length: 18 });
+    if (vaultFormPassword) {
+      vaultFormPassword.value = pw;
+      vaultFormPassword.type = 'text';
+    }
+  });
+}
+
+if (btnVaultFormTogglePass) {
+  btnVaultFormTogglePass.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (vaultFormPassword) {
+      vaultFormPassword.type = vaultFormPassword.type === 'password' ? 'text' : 'password';
+      btnVaultFormTogglePass.textContent = vaultFormPassword.type === 'password' ? '👁️' : '🙈';
+    }
+  });
+}
+
+if (btnVaultModalSave) {
+  btnVaultModalSave.addEventListener('click', async () => {
+    const domain = vaultFormDomain ? vaultFormDomain.value.trim() : '';
+    const username = vaultFormUsername ? vaultFormUsername.value.trim() : '';
+    const password = vaultFormPassword ? vaultFormPassword.value : '';
+    const notes = vaultFormNotes ? vaultFormNotes.value.trim() : '';
+
+    if (!domain || !username || !password) {
+      showToast('Please provide domain, username, and password');
+      return;
+    }
+
+    try {
+      await ipcRenderer.invoke('vault:save', { domain, username, password, notes });
+      modalAddLogin?.close();
+      showToast(`Saved credentials for ${domain}`);
+      loadAndRenderVault(inputVaultSearch ? inputVaultSearch.value.trim() : '');
+      if (vaultDropdown && vaultDropdown.style.display === 'block') {
+        renderVaultDropdown();
+      }
+    } catch (err) {
+      showToast('Failed to save credential to vault');
+    }
+  });
+}
+
+// Opt-In Autofill Dropdown in Top Bar
+async function renderVaultDropdown() {
+  if (!vaultDropdown) return;
+  const activeTab = tabs.get(activeTabId);
+  let domain = '';
+  if (activeTab && activeTab.url && !activeTab.url.includes('startpage.html')) {
+    try { domain = new URL(activeTab.url).hostname; } catch {}
+  }
+
+  if (vaultDropdownDomainLabel) {
+    vaultDropdownDomainLabel.textContent = domain ? `Logins for ${domain}:` : 'Logins for current page:';
+  }
+
+  if (!domain) {
+    if (vaultDropdownLoginsList) {
+      vaultDropdownLoginsList.innerHTML = `<div class="vault-empty" style="padding: 10px; color: var(--text-muted); text-align: center; font-size: 11.5px;">Open a website to view matching logins.</div>`;
+    }
+    return;
+  }
+
+  try {
+    const matching = await ipcRenderer.invoke('vault:get-for-domain', domain);
+    if (!matching || matching.length === 0) {
+      vaultDropdownLoginsList.innerHTML = `
+        <div class="vault-empty" style="padding: 10px; color: var(--text-muted); text-align: center; font-size: 11.5px;">
+          No saved logins for ${escapeHtml(domain)}.
+        </div>`;
+      return;
+    }
+
+    vaultDropdownLoginsList.innerHTML = matching.map(cred => `
+      <div class="vault-dropdown-item">
+        <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 175px;">
+          <strong style="color: var(--text-main); display: block;">${escapeHtml(cred.username)}</strong>
+          <span style="font-size: 10.5px; color: var(--text-muted);">••••••••</span>
+        </div>
+        <button class="vault-autofill-btn" data-user="${escapeHtml(cred.username)}" data-pass="${escapeHtml(cred.password)}">Autofill</button>
+      </div>
+    `).join('');
+
+    vaultDropdownLoginsList.querySelectorAll('.vault-autofill-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const u = btn.getAttribute('data-user') || '';
+        const p = btn.getAttribute('data-pass') || '';
+        injectAutofillCredentials(u, p);
+        vaultDropdown.style.display = 'none';
+      });
+    });
+  } catch (err) {
+    console.error('[Recon Vault] Error rendering dropdown:', err);
+  }
+}
+
+function injectAutofillCredentials(username, password) {
+  const activeTab = tabs.get(activeTabId);
+  if (!activeTab || !activeTab.webviewEl) return;
+
+  const code = `
+    (() => {
+      const uVal = ${JSON.stringify(username)};
+      const pVal = ${JSON.stringify(password)};
+      const passInputs = Array.from(document.querySelectorAll('input[type="password"]'));
+      const passInput = passInputs[0];
+      const userInputs = Array.from(document.querySelectorAll('input[type="email"], input[type="text"], input:not([type])'));
+      let userInput = userInputs.find(i => /user|email|login|name/i.test(i.name || i.id || i.getAttribute('autocomplete') || ''));
+      if (!userInput && passInput) {
+        const allInputs = Array.from(document.querySelectorAll('input'));
+        const pIdx = allInputs.indexOf(passInput);
+        if (pIdx > 0) userInput = allInputs[pIdx - 1];
+      }
+      if (userInput) {
+        userInput.focus();
+        userInput.value = uVal;
+        userInput.dispatchEvent(new Event('input', { bubbles: true }));
+        userInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (passInput) {
+        passInput.focus();
+        passInput.value = pVal;
+        passInput.dispatchEvent(new Event('input', { bubbles: true }));
+        passInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      return Boolean(userInput || passInput);
+    })();
+  `;
+
+  activeTab.webviewEl.executeJavaScript(code).then(filled => {
+    if (filled) {
+      showToast(`🔑 Autofilled credentials for ${username}`);
+    } else {
+      showToast('No login form detected on page');
+    }
+  }).catch(() => {
+    showToast('Failed to autofill credentials');
+  });
+}
+
+if (btnVaultToggle) {
+  btnVaultToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    shieldsPopover.classList.add('popover-hidden');
+    ecosystemDropdown.style.display = 'none';
+    if (bookmarksDropdown) bookmarksDropdown.style.display = 'none';
+    closeSettingsModal();
+    const isShown = vaultDropdown.style.display === 'block';
+    vaultDropdown.style.display = isShown ? 'none' : 'block';
+    if (!isShown) renderVaultDropdown();
+  });
+}
+
+if (btnVaultOpenSettings) {
+  btnVaultOpenSettings.addEventListener('click', () => {
+    if (vaultDropdown) vaultDropdown.style.display = 'none';
+    openSettingsModal('vault');
+  });
+}
+
+if (btnVaultQuickGenerate) {
+  btnVaultQuickGenerate.addEventListener('click', async () => {
+    const pw = await ipcRenderer.invoke('vault:generate-password', { length: 18 });
+    ipcRenderer.send('copy-to-clipboard', pw);
+    showToast(`⚡ Generated & copied password: ${pw.slice(0, 4)}••••`);
+  });
+}
+
+// ==========================================================================
+// Default Browser Integration (v1.4.0)
+// ==========================================================================
+const defaultBrowserBanner = document.getElementById('default-browser-banner');
+const btnBannerSetDefault = document.getElementById('btn-banner-set-default');
+const btnBannerDismissDefault = document.getElementById('btn-banner-dismiss-default');
+const btnSetDefaultBrowser = document.getElementById('btn-set-default-browser');
+const defaultBrowserStatusText = document.getElementById('default-browser-status-text');
+
+async function checkDefaultBrowserStatus() {
+  try {
+    const isDefault = await ipcRenderer.invoke('default-browser:status');
+    updateDefaultBrowserUI(isDefault);
+    if (!isDefault && localStorage.getItem('recon_dismiss_default_browser') !== 'true') {
+      if (defaultBrowserBanner) defaultBrowserBanner.style.display = 'flex';
+    } else {
+      if (defaultBrowserBanner) defaultBrowserBanner.style.display = 'none';
+    }
+  } catch (err) {
+    console.warn('[DefaultBrowser] Failed to check status:', err);
+  }
+}
+
+function updateDefaultBrowserUI(isDefault) {
+  if (defaultBrowserStatusText) {
+    defaultBrowserStatusText.textContent = isDefault 
+      ? 'Recon Browser is currently your default web browser.'
+      : 'Recon Browser is not your default web browser.';
+  }
+  if (btnSetDefaultBrowser) {
+    btnSetDefaultBrowser.textContent = isDefault ? 'Default Browser ✓' : 'Make Default';
+    btnSetDefaultBrowser.disabled = isDefault;
+  }
+}
+
+async function setAsDefaultBrowser() {
+  try {
+    const success = await ipcRenderer.invoke('default-browser:set');
+    if (success) {
+      showToast('Recon Browser set as default web browser');
+      if (defaultBrowserBanner) defaultBrowserBanner.style.display = 'none';
+      updateDefaultBrowserUI(true);
+    } else {
+      showToast('Please confirm default browser prompt in Windows settings');
+    }
+  } catch (err) {
+    showToast('Failed to set default browser');
+  }
+}
+
+if (btnBannerSetDefault) btnBannerSetDefault.addEventListener('click', setAsDefaultBrowser);
+if (btnSetDefaultBrowser) btnSetDefaultBrowser.addEventListener('click', setAsDefaultBrowser);
+if (btnBannerDismissDefault) {
+  btnBannerDismissDefault.addEventListener('click', () => {
+    localStorage.setItem('recon_dismiss_default_browser', 'true');
+    if (defaultBrowserBanner) defaultBrowserBanner.style.display = 'none';
+  });
+}
+
+// ==========================================================================
 // Initialization
 // ==========================================================================
 const savedTheme = localStorage.getItem('recon_theme') || 'cyber';
@@ -2011,14 +2719,18 @@ const savedEngine = localStorage.getItem('recon_default_engine') || 'duckduckgo'
 setEngine(savedEngine);
 
 // Global Shields & DoH Initial State Sync
-toggleAdblock.checked = shieldsGlobalActive;
-popoverOptAdblock.checked = shieldsGlobalActive;
+if (toggleAdblock) toggleAdblock.checked = shieldsGlobalActive;
+if (popoverOptAdblock) popoverOptAdblock.checked = shieldsGlobalActive;
 ipcRenderer.send('toggle-shields', shieldsGlobalActive);
 updateShieldsPopoverDisplay();
 
-// Initial Bookmarks & App Link Status Check
+// Initial Bookmarks, App Link & Default Browser Check
 renderBookmarks();
 refreshAppLinkStatus();
+checkDefaultBrowserStatus();
+
+// Initialize password generator
+generatePasswordWithOptions();
 
 // Create First Tab
 createTab(getStartPageURL());

@@ -67,10 +67,23 @@
     <!-- Bookmarks Quick Menu Button -->
     <div class="bookmarks-menu-container" style="position: relative;">
       <button id="btn-bookmarks-toggle" class="nav-icon-btn" title="Bookmarks (Ctrl+B)">★</button>
-      <div class="bookmarks-dropdown" id="bookmarks-dropdown" style="display: none; position: absolute; top: calc(100% + 6px); right: 0; width: 260px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.5); z-index: 1000; padding: 6px; font-size: 12px;">
+      <div class="bookmarks-dropdown" id="bookmarks-dropdown" style="display: none; position: absolute; top: calc(100% + 6px); right: 0; width: 300px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.5); z-index: 1000; padding: 6px; font-size: 12px;">
         <div class="dropdown-header" style="padding: 6px 10px; font-weight: 700; border-bottom: 1px solid var(--border-color); color: var(--text-main); display: flex; justify-content: space-between; align-items: center;">
           <span>★ Bookmarks</span>
-          <button id="btn-add-bookmark" style="background: var(--accent-purple); color: white; border: none; padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">+ Bookmark Page</button>
+          <div style="display: flex; gap: 4px;">
+            <button id="btn-new-bookmark-folder" style="background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-main); padding: 2px 6px; border-radius: 4px; font-size: 11px; cursor: pointer;" title="Create new bookmark folder">+ 📁 Folder</button>
+            <button id="btn-add-bookmark" style="background: var(--accent-purple); color: white; border: none; padding: 2px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">+ Page</button>
+          </div>
+        </div>
+        <div class="bookmarks-toolbar" style="display: flex; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--border-color); align-items: center;">
+          <select id="select-bookmark-sort" class="settings-select" style="font-size: 11px; padding: 2px 4px; height: 24px; flex: 1;">
+            <option value="recent">Sort: Recent</option>
+            <option value="az">Sort: A-Z</option>
+            <option value="folder">Sort: Folder</option>
+          </select>
+          <select id="select-bookmark-folder" class="settings-select" style="font-size: 11px; padding: 2px 4px; height: 24px; flex: 1;">
+            <option value="all">All Folders</option>
+          </select>
         </div>
         <div id="bookmarks-list" style="max-height: 280px; overflow-y: auto; padding: 4px 0;">
           <div class="bookmark-empty" style="padding: 10px; color: var(--text-muted); text-align: center; font-size: 11.5px;">No bookmarks yet. Press + or Ctrl+D to bookmark the active tab.</div>
@@ -83,9 +96,44 @@
       </div>
     </div>
 
+    <!-- Browsing History Quick Button -->
+    <button id="btn-history-toggle" class="nav-icon-btn" title="Browsing History (Ctrl+H)">🕒</button>
+
+    <!-- Password Vault & Autofill Button -->
+    <div class="vault-menu-container" style="position: relative;">
+      <button id="btn-vault-toggle" class="nav-icon-btn" title="Password Vault & Autofill (Ctrl+Shift+L)">🔑</button>
+      <div class="vault-dropdown" id="vault-dropdown" style="display: none; position: absolute; top: calc(100% + 6px); right: 0; width: 280px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 12px 32px rgba(0,0,0,0.5); z-index: 1000; padding: 8px; font-size: 12px;">
+        <div class="dropdown-header" style="padding: 4px 6px 8px; font-weight: 700; border-bottom: 1px solid var(--border-color); color: var(--text-main); display: flex; justify-content: space-between; align-items: center;">
+          <span>🔑 Recon Vault</span>
+          <button id="btn-vault-open-settings" style="background: transparent; border: none; color: var(--accent-cyan); font-size: 11px; cursor: pointer;">Manage Vault</button>
+        </div>
+        <div style="padding: 6px 4px 4px; font-size: 11px; color: var(--text-muted);" id="vault-dropdown-domain-label">Logins for current page:</div>
+        <div id="vault-dropdown-logins-list" style="max-height: 180px; overflow-y: auto; padding: 2px 0;">
+          <div class="vault-empty" style="padding: 10px; color: var(--text-muted); text-align: center; font-size: 11.5px;">No saved logins for this site.</div>
+        </div>
+        <div style="height: 1px; background: var(--border-color); margin: 6px 0;"></div>
+        <div style="display: flex; gap: 6px;">
+          <button id="btn-vault-quick-add" style="flex: 1; background: var(--accent-purple); border: none; color: white; padding: 5px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">+ Add Login</button>
+          <button id="btn-vault-quick-generate" style="flex: 1; background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-main); padding: 5px; border-radius: 4px; font-size: 11px; cursor: pointer;">⚡ Generate</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Global Browser Settings Button -->
     <button id="btn-settings-toggle" class="nav-icon-btn" title="Settings (Ctrl+,)">⚙</button>
   </header>
+
+  <!-- Default Browser Notice Banner -->
+  <div id="default-browser-banner" style="display: none; background: linear-gradient(90deg, #1e1b4b 0%, #0f172a 100%); border-bottom: 1px solid var(--border-color); padding: 8px 16px; font-size: 12px; color: #f8fafc; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 15px;">🌐</span>
+      <span>Make <strong>Recon Browser</strong> your default browser for hardened privacy and zero telemetry?</span>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button id="btn-banner-set-default" style="background: var(--accent-purple); color: white; border: none; padding: 4px 12px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer;">Set as Default</button>
+      <button id="btn-banner-dismiss-default" style="background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 4px; font-size: 11.5px; cursor: pointer;">Not Now</button>
+    </div>
+  </div>
 
   <!-- Optional Bookmarks Bar Below Navbar -->
   <div id="bookmarks-bar" class="bookmarks-bar" style="display: none; height: 32px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); align-items: center; padding: 0 10px; gap: 6px; overflow-x: auto; font-size: 12px;">
@@ -216,6 +264,12 @@
           <button class="settings-nav-btn" data-tab="privacy">
             <span class="nav-icon">🛡️</span> Privacy & Shields
           </button>
+          <button class="settings-nav-btn" data-tab="history">
+            <span class="nav-icon">🕒</span> Browsing History
+          </button>
+          <button class="settings-nav-btn" data-tab="vault">
+            <span class="nav-icon">🔑</span> Password Vault
+          </button>
           <button class="settings-nav-btn" data-tab="readaloud">
             <span class="nav-icon">🔊</span> Read Aloud
           </button>
@@ -319,6 +373,22 @@
               </div>
               <input type="checkbox" id="toggle-navbar-apps" class="recon-checkbox" checked />
             </div>
+
+            <div class="setting-row">
+              <div class="setting-label-group">
+                <strong>Default Browser</strong>
+                <small id="default-browser-status-text">Checking default browser status...</small>
+              </div>
+              <button id="btn-set-default-browser" class="btn-primary" style="font-size: 11.5px; padding: 4px 12px;">Make Default</button>
+            </div>
+
+            <div class="setting-toggle-row">
+              <div class="setting-label-group">
+                <strong>Show Bookmarks Bar</strong>
+                <small>Display the bookmarks bar below the navigation bar</small>
+              </div>
+              <input type="checkbox" id="settings-toggle-bookmarks-bar" class="recon-checkbox" />
+            </div>
           </div>
 
           <!-- 3. Search & Privacy -->
@@ -391,7 +461,82 @@
             </div>
           </div>
 
-          <!-- 4. Read Aloud -->
+          <!-- 4. Browsing History Panel -->
+          <div class="settings-panel" id="panel-history">
+            <h4 class="panel-heading">Browsing History</h4>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+              <input type="text" id="input-history-search" class="settings-input" placeholder="Search history by title or URL..." style="flex: 1;" />
+            </div>
+
+            <div class="history-controls-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; margin-bottom: 14px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 11.5px; color: var(--text-muted);">Clear range:</span>
+                <select id="select-clear-history-range" class="settings-select" style="font-size: 11.5px; padding: 3px 8px; height: 26px;">
+                  <option value="1h">Last hour</option>
+                  <option value="24h" selected>Last 24 hours</option>
+                  <option value="7d">Last 7 days</option>
+                  <option value="all">All time</option>
+                </select>
+                <button id="btn-clear-history" class="btn-danger" style="font-size: 11.5px; padding: 4px 10px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">Clear Browsing Data</button>
+              </div>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-muted); cursor: pointer;">
+                <input type="checkbox" id="toggle-history-clear-on-quit" class="recon-checkbox" />
+                <span>Clear on browser exit</span>
+              </label>
+            </div>
+
+            <div id="history-groups-container" style="max-height: 380px; overflow-y: auto; padding-right: 4px;">
+              <div style="text-align: center; color: var(--text-muted); padding: 24px; font-size: 12px;">Loading browsing history...</div>
+            </div>
+          </div>
+
+          <!-- 5. Password Vault Panel -->
+          <div class="settings-panel" id="panel-vault">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h4 class="panel-heading" style="margin: 0;">Password Vault & Autofill</h4>
+              <button id="btn-vault-add-login" class="btn-primary" style="font-size: 11.5px; padding: 4px 12px;">+ Add Login</button>
+            </div>
+
+            <!-- Hardware Encryption Banner -->
+            <div class="vault-security-banner" style="display: flex; align-items: center; gap: 10px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;">
+              <span style="font-size: 20px;">🔒</span>
+              <div style="font-size: 11.5px; line-height: 1.4;">
+                <strong style="color: var(--accent-cyan); display: block;">Hardware-Backed OS Encryption (safeStorage)</strong>
+                <span style="color: var(--text-muted);">Logins are encrypted locally on disk (recon_vault.enc) with Windows DPAPI / Keychain. Zero cloud syncing, zero telemetry.</span>
+              </div>
+            </div>
+
+            <!-- Built-in Password Generator Card -->
+            <div class="vault-generator-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; margin-bottom: 14px;">
+              <div style="font-weight: 600; font-size: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span>⚡ Built-in Password Generator</span>
+                <span id="label-pass-length" style="font-size: 11px; color: var(--text-muted);">Length: 18</span>
+              </div>
+              <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <input type="text" id="input-generated-password" readonly class="settings-input" style="font-family: monospace; font-size: 13px; letter-spacing: 1px; color: var(--accent-cyan); font-weight: 600; background: var(--bg-primary);" placeholder="Click Generate to create password" />
+                <button id="btn-generator-copy" class="btn-secondary" style="font-size: 11.5px; padding: 4px 12px; white-space: nowrap;">📋 Copy</button>
+                <button id="btn-generator-create" class="btn-primary" style="font-size: 11.5px; padding: 4px 12px; white-space: nowrap;">↻ Generate</button>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 11.5px; color: var(--text-muted); flex-wrap: wrap;">
+                <input type="range" id="slider-password-length" min="8" max="64" value="18" style="flex: 1; min-width: 120px;" />
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" id="gen-opt-upper" checked class="recon-checkbox" /> A-Z</label>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" id="gen-opt-lower" checked class="recon-checkbox" /> a-z</label>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" id="gen-opt-num" checked class="recon-checkbox" /> 0-9</label>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;"><input type="checkbox" id="gen-opt-sym" checked class="recon-checkbox" /> !@#$%</label>
+              </div>
+            </div>
+
+            <!-- Credentials List Search & Container -->
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+              <input type="text" id="input-vault-search" class="settings-input" placeholder="Search saved logins by domain or username..." style="flex: 1;" />
+            </div>
+            <div id="vault-logins-container" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px;">
+              <div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 12px;">No saved credentials in vault.</div>
+            </div>
+          </div>
+
+          <!-- 6. Read Aloud -->
           <div class="settings-panel" id="panel-readaloud">
             <h4 class="panel-heading">Read Aloud & Speech</h4>
             <div style="margin-bottom: 16px;">
@@ -436,7 +581,7 @@
               <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
               <div>
                 <h3 style="margin: 0; font-size: 18px;">Recon Browser</h3>
-                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.3.3</span>
+                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.4.0</span>
               </div>
             </div>
             <p class="about-desc" style="font-size: 12px; opacity: 0.85; margin: 8px 0 14px; line-height: 1.4;">
@@ -491,7 +636,7 @@
         <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
         <div>
           <h2>Recon Browser</h2>
-          <span id="about-version" class="about-ver">Version 1.1.0</span>
+          <span id="about-version" class="about-ver">Version 1.4.0</span>
         </div>
       </div>
 
@@ -609,6 +754,46 @@
         <button id="btn-clip-cancel" class="btn-subtle">Cancel</button>
         <button id="btn-clip-send" class="btn-primary" disabled>Send Clip</button>
       </div>
+    </div>
+  </dialog>
+
+  <!-- Add Login to Vault Dialog Modal -->
+  <dialog id="modal-add-login" class="vault-modal" style="background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 8px; width: 440px; box-shadow: 0 20px 45px rgba(0,0,0,0.6); padding: 0;">
+    <div style="padding: 14px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+      <div style="font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+        <span>🔑</span>
+        <span id="vault-modal-title">Save Login Credential</span>
+      </div>
+      <button id="btn-vault-modal-close" class="modal-close-btn" style="background: transparent; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer;" title="Close">×</button>
+    </div>
+    <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px; font-size: 12px;">
+      <input type="hidden" id="vault-form-id" value="" />
+      <div>
+        <label style="display: block; font-weight: 600; margin-bottom: 4px;">Website or Domain</label>
+        <input type="text" id="vault-form-domain" class="settings-input" placeholder="e.g. github.com or google.com" style="width: 100%; box-sizing: border-box;" />
+      </div>
+      <div>
+        <label style="display: block; font-weight: 600; margin-bottom: 4px;">Username or Email</label>
+        <input type="text" id="vault-form-username" class="settings-input" placeholder="e.g. username@domain.com" style="width: 100%; box-sizing: border-box;" />
+      </div>
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <label style="font-weight: 600;">Password</label>
+          <button id="btn-vault-form-generate" style="background: transparent; border: none; color: var(--accent-cyan); font-size: 11px; cursor: pointer; text-decoration: underline;">⚡ Generate Strong</button>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <input type="password" id="vault-form-password" class="settings-input" placeholder="Enter password" style="flex: 1; box-sizing: border-box;" />
+          <button id="btn-vault-form-toggle-pass" class="btn-subtle" style="font-size: 13px; padding: 4px 10px;" title="Show/Hide Password">👁️</button>
+        </div>
+      </div>
+      <div>
+        <label style="display: block; font-weight: 600; margin-bottom: 4px;">Notes (Optional)</label>
+        <textarea id="vault-form-notes" class="settings-input" rows="2" placeholder="Recovery codes, PIN, or extra notes..." style="width: 100%; resize: vertical; box-sizing: border-box;"></textarea>
+      </div>
+    </div>
+    <div style="padding: 12px 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 8px;">
+      <button id="btn-vault-modal-cancel" class="btn-subtle" style="font-size: 12px; padding: 6px 14px;">Cancel</button>
+      <button id="btn-vault-modal-save" class="btn-primary" style="font-size: 12px; padding: 6px 16px;">Save Login</button>
     </div>
   </dialog>
 

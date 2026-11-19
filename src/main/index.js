@@ -3,6 +3,8 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { Updater } = require('./updater');
+const { PasswordVault } = require('./vault');
+const { HistoryManager } = require('./history');
 const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link');
 const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
 
@@ -11,6 +13,8 @@ let blockedCount = 0;
 let shieldsEnabled = true;
 const pausedHosts = new Set();
 let updater = null;
+const vault = new PasswordVault();
+const historyManager = new HistoryManager();
 
 // Load tracking domains blocklist
 const filterPath = path.join(__dirname, '../../config/filters/default-trackers.txt');
@@ -317,7 +321,7 @@ function createWindow() {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('updater-status', status);
     }
-  });
+  }, () => mainWindow);
   updater.start();
 
   mainWindow.on('closed', () => {
@@ -488,17 +492,32 @@ async function checkForUpdatesInteractive(win) {
       buttons: ['OK']
     });
   } else if (res.state === 'available') {
-    const { response } = await dialog.showMessageBox(parent, {
-      type: 'info',
-      title: 'Update Available',
-      message: `Recon Browser v${res.version} is available!`,
-      detail: 'A new version of Recon Browser is ready for download from GitHub Releases.',
-      buttons: ['Download Update', 'Later'],
-      defaultId: 0,
-      cancelId: 1
-    });
-    if (response === 0) {
-      shell.openExternal(res.url || 'https://github.com/neogentrics/ReconBrowser/releases/latest');
+    const isDownloading = updater.isDownloading;
+    const hasInstaller = Boolean(updater.downloadedInstallerPath);
+
+    if (hasInstaller) {
+      const { response } = await dialog.showMessageBox(parent, {
+        type: 'info',
+        title: 'Update Ready to Install',
+        message: `Recon Browser v${res.version} has been downloaded!`,
+        detail: 'Click "Install & Restart" to apply the update now. Windows may ask for administrative (UAC) permission.',
+        buttons: ['Install & Restart', 'Later'],
+        defaultId: 0,
+        cancelId: 1
+      });
+      if (response === 0) {
+        updater.installNow();
+      }
+    } else {
+      dialog.showMessageBox(parent, {
+        type: 'info',
+        title: 'Update Available',
+        message: `Recon Browser v${res.version} is available!`,
+        detail: isDownloading
+          ? 'Recon Browser is currently downloading the installer in the background. You will be prompted as soon as it is ready to install.'
+          : 'The update is downloading in the background. You can continue browsing.',
+        buttons: ['OK']
+      });
     }
   } else if (res.state === 'downloading' || res.state === 'ready') {
     const isReady = res.state === 'ready';
@@ -534,6 +553,51 @@ ipcMain.on('check-updates-manual', () => {
 
 ipcMain.on('install-update-now', () => {
   if (updater) updater.installNow();
+});
+
+// ==========================================================================
+// Password Vault IPC Handlers (v1.4.0)
+// ==========================================================================
+ipcMain.handle('vault:get-all', () => vault.getAll());
+ipcMain.handle('vault:get-for-domain', (event, domain) => vault.getForDomain(domain));
+ipcMain.handle('vault:save', (event, cred) => vault.addOrUpdate(cred));
+ipcMain.handle('vault:delete', (event, id) => vault.delete(id));
+ipcMain.handle('vault:generate-password', (event, options) => vault.generatePassword(options));
+ipcMain.handle('vault:is-available', () => vault.isAvailable());
+
+// ==========================================================================
+// Browsing History IPC Handlers (v1.4.0)
+// ==========================================================================
+let historyClearOnQuit = false;
+ipcMain.handle('history:get-grouped', (event, query) => historyManager.getGroupedByDay(query));
+ipcMain.handle('history:add', (event, item) => historyManager.add(item));
+ipcMain.handle('history:delete', (event, id) => historyManager.delete(id));
+ipcMain.handle('history:clear', (event, range) => historyManager.clear(range));
+ipcMain.handle('history:get-clear-on-quit', () => historyClearOnQuit);
+ipcMain.handle('history:set-clear-on-quit', (event, val) => {
+  historyClearOnQuit = Boolean(val);
+  return historyClearOnQuit;
+});
+
+// ==========================================================================
+// Default Browser Integration IPC (v1.4.0)
+// ==========================================================================
+ipcMain.handle('default-browser:status', () => {
+  try {
+    return app.isDefaultProtocolClient('http');
+  } catch {
+    return false;
+  }
+});
+ipcMain.handle('default-browser:set', () => {
+  try {
+    const r1 = app.setAsDefaultProtocolClient('http');
+    const r2 = app.setAsDefaultProtocolClient('https');
+    return Boolean(r1 && r2);
+  } catch (err) {
+    console.error('[Recon System] Failed to set default protocol client:', err);
+    return false;
+  }
 });
 
 // ==========================================================================
@@ -679,9 +743,18 @@ ipcMain.handle('app-link:send-clip', async (event, { appId, clipOptions }) => {
   }
 });
 
-// Context menu on web contents for selection clipping
+// Context menu & history logging on web contents
 app.on('web-contents-created', (event, contents) => {
   if (contents.getType() === 'webview') {
+    contents.on('did-navigate', (event, url) => {
+      const title = contents.getTitle() || url;
+      historyManager.add({ url, title });
+    });
+    contents.on('did-navigate-in-page', (event, url) => {
+      const title = contents.getTitle() || url;
+      historyManager.add({ url, title });
+    });
+
     contents.on('context-menu', async (e, params) => {
       const menuTemplate = [];
 
@@ -820,6 +893,11 @@ app.whenReady().then(async () => {
 });
 
 app.on('will-quit', async () => {
+  if (historyClearOnQuit) {
+    try {
+      historyManager.clear('all');
+    } catch {}
+  }
   if (appLinkInstance) {
     await appLinkInstance.stop();
     appLinkInstance = null;

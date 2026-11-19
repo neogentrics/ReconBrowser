@@ -24,7 +24,7 @@
 
 ## Downloads
 
-The latest version is **v1.3.3**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
+The latest version is **v1.4.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
 
 | Platform | Download Package | Description |
 | :--- | :--- | :--- |
@@ -158,7 +158,8 @@ The full plan, with every feature, is in [docs/ROADMAP.md](docs/ROADMAP.md). In 
 | **v1.2** | Released | Reader View, Read Aloud, aspects and accessible themes |
 | **v1.3.1**| Released | StoryTracker & Markdown Reader research: send research clips with YAML front matter via App Link |
 | **v1.3.2**| Released | Tab dragging & rearranging, 4 spectrum themes (blues/reds/yellows), auto-updater manifest pipeline |
-| **v1.4** | Planned | Sync with no account, through a folder you already sync, with encryption |
+| **v1.3.3**| Released | Centered tabbed settings modal, high contrast theme fixes, draggable modal, live shields sync |
+| **v1.4.0**| Released | Encrypted Password Vault, opt-in autofill, bookmarks bar, right-click bookmarking, daily history |
 | **v1.5** | Planned | Offline archives: save a page as one file, search all your saved research |
 | **v1.6** | Planned | Shields 2.0: filter list subscriptions and a live network inspector |
 | **v1.7** | Planned | Creative suite hooks: a docked Author Desk rail and an audio grabber for RT Audio Studio |

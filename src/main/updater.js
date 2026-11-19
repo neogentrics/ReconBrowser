@@ -1,10 +1,12 @@
 'use strict';
 // Auto-updater module for Recon Browser against GitHub Releases.
-// - Windows (NSIS installed): electron-updater downloads in background, prompts to restart.
-// - Linux (AppImage): downloads and self-replaces AppImage.
-// - Portable Windows / macOS / Unpackaged dev: checks GitHub Releases API, informs user with release notes & download link.
+// - Background downloading of platform installers directly inside the app.
+// - Clean UAC execution and app relaunch without bouncing to external browsers.
 
-const { app, net, shell } = require('electron');
+const { app, net } = require('electron');
+const path = require('path');
+const fs = require('fs');
+const { spawn } = require('child_process');
 const { compareVersions } = require('./version');
 
 const OWNER = 'neogentrics';
@@ -19,10 +21,13 @@ function canSelfUpdate() {
 }
 
 class Updater {
-  constructor(onStatus) {
+  constructor(onStatus, mainWindowGetter) {
     this.onStatus = onStatus || (() => {});
+    this.getMainWindow = mainWindowGetter || (() => null);
     this.status = { state: 'idle' };
     this.autoUpdater = null;
+    this.downloadedInstallerPath = null;
+    this.isDownloading = false;
   }
 
   start() {
@@ -33,6 +38,7 @@ class Updater {
         this.autoUpdater.autoInstallOnAppQuit = true;
         this.autoUpdater.on('update-available', (i) => this.emit({ state: 'downloading', version: i.version }));
         this.autoUpdater.on('update-downloaded', (i) => this.emit({ state: 'ready', version: i.version }));
+        this.autoUpdater.on('download-progress', (p) => this.emit({ state: 'downloading', percent: Math.round(p.percent) }));
         this.autoUpdater.on('error', (e) => { this.lastError = e; });
       } catch {
         this.autoUpdater = null;
@@ -77,15 +83,36 @@ class Updater {
       if (!res.ok) throw new Error(`GitHub answered ${res.status}`);
       const rel = await res.json();
       const latestTag = rel.tag_name || '';
+      const versionStr = String(latestTag).replace(/^v/, '');
 
-      if (compareVersions(latestTag, app.getVersion() || '1.0.0') > 0) {
+      if (compareVersions(versionStr, app.getVersion() || '1.0.0') > 0) {
+        // Find platform installer asset
+        let matchedAsset = null;
+        if (Array.isArray(rel.assets)) {
+          if (process.platform === 'win32') {
+            matchedAsset = rel.assets.find(a => a.name.endsWith('.exe') && !a.name.includes('blockmap'));
+          } else if (process.platform === 'linux') {
+            matchedAsset = rel.assets.find(a => a.name.endsWith('.AppImage') || a.name.endsWith('.deb'));
+          } else if (process.platform === 'darwin') {
+            matchedAsset = rel.assets.find(a => a.name.endsWith('.dmg') || a.name.endsWith('.zip'));
+          }
+        }
+
         const s = {
           state: 'available',
-          version: String(latestTag).replace(/^v/, ''),
+          version: versionStr,
+          assetUrl: matchedAsset ? matchedAsset.browser_download_url : null,
+          assetName: matchedAsset ? matchedAsset.name : null,
           url: rel.html_url || RELEASES_URL,
           notes: rel.body || 'New Recon Browser release available.'
         };
         this.emit(s);
+
+        // If an installer asset is available, start background downloading immediately
+        if (s.assetUrl && !this.isDownloading && !this.downloadedInstallerPath) {
+          this.downloadInstaller(s.assetUrl, s.assetName, versionStr);
+        }
+
         return s;
       }
 
@@ -99,15 +126,88 @@ class Updater {
     }
   }
 
+  async downloadInstaller(downloadUrl, filename, version) {
+    if (this.isDownloading) return;
+    this.isDownloading = true;
+    this.emit({ state: 'downloading', version, percent: 0 });
+
+    try {
+      const targetDir = app.getPath('temp');
+      const targetPath = path.join(targetDir, filename || `ReconBrowser-Setup-${version}.exe`);
+
+      const response = await net.fetch(downloadUrl);
+      if (!response.ok) throw new Error(`Download failed with HTTP ${response.status}`);
+
+      const totalBytes = parseInt(response.headers.get('content-length') || '0', 10);
+      let receivedBytes = 0;
+
+      const fileStream = fs.createWriteStream(targetPath);
+      const reader = response.body.getReader();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          receivedBytes += value.length;
+          fileStream.write(Buffer.from(value));
+          if (totalBytes > 0) {
+            const percent = Math.round((receivedBytes / totalBytes) * 100);
+            this.emit({ state: 'downloading', version, percent });
+          }
+        }
+      }
+
+      fileStream.end();
+
+      await new Promise((resolve, reject) => {
+        fileStream.on('finish', resolve);
+        fileStream.on('error', reject);
+      });
+
+      this.downloadedInstallerPath = targetPath;
+      this.isDownloading = false;
+      this.emit({ state: 'ready', version, path: targetPath });
+      console.log(`[Recon Updater] Installer downloaded to ${targetPath}, ready to install.`);
+    } catch (err) {
+      this.isDownloading = false;
+      console.error('[Recon Updater] Background download failed:', err);
+      this.emit({ state: 'available', version, error: String(err.message || err) });
+    }
+  }
+
   installNow() {
+    // 1. If electron-updater has downloaded package
     if (this.autoUpdater && this.status.state === 'ready') {
       setImmediate(() => this.autoUpdater.quitAndInstall(true, true));
       return true;
     }
-    if (this.status.url) {
-      shell.openExternal(this.status.url);
+
+    // 2. If direct background downloader finished payload
+    if (this.downloadedInstallerPath && fs.existsSync(this.downloadedInstallerPath)) {
+      try {
+        console.log(`[Recon Updater] Spawning downloaded installer: ${this.downloadedInstallerPath}`);
+        if (process.platform === 'win32') {
+          spawn(this.downloadedInstallerPath, [], { detached: true, stdio: 'ignore' }).unref();
+        } else if (process.platform === 'darwin') {
+          spawn('open', [this.downloadedInstallerPath], { detached: true, stdio: 'ignore' }).unref();
+        } else {
+          fs.chmodSync(this.downloadedInstallerPath, '755');
+          spawn(this.downloadedInstallerPath, [], { detached: true, stdio: 'ignore' }).unref();
+        }
+        app.quit();
+        return true;
+      } catch (err) {
+        console.error('[Recon Updater] Failed to launch installer executable:', err);
+      }
+    }
+
+    // 3. Fallback: navigate in Recon Browser tab (never bounce to external browser!)
+    const win = this.getMainWindow();
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('open-link-new-tab', { url: this.status.url || RELEASES_URL });
       return true;
     }
+
     return false;
   }
 }

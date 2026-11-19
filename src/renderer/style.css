@@ -2042,3 +2042,273 @@ body {
   padding-top: 10px;
   border-top: 1px solid var(--border-color);
 }
+
+/* ==========================================================================
+   v1.4.0 Features: Browsing History, Password Vault & Enhanced Bookmarks
+   ========================================================================== */
+
+/* History Day Cards & Grouping */
+.history-day-card {
+  margin-bottom: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.history-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  user-select: none;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.12s ease;
+}
+
+.history-day-header:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.history-day-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.day-toggle-arrow {
+  display: inline-block;
+  font-size: 10px;
+  transition: transform 0.15s ease;
+  color: var(--text-muted);
+}
+
+.history-day-card.collapsed .day-toggle-arrow {
+  transform: rotate(-90deg);
+}
+
+.history-day-card.collapsed .history-items-list {
+  display: none;
+}
+
+.day-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: normal;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.history-items-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-top: 1px solid var(--border-color);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.history-item-row:hover {
+  background-color: var(--bg-hover);
+}
+
+.history-time {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  width: 65px;
+  flex-shrink: 0;
+}
+
+.history-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.history-item-title {
+  color: var(--text-main);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-item-url {
+  color: var(--text-muted);
+  font-size: 10.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-item-del {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: all 0.12s ease;
+}
+
+.history-item-del:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Password Vault Cards */
+.vault-login-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.vault-login-card:hover {
+  border-color: var(--accent-purple);
+}
+
+.vault-login-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vault-login-domain {
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vault-login-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vault-action-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vault-action-btn:hover {
+  color: var(--text-main);
+  border-color: var(--accent-purple);
+  background: var(--bg-hover);
+}
+
+.vault-action-btn.btn-del-login:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.vault-login-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  background: var(--bg-primary);
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.vault-login-field-val {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vault-pass-masked {
+  font-family: monospace;
+  letter-spacing: 2px;
+}
+
+.vault-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  margin-bottom: 4px;
+  border: 1px solid var(--border-color);
+  font-size: 11.5px;
+}
+
+.vault-autofill-btn {
+  background: var(--accent-purple);
+  color: white;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.vault-autofill-btn:hover {
+  opacity: 0.9;
+}
+
+/* Bookmark Folders & Badges */
+.bookmark-folder-badge {
+  background: rgba(124, 58, 237, 0.18);
+  color: var(--accent-purple);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.bookmark-folder-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid var(--border-color);
+  margin-top: 4px;
+}

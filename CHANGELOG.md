@@ -5,6 +5,47 @@ All notable changes to **Recon Browser** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-11-19
+
+### Added
+- **Native Bookmarks System & Toolbar**:
+  - Optional Bookmarks Bar right below the navigation bar (`Ctrl+Shift+B` or Settings toggle).
+  - Dedicated navbar Bookmarks button (`★` / `Ctrl+B`) for 1-click access even when the bar is hidden.
+  - Multi-folder organization (Favorites, Recon Apps, Search, and custom user folders).
+  - Sorting support: Recent, Alphabetical (A-Z), and Grouped by Folder.
+  - Webview right-click context menu "★ Bookmark Link" action to save links without needing to open them.
+  - Keyboard shortcut `Ctrl+D` to bookmark the active page.
+- **Daily-Sorted Browsing History Tracker**:
+  - Local history tracker recorded automatically on page navigation without telemetry (`userData/recon_history.json`).
+  - History viewer grouped and sorted chronologically by day (*Today*, *Yesterday*, or full date).
+  - Dedicated navbar History button (`🕒` / `Ctrl+H`) and Settings *Browsing History* tab.
+  - Instant live search filtering across titles and URLs with debouncing.
+  - Granular history clearing by time range (*Last hour*, *Last 24 hours*, *Last 7 days*, *All time*).
+  - Optional "Clear on browser exit" setting with background execution on quit.
+  - Individual item deletion (`×`) and 1-click navigation.
+- **Encrypted Password Vault & Opt-In Autofill**:
+  - Local hardware-backed encryption via Electron `safeStorage` (Windows DPAPI / macOS Keychain) stored at `userData/recon_vault.enc`.
+  - Dedicated navbar Password Vault button (`🔑` / `Ctrl+Shift+L`) and Settings *Password Vault* tab.
+  - Strictly opt-in autofill: detects active tab host and suggests matching logins, with click-to-autofill DOM injection without auto-submitting forms.
+  - Built-in cryptographically secure random password generator (`crypto.randomInt`) with customizable length (8-64), uppercase, lowercase, numbers, and symbols.
+  - Vault management: search credentials, masked password with reveal toggle (👁️/🙈), 1-click copy username/password, edit, and delete.
+  - Add/Edit Credential dialog modal with pre-filled domain from active tab.
+- **Native In-App Background Updater & Default Browser**:
+  - True background binary downloading of installers via `net.fetch()` streamed to `%TEMP%`.
+  - 1-click "Install & Restart" launching installer with native Windows UAC elevation, zero external browser redirects.
+  - First-run Default Browser notice banner with 1-click setup.
+  - Settings *Interface* Default Browser row with system status indicator and toggle (`app.setAsDefaultProtocolClient`).
+
+### Fixed & Polished
+- **Startup Black Screen / Tab Creation Fix**:
+  - Resolved `btnOpenAbout` reference guard and eliminated `loadBookmarks` recursion to guarantee clean first tab creation on initial launch.
+- **Shields Widget Redundancy Cleanup**:
+  - Removed redundant "Shields:" word from the top-right navbar widget, streamlining it to `🛡️ ON [0]` to accommodate Bookmarks, History, and Vault icons.
+- **DoH Fortification**:
+  - Upgraded DNS-over-HTTPS resolvers to direct IP endpoints (`https://1.1.1.1/dns-query`, `https://1.0.0.1/dns-query`, `https://dns.google/dns-query`) to prevent DNS bootstrap leak loops.
+- **Draggable Settings Modal**:
+  - Added header drag handle with `grab`/`grabbing` cursor states.
+
 ## [1.3.3] - 2026-11-18
 
 ### Added

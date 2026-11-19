@@ -11,12 +11,12 @@
   --bg-primary: #090b10;
   --bg-secondary: #121520;
   --bg-hover: #1c2234;
-  --border-color: #1e2436;
+  --border-color: #242c42;
   --accent-purple: #7c3aed;
   --accent-cyan: #06b6d4;
   --accent-green: #22c55e;
-  --text-main: #f1f5f9;
-  --text-muted: #64748b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
   --card-bg: #141926;
   --input-bg: #090b10;
   --popover-bg: #141926;
@@ -26,12 +26,12 @@ body.theme-obsidian {
   --bg-primary: #000000;
   --bg-secondary: #0a0a0a;
   --bg-hover: #171717;
-  --border-color: #262626;
+  --border-color: #2e2e2e;
   --accent-purple: #9333ea;
   --accent-cyan: #06b6d4;
   --accent-green: #22c55e;
-  --text-main: #fafafa;
-  --text-muted: #737373;
+  --text-main: #ffffff;
+  --text-muted: #a3a3a3;
   --card-bg: #0d0d0d;
   --input-bg: #000000;
   --popover-bg: #0d0d0d;
@@ -41,12 +41,12 @@ body.theme-slate {
   --bg-primary: #1a2028;
   --bg-secondary: #222a34;
   --bg-hover: #2e3846;
-  --border-color: #3b4756;
+  --border-color: #3f4e60;
   --accent-purple: #8fb3d9;
   --accent-cyan: #38bdf8;
   --accent-green: #4ade80;
-  --text-main: #e4e9ef;
-  --text-muted: #94a3b8;
+  --text-main: #f1f5f9;
+  --text-muted: #b0c0d4;
   --card-bg: #2b3440;
   --input-bg: #151a21;
   --popover-bg: #2b3440;
@@ -56,12 +56,12 @@ body.theme-dark {
   --bg-primary: #15131c;
   --bg-secondary: #1f1c29;
   --bg-hover: #2b2738;
-  --border-color: #363046;
+  --border-color: #3e3850;
   --accent-purple: #a896ff;
   --accent-cyan: #22d3ee;
   --accent-green: #34d399;
-  --text-main: #ece9f4;
-  --text-muted: #a9a3b8;
+  --text-main: #f5f3fa;
+  --text-muted: #bfb7d4;
   --card-bg: #262236;
   --input-bg: #121019;
   --popover-bg: #262236;
@@ -70,30 +70,30 @@ body.theme-dark {
 body.theme-sepia {
   --bg-primary: #e9dcc2;
   --bg-secondary: #f4e9d3;
-  --bg-hover: #dfceb0;
-  --border-color: #cdbb9a;
+  --bg-hover: #ded0b5;
+  --border-color: #c4b08d;
   --accent-purple: #8a4b12;
-  --accent-cyan: #0284c7;
+  --accent-cyan: #0369a1;
   --accent-green: #15803d;
-  --text-main: #43362b;
-  --text-muted: #786452;
+  --text-main: #1f150e;
+  --text-muted: #4d3826;
   --card-bg: #ecdfc4;
-  --input-bg: #fdf5e6;
+  --input-bg: #fdfaf3;
   --popover-bg: #f4e9d3;
 }
 
 body.theme-mist {
   --bg-primary: #dfe5ec;
   --bg-secondary: #dbe4ee;
-  --bg-hover: #cbd7e4;
-  --border-color: #bccad9;
-  --accent-purple: #355f94;
+  --bg-hover: #c8d5e4;
+  --border-color: #b5c4d4;
+  --accent-purple: #1e40af;
   --accent-cyan: #0284c7;
   --accent-green: #0f766e;
-  --text-main: #26313f;
-  --text-muted: #52637a;
-  --card-bg: #cfe9e2;
-  --input-bg: #f0f4f9;
+  --text-main: #0f172a;
+  --text-muted: #2d3b4e;
+  --card-bg: #d3deea;
+  --input-bg: #f8fafc;
   --popover-bg: #dbe4ee;
 }
 
@@ -101,12 +101,12 @@ body.theme-forest {
   --bg-primary: #06150e;
   --bg-secondary: #0f3320;
   --bg-hover: #185233;
-  --border-color: #257047;
+  --border-color: #2b7d50;
   --accent-purple: #34d399;
   --accent-cyan: #2dd4bf;
   --accent-green: #4ade80;
-  --text-main: #ecfdf5;
-  --text-muted: #94cbb0;
+  --text-main: #f0fdf4;
+  --text-muted: #a3d9bc;
   --card-bg: #113824;
   --input-bg: #081a11;
   --popover-bg: #113824;
@@ -116,12 +116,12 @@ body.theme-dusk {
   --bg-primary: #0e0a18;
   --bg-secondary: #2b1c54;
   --bg-hover: #3d2775;
-  --border-color: #5d3ea3;
+  --border-color: #6947b7;
   --accent-purple: #c084fc;
   --accent-cyan: #38bdf8;
   --accent-green: #34d399;
-  --text-main: #f3f0fa;
-  --text-muted: #b4a7d1;
+  --text-main: #faf5ff;
+  --text-muted: #c8bde3;
   --card-bg: #271b4b;
   --input-bg: #0c0816;
   --popover-bg: #271b4b;
@@ -131,12 +131,12 @@ body.theme-evergreen {
   --bg-primary: #0a1c15;
   --bg-secondary: #134232;
   --bg-hover: #1b5944;
-  --border-color: #2e7a5e;
+  --border-color: #338768;
   --accent-purple: #50c878;
   --accent-cyan: #2dd4bf;
   --accent-green: #4ade80;
   --text-main: #f0fdf4;
-  --text-muted: #9dc8b5;
+  --text-muted: #a8dcc5;
   --card-bg: #164736;
   --input-bg: #0b221a;
   --popover-bg: #164736;
@@ -146,12 +146,12 @@ body.theme-aero {
   --bg-primary: #9ec0df;
   --bg-secondary: #d3e4f5;
   --bg-hover: #bdd7ef;
-  --border-color: #88aecd;
+  --border-color: #82a8c7;
   --accent-purple: #1d4ed8;
   --accent-cyan: #0284c7;
   --accent-green: #0d9488;
-  --text-main: #0c1c2b;
-  --text-muted: #435e77;
+  --text-main: #08131e;
+  --text-muted: #1c364e;
   --card-bg: #eaf2fb;
   --input-bg: #ffffff;
   --popover-bg: #d3e4f5;
@@ -166,7 +166,7 @@ body.theme-contrast {
   --accent-cyan: #00ffff;
   --accent-green: #00ff00;
   --text-main: #ffffff;
-  --text-muted: #cccccc;
+  --text-muted: #ffffff;
   --card-bg: #000000;
   --input-bg: #000000;
   --popover-bg: #000000;
@@ -176,12 +176,12 @@ body.theme-red {
   --bg-primary: #26040a;
   --bg-secondary: #540b19;
   --bg-hover: #751224;
-  --border-color: #8f1f33;
+  --border-color: #9e2338;
   --accent-purple: #ffd166;
   --accent-cyan: #ff8c42;
   --accent-green: #22c55e;
   --text-main: #fff5f5;
-  --text-muted: #f4c2ca;
+  --text-muted: #f7cbd2;
   --card-bg: #440914;
   --input-bg: #1a0307;
   --popover-bg: #440914;
@@ -191,12 +191,12 @@ body.theme-yellow {
   --bg-primary: #ffaa00;
   --bg-secondary: #fff2b2;
   --bg-hover: #ffe47a;
-  --border-color: #d99000;
+  --border-color: #c98500;
   --accent-purple: #1e3a8a;
   --accent-cyan: #0284c7;
   --accent-green: #15803d;
-  --text-main: #261f06;
-  --text-muted: #574612;
+  --text-main: #1c1503;
+  --text-muted: #3e2d04;
   --card-bg: #fff9d6;
   --input-bg: #ffffff;
   --popover-bg: #fff2b2;
@@ -206,12 +206,12 @@ body.theme-colorblind-blue-orange {
   --bg-primary: #0c131c;
   --bg-secondary: #182638;
   --bg-hover: #243954;
-  --border-color: #355378;
+  --border-color: #3d5e88;
   --accent-purple: #0072b2;
   --accent-cyan: #56b4e9;
   --accent-green: #e69f00;
-  --text-main: #f0f4f8;
-  --text-muted: #9ab0c8;
+  --text-main: #f8fafc;
+  --text-muted: #b8cde8;
   --card-bg: #20334a;
   --input-bg: #0a1017;
   --popover-bg: #182638;
@@ -221,12 +221,12 @@ body.theme-colorblind-cyan-magenta {
   --bg-primary: #110e19;
   --bg-secondary: #211a30;
   --bg-hover: #2f2545;
-  --border-color: #4c3b6d;
+  --border-color: #55427a;
   --accent-purple: #cc79a7;
   --accent-cyan: #009e73;
   --accent-green: #f0e442;
   --text-main: #fbf7fc;
-  --text-muted: #aa9eb4;
+  --text-muted: #d0c4dc;
   --card-bg: #2c2340;
   --input-bg: #0d0b14;
   --popover-bg: #211a30;
@@ -236,12 +236,12 @@ body.theme-ocean {
   --bg-primary: #070e1c;
   --bg-secondary: #0f1c35;
   --bg-hover: #182b52;
-  --border-color: #24417a;
+  --border-color: #2b4d91;
   --accent-purple: #3b82f6;
   --accent-cyan: #60a5fa;
   --accent-green: #10b981;
   --text-main: #f0f7ff;
-  --text-muted: #8ba5c9;
+  --text-muted: #b8d4f6;
   --card-bg: #0c172d;
   --input-bg: #040913;
   --popover-bg: #0f1c35;
@@ -251,12 +251,12 @@ body.theme-azure {
   --bg-primary: #06151e;
   --bg-secondary: #0c2a3b;
   --bg-hover: #133e56;
-  --border-color: #1e5a7d;
+  --border-color: #23678e;
   --accent-purple: #06b6d4;
   --accent-cyan: #38bdf8;
   --accent-green: #34d399;
   --text-main: #f0fdff;
-  --text-muted: #84adbf;
+  --text-muted: #b2dff5;
   --card-bg: #0a2230;
   --input-bg: #030d14;
   --popover-bg: #0c2a3b;
@@ -266,12 +266,12 @@ body.theme-scarlet {
   --bg-primary: #1f0507;
   --bg-secondary: #3b0d12;
   --bg-hover: #57141b;
-  --border-color: #821c27;
+  --border-color: #96212d;
   --accent-purple: #f43f5e;
   --accent-cyan: #fb7185;
   --accent-green: #22c55e;
   --text-main: #fff1f2;
-  --text-muted: #e29ca6;
+  --text-muted: #f8c0c8;
   --card-bg: #2d090d;
   --input-bg: #140204;
   --popover-bg: #3b0d12;
@@ -281,12 +281,12 @@ body.theme-solar {
   --bg-primary: #161205;
   --bg-secondary: #2d240c;
   --bg-hover: #453612;
-  --border-color: #6b531c;
+  --border-color: #795d1f;
   --accent-purple: #f59e0b;
   --accent-cyan: #fbbf24;
   --accent-green: #10b981;
   --text-main: #fffbeb;
-  --text-muted: #c7b68a;
+  --text-muted: #eddca8;
   --card-bg: #221b08;
   --input-bg: #0c0a02;
   --popover-bg: #2d240c;
@@ -309,30 +309,39 @@ body.aspect-solid #recon-navbar {
 body.aspect-solid #omnibar {
   background: var(--input-bg) !important;
   border: 1.5px solid var(--border-color) !important;
+  color: var(--text-main) !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
 body.aspect-solid .shields-widget,
-body.aspect-solid #btn-ecosystem,
 body.aspect-solid .nav-controls button,
 body.aspect-solid .nav-icon-btn {
   background: var(--card-bg) !important;
   border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
+}
+
+body.aspect-solid #btn-ecosystem {
+  background: var(--accent-purple) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 
 body.aspect-solid .tab {
   background-color: var(--bg-secondary) !important;
   border: 1px solid var(--border-color) !important;
   border-bottom: none !important;
+  color: var(--text-muted) !important;
 }
 
 body.aspect-solid .tab.active {
   background-color: var(--card-bg) !important;
   border-top: 2px solid var(--accent-purple) !important;
+  color: var(--text-main) !important;
   box-shadow: none !important;
 }
 
@@ -349,86 +358,135 @@ body.aspect-solid .settings-modal {
 /* --- 2. METALLIC (Brushed Sheen & Chamfered Edge Finish) --- */
 body.aspect-metallic header,
 body.aspect-metallic #recon-navbar {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.07) 25%, rgba(0, 0, 0, 0.28) 55%, rgba(255, 255, 255, 0.14) 85%, rgba(0, 0, 0, 0.45) 100%), var(--bg-secondary) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.5) !important;
-  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, #ffffff 60%) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 30%, rgba(0, 0, 0, 0.15) 70%, rgba(255, 255, 255, 0.08) 100%), var(--bg-secondary) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(0, 0, 0, 0.4), 0 3px 12px rgba(0, 0, 0, 0.35) !important;
+  border-bottom: 1px solid var(--border-color) !important;
   backdrop-filter: none !important;
 }
 
+/* Omnibar in Metallic aspect: Clean, high-contrast, zero dark mud */
 body.aspect-metallic #omnibar {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.18) 60%, rgba(255, 255, 255, 0.08) 100%), var(--input-bg) !important;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7), inset 0 -1px 0 rgba(255, 255, 255, 0.25), 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-  border: 1px solid color-mix(in srgb, var(--border-color) 40%, #ffffff 60%) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(0, 0, 0, 0.14) 100%), var(--input-bg) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35), inset 0 -1px 0 rgba(255, 255, 255, 0.15) !important;
+  border: 1.5px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+}
+
+/* Light themes in Metallic aspect: ensure white/cream crisp input background */
+body.theme-sepia.aspect-metallic #omnibar,
+body.theme-mist.aspect-metallic #omnibar,
+body.theme-yellow.aspect-metallic #omnibar,
+body.theme-aero.aspect-metallic #omnibar {
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.75) 100%), var(--input-bg) !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  border: 1.5px solid var(--border-color) !important;
+  color: var(--text-main) !important;
 }
 
 body.aspect-metallic .shields-widget,
-body.aspect-metallic #btn-ecosystem,
 body.aspect-metallic .nav-controls button:not(:disabled),
 body.aspect-metallic .nav-icon-btn {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0.06) 50%, rgba(0, 0, 0, 0.35) 100%), var(--card-bg) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 2px 6px rgba(0, 0, 0, 0.45) !important;
-  border: 1px solid color-mix(in srgb, var(--border-color) 35%, #ffffff 65%) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 50%, rgba(0, 0, 0, 0.18) 100%), var(--card-bg) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 5px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+}
+
+/* Recon Apps button in Metallic: Always rich accent purple with crisp white text */
+body.aspect-metallic #btn-ecosystem {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(0, 0, 0, 0.25) 100%), var(--accent-purple) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+body.aspect-metallic .tab {
+  color: var(--text-muted) !important;
 }
 
 body.aspect-metallic .tab.active {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.1) 40%, rgba(0, 0, 0, 0.3) 100%), var(--card-bg) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 1px 0 0 rgba(255, 255, 255, 0.25), inset -1px 0 0 rgba(255, 255, 255, 0.25) !important;
-  border-color: color-mix(in srgb, var(--border-color) 40%, #ffffff 60%) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0.15) 100%), var(--card-bg) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-main) !important;
 }
 
 body.aspect-metallic #shields-popover,
 body.aspect-metallic #settings-drawer,
 body.aspect-metallic .settings-modal {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.05) 30%, rgba(0, 0, 0, 0.35) 60%, rgba(255, 255, 255, 0.16) 80%, rgba(0, 0, 0, 0.5) 100%), var(--card-bg) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), inset -1px 0 0 rgba(255, 255, 255, 0.2), 0 20px 50px rgba(0, 0, 0, 0.75) !important;
-  border: 1px solid color-mix(in srgb, var(--border-color) 35%, #ffffff 65%) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 30%, rgba(0, 0, 0, 0.2) 60%, rgba(255, 255, 255, 0.08) 80%, rgba(0, 0, 0, 0.3) 100%), var(--card-bg) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 20px 50px rgba(0, 0, 0, 0.75) !important;
+  border: 1px solid var(--border-color) !important;
 }
 
 /* --- 3. GLASS (Frosted Acrylic & Ambient Glow Finish) --- */
 body.aspect-glass header,
 body.aspect-glass #recon-navbar {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.04) 100%), color-mix(in srgb, var(--bg-secondary) 50%, transparent) !important;
-  backdrop-filter: blur(28px) saturate(220%) brightness(112%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(220%) brightness(112%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.02) 100%), color-mix(in srgb, var(--bg-secondary) 65%, transparent) !important;
+  backdrop-filter: blur(28px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35) !important;
 }
 
 body.aspect-glass #omnibar {
-  background: color-mix(in srgb, var(--input-bg) 45%, transparent) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.28) !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 0 14px color-mix(in srgb, var(--accent-purple) 30%, transparent) !important;
+  background: color-mix(in srgb, var(--input-bg) 70%, transparent) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1.5px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 10px color-mix(in srgb, var(--accent-purple) 25%, transparent) !important;
+}
+
+body.theme-sepia.aspect-glass #omnibar,
+body.theme-mist.aspect-glass #omnibar,
+body.theme-yellow.aspect-glass #omnibar,
+body.theme-aero.aspect-glass #omnibar {
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: var(--text-main) !important;
+  border: 1.5px solid var(--border-color) !important;
 }
 
 body.aspect-glass .shields-widget,
-body.aspect-glass #btn-ecosystem,
 body.aspect-glass #read-aloud-bar,
-body.aspect-glass .reader-header-bar {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 100%), color-mix(in srgb, var(--card-bg) 50%, transparent) !important;
-  backdrop-filter: blur(20px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(200%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 6px 18px rgba(0, 0, 0, 0.35) !important;
+body.aspect-glass .reader-header-bar,
+body.aspect-glass .nav-controls button:not(:disabled),
+body.aspect-glass .nav-icon-btn {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.03) 100%), color-mix(in srgb, var(--card-bg) 65%, transparent) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.aspect-glass #btn-ecosystem {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(0, 0, 0, 0.15) 100%), var(--accent-purple) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+body.aspect-glass .tab {
+  color: var(--text-muted) !important;
 }
 
 body.aspect-glass .tab.active {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 100%), color-mix(in srgb, var(--card-bg) 60%, transparent) !important;
-  backdrop-filter: blur(20px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(200%) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.04) 100%), color-mix(in srgb, var(--card-bg) 75%, transparent) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-main) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
 }
 
 body.aspect-glass #shields-popover,
 body.aspect-glass #settings-drawer,
 body.aspect-glass .settings-modal {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.02) 100%), color-mix(in srgb, var(--card-bg) 45%, transparent) !important;
-  backdrop-filter: blur(36px) saturate(220%) brightness(115%) !important;
-  -webkit-backdrop-filter: blur(36px) saturate(220%) brightness(115%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.32) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45), 0 24px 60px rgba(0, 0, 0, 0.65) !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.02) 100%), color-mix(in srgb, var(--card-bg) 70%, transparent) !important;
+  backdrop-filter: blur(36px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(200%) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 24px 60px rgba(0, 0, 0, 0.65) !important;
 }
 
 body {
@@ -481,6 +539,7 @@ body {
   min-width: 140px;
   max-width: 210px;
   font-size: 12px;
+  font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -494,6 +553,7 @@ body {
 .tab.active {
   background-color: var(--card-bg);
   color: var(--text-main);
+  font-weight: 600;
   border-top: 2px solid var(--accent-purple);
   height: 32px;
 }
@@ -526,7 +586,8 @@ body {
 
 .tab-close {
   font-size: 16px;
-  color: var(--text-muted);
+  color: var(--text-main);
+  opacity: 0.75;
   border-radius: 4px;
   width: 16px;
   height: 16px;
@@ -538,13 +599,15 @@ body {
 .tab-close:hover {
   background-color: rgba(239, 68, 68, 0.2);
   color: #ef4444;
+  opacity: 1;
 }
 
 #btn-new-tab {
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: var(--text-main);
   font-size: 18px;
+  font-weight: 700;
   width: 26px;
   height: 26px;
   border-radius: 6px;
@@ -557,7 +620,7 @@ body {
 
 #btn-new-tab:hover {
   background-color: var(--bg-hover);
-  color: var(--text-main);
+  color: var(--accent-purple);
 }
 
 /* ==========================================================================
@@ -583,8 +646,9 @@ body {
 .nav-controls button, .nav-icon-btn {
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: var(--text-main);
   font-size: 18px;
+  font-weight: 700;
   width: 30px;
   height: 30px;
   border-radius: 6px;
@@ -597,7 +661,7 @@ body {
 
 .nav-controls button:hover, .nav-icon-btn:hover {
   background-color: var(--bg-hover);
-  color: var(--text-main);
+  color: var(--accent-purple);
 }
 
 .nav-controls button:disabled {
@@ -630,8 +694,17 @@ body {
   padding: 0 170px 0 145px;
   color: var(--text-main);
   font-size: 13px;
+  font-weight: 500;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+#omnibar::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.95 !important;
+  font-weight: 500 !important;
 }
 
 #omnibar:focus {
@@ -707,20 +780,20 @@ body {
 }
 
 .blocked-badge {
-  background-color: var(--card-bg);
-  color: var(--text-muted);
+  background-color: color-mix(in srgb, var(--border-color) 40%, var(--bg-primary));
+  color: var(--text-main) !important;
   border: 1px solid var(--border-color);
   padding: 1px 7px;
   border-radius: 10px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   transition: all 0.2s ease;
 }
 
 .blocked-badge.has-blocked {
-  background-color: var(--accent-purple);
-  color: #ffffff;
-  border-color: var(--accent-purple);
+  background-color: var(--accent-purple) !important;
+  color: #ffffff !important;
+  border-color: var(--accent-purple) !important;
 }
 
 /* Recon Apps Ecosystem Dropdown */

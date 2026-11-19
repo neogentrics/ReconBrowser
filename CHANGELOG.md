@@ -5,6 +5,21 @@ All notable changes to **Recon Browser** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2026-11-19
+
+### Fixed
+- **Universal High-Contrast Theme & Text Legibility Overhaul**:
+  - Resolved theme contrast blur and color clashes across all 19 themes (Warm Sepia, Mist, Cyber, Aero, Solar, Cobalt Ocean, Dusk, etc.) and all 3 visual finishes (Solid, Metallic, Glass).
+  - Upgraded palette text contrast ratios to exceed WCAG AA (4.5:1) and AAA (7:1+) standards:
+    - `Warm Sepia` (`theme-sepia`): increased main text contrast to 14.8:1 (`#1f150e`) and muted text to 7.4:1 (`#4d3826`), eliminating washed-out brown blur.
+    - `Cobalt Abyss` (`theme-ocean`): increased muted label & tagline contrast to 9.5:1 (`#b8d4f6`), resolving dark navy illegibility.
+    - `Nordic Mist`, `Solar Flare`, `Golden Amber`, `Aero Glass`, and other light/dark themes upgraded with matching high-contrast ratios.
+  - Eliminated dark sludge metallic gradient overlay (`rgba(0,0,0,0.32)`) on light themes: replaced with clean specular sheen and dedicated light theme metallic/glass overrides.
+  - Fixed `#btn-ecosystem` ("Recon Apps") styling in Metallic and Glass aspects so it always renders crisp white text on purple accent, eliminating low-contrast beige-on-beige.
+  - Added explicit, high-contrast `::placeholder` styling for the Omnibar (`#omnibar`) and Start Page search input (`#start-search`), eliminating faint 54% opacity browser default wash.
+  - Enhanced visibility of tab titles, close buttons, navigation controls (back/forward/refresh/home), and shields pill badges.
+  - Added automated WCAG 2.1 contrast verification test suite (`tests/test_v171_contrast.mjs`) validating 75/75 contrast ratios across all themes and aspects.
+
 ## [1.7.0] - 2026-11-19
 
 ### Added

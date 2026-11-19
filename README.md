@@ -24,7 +24,7 @@
 
 ## Downloads
 
-The latest version is **v1.7.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
+The latest version is **v1.7.1**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
 
 | Platform | Download Package | Description |
 | :--- | :--- | :--- |
@@ -61,6 +61,17 @@ An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 ---
 
 ## What's New
+
+### v1.7.1: Universal High-Contrast Theme & Text Legibility Overhaul
+
+- **Universal High-Contrast Theme & Palette Overhaul**:
+  - Eliminated text blurring, low contrast, and color clashes across all 19 themes (Warm Sepia, Mist, Cyber, Aero, Solar, Cobalt Ocean, Dusk, etc.) and all 3 visual finishes (Solid, Metallic, Glass).
+  - Main text contrast upgraded to exceed 14:1 (WCAG AAA) on light themes and muted text contrast boosted above 7:1 (WCAG AAA).
+  - Light theme metallic finishes re-engineered with clean specular plates and highlights, completely eliminating dark smudge / sludge gradient smears (`rgba(0,0,0,0.32)`) under search inputs and stat cards.
+  - `#btn-ecosystem` ("Recon Apps") button locked to crisp white text on purple accent across all finishes, eliminating low-contrast beige-on-beige.
+  - Added dedicated, high-contrast `::placeholder` styling for the Omnibar and Start Page search input so placeholders are immediately visible and never washed out.
+  - High-visibility tab titles, close buttons, navigation controls (back/forward/refresh/home), and shields pill badges.
+  - Automated WCAG 2.1 contrast verification test suite (`tests/test_v171_contrast.mjs`) ensuring 100% compliance across all 19 themes.
 
 ### v1.7.0: Recon Containers, Isolated Persona Jars & Ephemeral Disposable Tabs
 

@@ -84,6 +84,7 @@ const btnReaderSizeUp = document.getElementById('btn-reader-size-up');
 const btnReaderClose = document.getElementById('btn-reader-close');
 
 // About Dialog
+const btnOpenAbout = document.getElementById('btn-open-about');
 const aboutDlg = document.getElementById('about-dlg');
 const aboutClose = document.getElementById('about-close');
 const aboutDone = document.getElementById('about-done');
@@ -1311,20 +1312,22 @@ if (btnOpenAbout) {
   });
 }
 
-aboutClose.addEventListener('click', () => aboutDlg.close());
-aboutDone.addEventListener('click', () => aboutDlg.close());
+if (aboutClose) aboutClose.addEventListener('click', () => aboutDlg?.close());
+if (aboutDone) aboutDone.addEventListener('click', () => aboutDlg?.close());
 
-aboutCopy.addEventListener('click', async () => {
-  const info = await ipcRenderer.invoke('get-app-info');
-  const details = [
-    `Recon Browser ${info.version}`,
-    `Electron ${info.electron} · Chromium ${info.chrome} · Node ${info.node}`,
-    `${info.os}`
-  ].join('\n');
+if (aboutCopy) {
+  aboutCopy.addEventListener('click', async () => {
+    const info = await ipcRenderer.invoke('get-app-info');
+    const details = [
+      `Recon Browser ${info.version}`,
+      `Electron ${info.electron} · Chromium ${info.chrome} · Node ${info.node}`,
+      `${info.os}`
+    ].join('\n');
 
-  ipcRenderer.send('copy-to-clipboard', details);
-  showToast('Version details copied to clipboard');
-});
+    ipcRenderer.send('copy-to-clipboard', details);
+    showToast('Version details copied to clipboard');
+  });
+}
 
 // External Links in About Modal & Settings Modal
 const externalLinks = {
@@ -1830,7 +1833,9 @@ function loadBookmarks() {
     const raw = localStorage.getItem('recon_bookmarks');
     if (raw) return JSON.parse(raw);
   } catch (err) {}
-  saveBookmarks(DEFAULT_BOOKMARKS);
+  try {
+    localStorage.setItem('recon_bookmarks', JSON.stringify(DEFAULT_BOOKMARKS));
+  } catch (err) {}
   return DEFAULT_BOOKMARKS;
 }
 

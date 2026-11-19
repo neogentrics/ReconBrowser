@@ -33,6 +33,8 @@
       <button id="btn-read-aloud" class="omnibar-action-btn" title="Read Aloud (Ctrl+Shift+A)">🔊</button>
       <button id="btn-archive-page" class="omnibar-action-btn" title="Save to Offline Research Archive (Ctrl+S)">📦</button>
       <button id="btn-clip-research" class="omnibar-action-btn" title="Send Research Clip to Recon Apps (Ctrl+Shift+C)">📎</button>
+      <button id="btn-audio-grabber" class="omnibar-action-btn" title="Audio Studio Grabber (Ctrl+Shift+G)">🎙️</button>
+      <button id="btn-toggle-companion-rail" class="omnibar-action-btn" title="Toggle Author Desk Companion Rail (Ctrl+Shift+D)">✍️</button>
     </div>
 
     <!-- Recon Shields Status Widget -->
@@ -158,8 +160,76 @@
     </div>
   </div>
 
-  <!-- Multi-Webview Container -->
-  <main id="browser-container"></main>
+  <!-- Split Workspace: Webviews & Docked Author Desk Companion Rail (v1.6.0) -->
+  <div id="workspace-container" class="workspace-container">
+    <main id="browser-container"></main>
+    <div id="rail-resizer" class="rail-resizer" style="display: none;"></div>
+    <aside id="companion-rail" class="companion-rail companion-rail-hidden">
+      <!-- Companion Rail Header -->
+      <div class="rail-header">
+        <div class="rail-header-title">
+          <span>✍️</span>
+          <strong>Author Desk Companion</strong>
+        </div>
+        <div class="rail-header-actions">
+          <button id="btn-rail-dock-pos" class="rail-icon-btn" title="Switch Dock Position (Left/Right)">↔️</button>
+          <button id="btn-rail-close" class="rail-icon-btn" title="Close Rail (Ctrl+Shift+D)">×</button>
+        </div>
+      </div>
+
+      <!-- Note Selector & Controls -->
+      <div class="rail-note-bar">
+        <select id="companion-note-select" class="rail-select">
+          <!-- Populated dynamically with notes -->
+        </select>
+        <button id="btn-rail-new-note" class="rail-btn-subtle" title="Create New Note">+ New</button>
+        <button id="btn-rail-delete-note" class="rail-btn-subtle" title="Delete Active Note">🗑️</button>
+      </div>
+
+      <!-- Note Title -->
+      <div class="rail-input-group">
+        <input type="text" id="companion-note-title" class="rail-input" placeholder="Note Title..." />
+      </div>
+
+      <!-- Mode Switcher (Edit vs Preview) -->
+      <div class="rail-mode-bar">
+        <div class="rail-mode-buttons">
+          <button id="btn-rail-mode-edit" class="rail-mode-btn active">✏️ Edit</button>
+          <button id="btn-rail-mode-preview" class="rail-mode-btn">👁️ Preview</button>
+        </div>
+        <div id="rail-word-count" class="rail-meta-text">0 words</div>
+      </div>
+
+      <!-- Drafting Editor / Preview Container -->
+      <div class="rail-editor-container">
+        <textarea id="companion-note-content" class="rail-textarea" placeholder="Draft your notes, outline chapters, or append web research clippings..."></textarea>
+        <div id="companion-markdown-preview" class="rail-preview-pane" style="display: none;"></div>
+      </div>
+
+      <!-- Rail Action Toolbar -->
+      <div class="rail-action-toolbar">
+        <button id="btn-rail-clip-selection" class="btn-primary" style="font-size: 11px; padding: 4px 8px;" title="Append highlighted text on active tab (Ctrl+Shift+E)">📋 Clip</button>
+        <button id="btn-rail-save-note" class="btn-subtle" style="font-size: 11px; padding: 4px 8px;">💾 Save</button>
+        <button id="btn-rail-export-md" class="btn-subtle" style="font-size: 11px; padding: 4px 8px;" title="Export Note to Markdown">📤 Export</button>
+        <button id="btn-rail-send-author-desk" class="btn-secondary" style="font-size: 11px; padding: 4px 8px;" title="Send directly to Author Desk via App Link">⚡ Send to Author Desk</button>
+      </div>
+
+      <!-- Mini Audio Studio Grabber Drawer at Bottom of Rail -->
+      <div class="rail-audio-section">
+        <div class="rail-audio-header" id="rail-audio-toggle">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span>🎙️</span>
+            <strong style="font-size: 11.5px;">RT Audio Studio Grabber</strong>
+            <span id="rail-media-count-badge" class="inspector-domain-pill" style="font-size: 10px; padding: 1px 6px;">0 streams</span>
+          </div>
+          <button id="btn-rail-refresh-audio" class="rail-icon-btn" title="Refresh Audio Detection">↻</button>
+        </div>
+        <div id="rail-audio-list" class="rail-audio-list">
+          <div style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 8px;">No audio streams detected on current page.</div>
+        </div>
+      </div>
+    </aside>
+  </div>
 
   <!-- Dedicated Reader View Overlay -->
   <div id="reader-overlay" class="reader-overlay-hidden">
@@ -286,6 +356,9 @@
           </button>
           <button class="settings-nav-btn" data-tab="applink">
             <span class="nav-icon">⚡</span> Recon App Link
+          </button>
+          <button class="settings-nav-btn" data-tab="studio">
+            <span class="nav-icon">✍️</span> Studio Suite
           </button>
           <button class="settings-nav-btn" data-tab="about">
             <span class="nav-icon">ℹ️</span> About
@@ -762,13 +835,65 @@
             <button id="btn-refresh-app-link" class="btn-subtle" style="margin-top: 12px; font-size: 12px;">↻ Refresh Linked Apps</button>
           </div>
 
-          <!-- 6. About -->
+          <!-- 9. Creative Suite Studio Hub (v1.6.0) -->
+          <div class="settings-panel" id="panel-studio">
+            <h4 class="panel-heading" style="margin-bottom: 12px;">Creative Suite Studio &amp; Media Ingestion</h4>
+
+            <!-- Banner -->
+            <div class="sync-banner" style="display: flex; align-items: center; gap: 10px; background: rgba(124, 58, 237, 0.1); border: 1px solid rgba(124, 58, 237, 0.35); border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;">
+              <span style="font-size: 22px;">✍️</span>
+              <div style="font-size: 11.5px; line-height: 1.4;">
+                <strong style="color: var(--accent-purple); display: block;">Author Desk Companion &amp; RT Audio Studio Ingestion Hub</strong>
+                <span style="color: var(--text-muted);">Split-screen drafting, research clipping, and in-page audio stream capture connected directly to your creative desktop suite.</span>
+              </div>
+            </div>
+
+            <!-- Companion Rail Settings Card -->
+            <div class="sync-config-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 14px; margin-bottom: 14px;">
+              <h5 class="subpanel-heading" style="margin: 0 0 8px;">Author Desk Companion Rail Options</h5>
+              <div class="setting-row">
+                <div class="setting-label-group">
+                  <strong>Default Dock Position</strong>
+                  <small>Choose whether the companion rail docks on the right or left</small>
+                </div>
+                <select id="select-rail-dock-position" class="settings-select">
+                  <option value="right" selected>Dock Right (Default)</option>
+                  <option value="left">Dock Left</option>
+                </select>
+              </div>
+              <div class="setting-toggle-row">
+                <div class="setting-label-group">
+                  <strong>Live Markdown Preview</strong>
+                  <small>Automatically render Markdown formatting as you type</small>
+                </div>
+                <input type="checkbox" id="toggle-rail-live-preview" class="recon-checkbox" checked />
+              </div>
+            </div>
+
+            <!-- RT Audio Studio Media Ingestion Card -->
+            <div class="sync-config-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 14px; margin-bottom: 14px;">
+              <h5 class="subpanel-heading" style="margin: 0 0 8px;">RT Audio Studio Media Grabber Options</h5>
+              <div class="setting-toggle-row">
+                <div class="setting-label-group">
+                  <strong>Auto-Sniff Media Streams</strong>
+                  <small>Detect audio/video tracks and podcasts while browsing</small>
+                </div>
+                <input type="checkbox" id="toggle-audio-auto-sniff" class="recon-checkbox" checked />
+              </div>
+              <p style="font-size: 11px; color: var(--text-muted); margin: 6px 0 10px;">
+                Captured audio clips are saved locally to <code style="font-family: monospace; color: var(--accent-cyan);">userData/audio_studio_clips/</code> with automated metadata tagging.
+              </p>
+              <button id="btn-open-audio-drawer-settings" class="btn-primary" style="font-size: 11.5px; padding: 5px 12px;">🎙️ Open Audio Grabber Drawer...</button>
+            </div>
+          </div>
+
+          <!-- 10. About -->
           <div class="settings-panel" id="panel-about">
             <div class="about-panel-header" style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
               <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
               <div>
                 <h3 style="margin: 0; font-size: 18px;">Recon Browser</h3>
-                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.5.0</span>
+                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.6.0</span>
               </div>
             </div>
             <p class="about-desc" style="font-size: 12px; opacity: 0.85; margin: 8px 0 14px; line-height: 1.4;">
@@ -823,7 +948,7 @@
         <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
         <div>
           <h2>Recon Browser</h2>
-          <span id="about-version" class="about-ver">Version 1.5.0</span>
+          <span id="about-version" class="about-ver">Version 1.6.0</span>
         </div>
       </div>
 
@@ -1019,6 +1144,37 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- RT Audio Studio Media Grabber Drawer (v1.6.0) -->
+  <div id="audio-grabber-drawer" class="inspector-drawer-hidden">
+    <div class="inspector-drawer-header">
+      <div class="inspector-header-left">
+        <span class="inspector-badge-icon">🎙️</span>
+        <strong>RT Audio Studio Stream &amp; Reference Grabber</strong>
+        <span id="audio-grabber-domain-badge" class="inspector-domain-pill">Active Tab</span>
+      </div>
+      <div class="inspector-filters">
+        <button class="inspector-filter-btn active" id="btn-audio-tab-detected">Detected Streams (<span id="audio-count-detected">0</span>)</button>
+        <button class="inspector-filter-btn" id="btn-audio-tab-saved">Saved Clips (<span id="audio-count-saved">0</span>)</button>
+      </div>
+      <div class="inspector-header-right">
+        <button id="btn-scan-audio-page" class="btn-subtle" style="font-size: 11px; padding: 3px 8px;" title="Scan Active Page for Media">🔍 Scan Page</button>
+        <button id="btn-close-audio-drawer" class="modal-close-btn" title="Close Drawer (Esc)">×</button>
+      </div>
+    </div>
+    <div class="inspector-table-container" style="padding: 12px 16px;">
+      <div id="audio-grabber-content-detected">
+        <div id="audio-streams-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="text-align: center; color: var(--text-muted); padding: 25px; font-size: 12px;">No audio streams detected on this page yet. Play or load audio to capture.</div>
+        </div>
+      </div>
+      <div id="audio-grabber-content-saved" style="display: none;">
+        <div id="audio-saved-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="text-align: center; color: var(--text-muted); padding: 25px; font-size: 12px;">No saved clips in RT Audio Studio library yet.</div>
+        </div>
+      </div>
     </div>
   </div>
 

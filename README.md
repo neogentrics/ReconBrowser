@@ -24,7 +24,7 @@
 
 ## Downloads
 
-The latest version is **v1.5.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
+The latest version is **v1.6.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
 
 | Platform | Download Package | Description |
 | :--- | :--- | :--- |
@@ -61,6 +61,23 @@ An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 ---
 
 ## What's New
+
+### v1.6.0: Docked Author Desk Companion Rail, RT Audio Studio Grabber & Studio Suite Hub
+
+- **Docked Author Desk Companion Rail (`Ctrl+Shift+D` / Omnibar `✍️`)**:
+  - Split-screen drafting scratchpad docked alongside active browsing tabs for simultaneous research and manuscript writing.
+  - Multi-note drafting canvas with live Markdown rendering, note switcher, and real-time word/character counts.
+  - Quick "Clip to Rail" button and keyboard shortcut (`Ctrl+Shift+E` / context menu) to append highlighted web text with formatted blockquotes and source attribution (`[Title](URL) — accessed Date`).
+  - Customizable dock position: toggle between docking on the Right or Left (`↔️`), with draggable split-view resizer.
+  - 1-click **Export to Markdown** (`.md`) and direct **Send to RT Author Desk** via App Link protocol.
+- **RT Audio Studio Media & Stream Grabber (`Ctrl+Shift+G` / Omnibar `🎙️`)**:
+  - In-page media sniffer automatically detecting audio streams, podcast episodes, and media files (`.mp3`, `.wav`, `.ogg`, `.m4a`, `.aac`, `.flac`, `.opus`, `.webm`).
+  - Sliding **Audio Studio Grabber Drawer** with per-tab detected streams counter, in-browser audio preview player, and 1-click download directly into RT Audio Studio's project library (`userData/audio_studio_clips/`).
+  - Mini audio reference player embedded in the bottom of the Companion Rail for quick scrubbing and playback while writing.
+  - Saved clips catalog management with 1-click deletion and direct file paths.
+- **Recon Studio Dispatch Hub & Studio Menu**:
+  - Dedicated top-level **Studio** application menu with accelerators for toggling the Companion Rail (`Ctrl+Shift+D`), clipping active text (`Ctrl+Shift+E`), opening the Audio Grabber (`Ctrl+Shift+G`), and saving offline archives (`Ctrl+S`).
+  - Settings *Studio Suite* tab (`panel-studio`) for companion rail preferences, auto-sniffing toggles, and direct drawer access.
 
 ### v1.5.0: Zero-Knowledge Sync, Universal Import/Export, Shields 2.0 & Offline Research Archives
 
@@ -159,10 +176,14 @@ The first stable release: multi-tab browsing, the DuckDuckGo address bar with `!
 - `Ctrl+L` / `Cmd+L`: Focus and select omnibar
 - `Ctrl+R` / `Cmd+R`: Reload current page
 - `Ctrl+,` / `Cmd+,`: Open settings
+- `Ctrl+Shift+D` / `Cmd+Shift+D`: Toggle Author Desk Companion Rail
+- `Ctrl+Shift+E` / `Cmd+Shift+E`: Append highlighted text to Companion Rail
+- `Ctrl+Shift+G` / `Cmd+Shift+G`: Open RT Audio Studio Media Grabber
 - `Ctrl+Shift+C` / `Cmd+Shift+C`: Send Research Clip to Recon Apps (RT Story Tracker / RT Markdown Reader)
 - `Ctrl+Alt+R` / `Cmd+Alt+R`: Toggle Reader View (`Esc` leaves it)
 - `Ctrl+Shift+A` / `Cmd+Shift+A`: Read the page aloud
 - `Ctrl+Shift+X` / `Cmd+Shift+X`: Stop reading
+- `Ctrl+S` / `Cmd+S`: Save active page to Offline Research Archive (`.reconarchive`)
 - `!g <query>`: Instant search redirect to Google
 - `!b <query>`: Instant search redirect to Bing
 
@@ -182,7 +203,7 @@ The full plan, with every feature, is in [docs/ROADMAP.md](docs/ROADMAP.md). In 
 | **v1.3.3**| Released | Centered tabbed settings modal, high contrast theme fixes, draggable modal, live shields sync |
 | **v1.4.0**| Released | Encrypted Password Vault, opt-in autofill, bookmarks bar, right-click bookmarking, daily history |
 | **v1.5.0**| Released | Zero-Knowledge Sync, Shields 2.0, Universal Cross-Browser Import/Export & Offline Research Archives |
-| **v1.6.0**| Planned | Creative suite hooks: a docked Author Desk rail and an audio grabber for RT Audio Studio |
+| **v1.6.0**| Released | Creative suite hooks: docked Author Desk companion rail and audio grabber for RT Audio Studio |
 | **v1.7.0**| Planned | Containers for separate identities, per-container proxies and disposable tabs |
 | **v1.8.0**| Planned | A local AI helper through Ollama, with nothing sent to the cloud |
 | **v1.9.0**| Planned | Decentralized Gateway: native IPFS (`ipfs://`) and Gemini (`gemini://`) handlers |

@@ -5,6 +5,25 @@ All notable changes to **Recon Browser** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-11-19
+
+### Added
+- **Docked Author Desk Companion Rail (`Ctrl+Shift+D` / Omnibar `✍️`)**:
+  - Split-screen companion panel docked right alongside active browsing tabs for simultaneous research and drafting.
+  - Multi-note drafting canvas with live Markdown rendering, note switcher, and word/character counters.
+  - Quick "Clip to Rail" button and keyboard shortcut (`Ctrl+Shift+E` / context menu) to append highlighted web text with formatted blockquotes and source attribution (`[Title](URL) — accessed Date`).
+  - Customizable dock position: toggle seamlessly between docking on the Right or Left (`↔️`), with draggable split-view resizer.
+  - 1-click **Export to Markdown** (`.md`) and direct **Send to RT Author Desk** via App Link protocol.
+- **RT Audio Studio Media & Stream Grabber (`Ctrl+Shift+G` / Omnibar `🎙️`)**:
+  - In-page media sniffer automatically detecting audio streams, podcast episodes, and media files (`.mp3`, `.wav`, `.ogg`, `.m4a`, `.aac`, `.flac`, `.opus`, `.webm`).
+  - Sliding **Audio Studio Grabber Drawer** with per-tab detected streams counter, in-browser audio preview player, and 1-click download directly into RT Audio Studio's project library (`userData/audio_studio_clips/`).
+  - Mini audio reference player embedded in the bottom of the Companion Rail for quick scrubbing and playback while writing.
+  - Saved clips catalog management with 1-click deletion and direct file paths.
+- **Recon Studio Dispatch Hub & Studio Menu**:
+  - Dedicated top-level **Studio** application menu with accelerators for toggling the Companion Rail (`Ctrl+Shift+D`), clipping active text (`Ctrl+Shift+E`), opening the Audio Grabber (`Ctrl+Shift+G`), and saving offline archives (`Ctrl+S`).
+  - Webview context menu integration for instant text appending and audio capture.
+  - Settings *Studio Suite* tab (`panel-studio`) for companion rail preferences, auto-sniffing toggles, and direct drawer access.
+
 ## [1.5.0] - 2026-11-19
 
 ### Added

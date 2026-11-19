@@ -35,7 +35,7 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 | **v1.3.3** | ✅ **Live** | Tabbed Settings, High Contrast, Draggable Modal | Centered tabbed modal with drag handle, high-contrast typography & system info badge, individual ecosystem suite links |
 | **v1.4.0** | ✅ **Live** | Password Vault, Opt-In Autofill, Bookmarks & History | Encrypted credential vault (`safeStorage`), permission-based opt-in autofill, bookmarks bar & right-click bookmarking, daily-sorted history manager, in-app updater |
 | **v1.5.0** | ✅ **Live** | Zero-Knowledge Sync, Shields 2.0 & Offline Research Archives | Accountless AES-256-GCM folder sync, universal bookmarks import/export (**Brave**, Chrome, Firefox, Edge, Safari), passwords CSV import/export, encrypted backup (`.reconbackup`), custom filter list subscriptions, live sliding network inspector drawer, cosmetic element zapper, and `.reconarchive` (MHTML) offline library |
-| **v1.6.0** | 📋 Planned | Creative Suite Dock & Audio Grabber | Docked Author Desk rail, audio grabber & stream router for RT Audio Studio |
+| **v1.6.0** | ✅ **Live** | Creative Suite Dock & Audio Grabber | Docked Author Desk companion rail, multi-note scratchpad, contextual citations (`Ctrl+Shift+E`), in-page audio stream sniffer & RT Audio Studio grabber |
 | **v1.7.0** | 📋 Planned | Containers & Ephemeral Tabs | Isolated cookie containers, per-container SOCKS5/Tor routing, disposable private tabs |
 | **v1.8.0** | 📋 Planned | Local AI Integration | Ollama bridge (`localhost:11434`), zero-cloud summarization & claim extraction |
 | **v1.9.0** | 📋 Planned | Decentralized Gateway | Native IPFS (`ipfs://`) and Gemini (`gemini://`) protocol handlers |

@@ -2537,3 +2537,290 @@ body {
   color: var(--accent-purple);
   font-size: 11px;
 }
+
+/* ==========================================================================
+   v1.6.0: Author Desk Companion Rail & RT Audio Studio Grabber
+   ========================================================================== */
+
+.workspace-container {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.workspace-container #browser-container {
+  flex: 1;
+  height: 100%;
+  min-width: 300px;
+}
+
+.rail-resizer {
+  width: 4px;
+  background-color: var(--border-color);
+  cursor: col-resize;
+  transition: background-color 0.15s ease;
+  z-index: 10;
+}
+
+.rail-resizer:hover {
+  background-color: var(--accent-purple);
+}
+
+.companion-rail {
+  width: 380px;
+  min-width: 280px;
+  max-width: 650px;
+  background-color: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  z-index: 50;
+  transition: width 0.15s ease;
+}
+
+.companion-rail.companion-rail-left {
+  order: -1;
+  border-left: none;
+  border-right: 1px solid var(--border-color);
+}
+
+.companion-rail.companion-rail-hidden {
+  display: none !important;
+}
+
+.rail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.rail-header-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.rail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rail-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+.rail-icon-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.rail-note-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.rail-select {
+  flex: 1;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11.5px;
+}
+
+.rail-btn-subtle {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.rail-btn-subtle:hover {
+  color: var(--text-main);
+  border-color: var(--text-muted);
+}
+
+.rail-input-group {
+  padding: 8px 12px 0 12px;
+}
+
+.rail-input {
+  width: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.rail-input:focus {
+  outline: none;
+  border-color: var(--accent-purple);
+}
+
+.rail-mode-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+}
+
+.rail-mode-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.rail-mode-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.rail-mode-btn.active {
+  background: var(--accent-purple);
+  color: #fff;
+  border-color: var(--accent-purple);
+}
+
+.rail-meta-text {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.rail-editor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px;
+  overflow: hidden;
+}
+
+.rail-textarea {
+  flex: 1;
+  width: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 12px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: none;
+  box-sizing: border-box;
+}
+
+.rail-textarea:focus {
+  outline: none;
+  border-color: var(--accent-purple);
+}
+
+.rail-preview-pane {
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.rail-preview-pane blockquote {
+  border-left: 3px solid var(--accent-purple);
+  margin: 6px 0;
+  padding-left: 8px;
+  color: var(--text-muted);
+}
+
+.rail-action-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  background-color: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.rail-audio-section {
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+}
+
+.rail-audio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+
+.rail-audio-list {
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.audio-stream-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.audio-stream-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.audio-stream-url {
+  font-family: monospace;
+  font-size: 10.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--accent-cyan);
+}

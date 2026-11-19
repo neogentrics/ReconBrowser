@@ -8,6 +8,8 @@ const { HistoryManager } = require('./history');
 const { SyncManager } = require('./sync');
 const { ArchiveManager } = require('./archive');
 const { ShieldsManager } = require('./shields2');
+const { CompanionRailManager } = require('./companion-rail');
+const { AudioGrabberManager } = require('./audio-grabber');
 const { exportBookmarksToHtml, parseBookmarksHtml, exportVaultToCsv, parseVaultCsv } = require('./importer-exporter');
 const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link');
 const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
@@ -22,6 +24,8 @@ const historyManager = new HistoryManager();
 const syncManager = new SyncManager();
 const archiveManager = new ArchiveManager();
 const shieldsManager = new ShieldsManager();
+const companionRailManager = new CompanionRailManager();
+const audioGrabberManager = new AudioGrabberManager();
 
 // Load tracking domains blocklist
 const filterPath = path.join(__dirname, '../../config/filters/default-trackers.txt');
@@ -170,6 +174,32 @@ function buildMenu() {
           label: 'Previous Tab',
           accelerator: 'Ctrl+Shift+Tab',
           click: () => mainWindow && mainWindow.webContents.send('menu-prev-tab')
+        }
+      ]
+    },
+    {
+      label: 'Studio',
+      submenu: [
+        {
+          label: 'Toggle Author Desk Companion Rail',
+          accelerator: 'CmdOrCtrl+Shift+D',
+          click: () => mainWindow && mainWindow.webContents.send('companion-toggle-rail')
+        },
+        {
+          label: 'Append Highlighted Text to Companion Rail',
+          accelerator: 'CmdOrCtrl+Shift+E',
+          click: () => mainWindow && mainWindow.webContents.send('companion-append-active-selection')
+        },
+        { type: 'separator' },
+        {
+          label: 'Open Audio Grabber (RT Audio Studio)...',
+          accelerator: 'CmdOrCtrl+Shift+G',
+          click: () => mainWindow && mainWindow.webContents.send('audio-grabber-open')
+        },
+        {
+          label: 'Save Active Page to Offline Archive',
+          accelerator: 'CmdOrCtrl+S',
+          click: () => mainWindow && mainWindow.webContents.send('archive-active-page')
         }
       ]
     },
@@ -361,6 +391,13 @@ function createWindow() {
         blocked: false,
         reason: 'Allowed'
       });
+
+      if (details.resourceType === 'media' || /\.(mp3|wav|ogg|m4a|aac|flac|opus|webm)(\?.*)?$/i.test(details.url)) {
+        audioGrabberManager.recordDetectedMedia(details.webContentsId, { url: details.url });
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('media-detected-update', { url: details.url });
+        }
+      }
     } catch (err) {
       // Ignore malformed URLs
     }
@@ -815,6 +852,45 @@ ipcMain.handle('zapper:add-rule', (event, { domain, selector }) => shieldsManage
 ipcMain.handle('zapper:remove-rule', (event, { domain, selector }) => shieldsManager.removeZapperRule(domain, selector));
 
 // ==========================================================================
+// Author Desk Companion Rail & Audio Studio Grabber IPC (v1.6.0)
+// ==========================================================================
+ipcMain.handle('companion:get-notes', () => companionRailManager.getAllNotes());
+ipcMain.handle('companion:save-note', (event, note) => companionRailManager.saveNote(note));
+ipcMain.handle('companion:delete-note', (event, id) => companionRailManager.deleteNote(id));
+ipcMain.handle('companion:append-snippet', (event, { noteId, data }) => companionRailManager.appendSnippet(noteId, data));
+ipcMain.handle('companion:export-note-md', async (event, { title, content }) => {
+  try {
+    const safeTitle = (title || 'companion_note').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const res = await dialog.showSaveDialog(mainWindow, {
+      title: 'Export Note to Markdown',
+      defaultPath: `${safeTitle}.md`,
+      filters: [{ name: 'Markdown File', extensions: ['md', 'markdown'] }]
+    });
+    if (res.canceled || !res.filePath) return { canceled: true };
+    fs.writeFileSync(res.filePath, content, 'utf8');
+    return { success: true, path: res.filePath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('audio-grabber:get-detected', (event, tabId) => audioGrabberManager.getDetectedMedia(tabId));
+ipcMain.handle('audio-grabber:record-detected', (event, { tabId, mediaItem }) => {
+  audioGrabberManager.recordDetectedMedia(tabId, mediaItem);
+  return true;
+});
+ipcMain.handle('audio-grabber:download-clip', async (event, params) => {
+  try {
+    const saved = await audioGrabberManager.downloadClip(params);
+    return { success: true, clip: saved };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+ipcMain.handle('audio-grabber:get-saved-clips', () => audioGrabberManager.getSavedClips());
+ipcMain.handle('audio-grabber:delete-clip', (event, id) => audioGrabberManager.deleteClip(id));
+
+// ==========================================================================
 // Recon App Link & Research Clips (v1.3.0)
 // ==========================================================================
 let appLinkInstance = null;
@@ -1032,6 +1108,16 @@ app.on('web-contents-created', (event, contents) => {
           }
         });
 
+        menuTemplate.push({
+          label: '📝 Append to Companion Rail',
+          accelerator: 'CmdOrCtrl+Shift+E',
+          click: () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('companion-append-selection', { text: params.selectionText });
+            }
+          }
+        });
+
         if (runningLinked.length > 0) {
           runningLinked.forEach(a => {
             menuTemplate.push({
@@ -1117,6 +1203,25 @@ app.on('web-contents-created', (event, contents) => {
             click: () => {
               if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('trigger-element-zapper');
+              }
+            }
+          },
+          { type: 'separator' },
+          {
+            label: '✍️ Toggle Author Desk Companion Rail',
+            accelerator: 'CmdOrCtrl+Shift+D',
+            click: () => {
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('companion-toggle-rail');
+              }
+            }
+          },
+          {
+            label: '🎙️ Grab Audio from Page (Audio Studio)...',
+            accelerator: 'CmdOrCtrl+Shift+G',
+            click: () => {
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('audio-grabber-open');
               }
             }
           }

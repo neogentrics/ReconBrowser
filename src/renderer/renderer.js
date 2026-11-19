@@ -661,6 +661,8 @@ settingsNavBtns.forEach(btn => {
       loadAndRenderArchives();
     } else if (tabId === 'privacy' && typeof loadShields2Settings === 'function') {
       loadShields2Settings();
+    } else if (tabId === 'studio' && typeof loadStudioSettings === 'function') {
+      loadStudioSettings();
     } else if (tabId === 'interface' && typeof checkDefaultBrowserStatus === 'function') {
       checkDefaultBrowserStatus();
     }
@@ -2135,6 +2137,26 @@ ipcRenderer.on('trigger-element-zapper', () => {
   startElementZapper();
 });
 
+ipcRenderer.on('companion-toggle-rail', () => {
+  toggleCompanionRail();
+});
+
+ipcRenderer.on('companion-append-selection', (event, { text }) => {
+  appendSelectionToCompanionRail(text);
+});
+
+ipcRenderer.on('companion-append-active-selection', () => {
+  clipSelectionFromActiveTab();
+});
+
+ipcRenderer.on('audio-grabber-open', () => {
+  openAudioGrabberDrawer();
+});
+
+ipcRenderer.on('media-detected-update', () => {
+  refreshAudioDetection();
+});
+
 // ==========================================================================
 // Browsing History Tracking System (v1.4.0)
 // ==========================================================================
@@ -3458,6 +3480,641 @@ if (btnSubAddCustom && inputSubCustomUrl) {
     }
   });
 }
+
+// ==========================================================================
+// v1.6.0: Author Desk Companion Rail & RT Audio Studio Grabber
+// ==========================================================================
+const companionRail = document.getElementById('companion-rail');
+const railResizer = document.getElementById('rail-resizer');
+const btnToggleCompanionRail = document.getElementById('btn-toggle-companion-rail');
+const btnRailClose = document.getElementById('btn-rail-close');
+const btnRailDockPos = document.getElementById('btn-rail-dock-pos');
+const companionNoteSelect = document.getElementById('companion-note-select');
+const btnRailNewNote = document.getElementById('btn-rail-new-note');
+const btnRailDeleteNote = document.getElementById('btn-rail-delete-note');
+const companionNoteTitle = document.getElementById('companion-note-title');
+const companionNoteContent = document.getElementById('companion-note-content');
+const companionMarkdownPreview = document.getElementById('companion-markdown-preview');
+const btnRailModeEdit = document.getElementById('btn-rail-mode-edit');
+const btnRailModePreview = document.getElementById('btn-rail-mode-preview');
+const railWordCount = document.getElementById('rail-word-count');
+const btnRailClipSelection = document.getElementById('btn-rail-clip-selection');
+const btnRailSaveNote = document.getElementById('btn-rail-save-note');
+const btnRailExportMd = document.getElementById('btn-rail-export-md');
+const btnRailSendAuthorDesk = document.getElementById('btn-rail-send-author-desk');
+
+// Audio Grabber DOM
+const btnAudioGrabber = document.getElementById('btn-audio-grabber');
+const audioGrabberDrawer = document.getElementById('audio-grabber-drawer');
+const btnCloseAudioDrawer = document.getElementById('btn-close-audio-drawer');
+const btnScanAudioPage = document.getElementById('btn-scan-audio-page');
+const audioGrabberDomainBadge = document.getElementById('audio-grabber-domain-badge');
+const btnAudioTabDetected = document.getElementById('btn-audio-tab-detected');
+const btnAudioTabSaved = document.getElementById('btn-audio-tab-saved');
+const audioCountDetected = document.getElementById('audio-count-detected');
+const audioCountSaved = document.getElementById('audio-count-saved');
+const audioGrabberContentDetected = document.getElementById('audio-grabber-content-detected');
+const audioGrabberContentSaved = document.getElementById('audio-grabber-content-saved');
+const audioStreamsList = document.getElementById('audio-streams-list');
+const audioSavedList = document.getElementById('audio-saved-list');
+const railAudioList = document.getElementById('rail-audio-list');
+const railMediaCountBadge = document.getElementById('rail-media-count-badge');
+const btnRailRefreshAudio = document.getElementById('btn-rail-refresh-audio');
+
+// Studio Settings DOM
+const selectRailDockPosition = document.getElementById('select-rail-dock-position');
+const toggleRailLivePreview = document.getElementById('toggle-rail-live-preview');
+const toggleAudioAutoSniff = document.getElementById('toggle-audio-auto-sniff');
+const btnOpenAudioDrawerSettings = document.getElementById('btn-open-audio-drawer-settings');
+
+let activeNoteId = null;
+let companionNotesList = [];
+let railCurrentMode = 'edit'; // 'edit' or 'preview'
+let isResizingRail = false;
+
+function toggleCompanionRail(forceOpen = null) {
+  if (!companionRail) return;
+  const isCurrentlyHidden = companionRail.classList.contains('companion-rail-hidden');
+  const shouldOpen = forceOpen !== null ? forceOpen : isCurrentlyHidden;
+
+  if (shouldOpen) {
+    companionRail.classList.remove('companion-rail-hidden');
+    if (railResizer) railResizer.style.display = 'block';
+    if (btnToggleCompanionRail) btnToggleCompanionRail.classList.add('active');
+    loadCompanionNotes();
+    refreshAudioDetection();
+  } else {
+    companionRail.classList.add('companion-rail-hidden');
+    if (railResizer) railResizer.style.display = 'none';
+    if (btnToggleCompanionRail) btnToggleCompanionRail.classList.remove('active');
+  }
+}
+
+function setCompanionRailDockPosition(pos) {
+  if (!companionRail) return;
+  if (pos === 'left') {
+    companionRail.classList.add('companion-rail-left');
+    localStorage.setItem('recon_rail_dock_pos', 'left');
+    if (btnRailDockPos) btnRailDockPos.title = 'Switch Dock to Right';
+  } else {
+    companionRail.classList.remove('companion-rail-left');
+    localStorage.setItem('recon_rail_dock_pos', 'right');
+    if (btnRailDockPos) btnRailDockPos.title = 'Switch Dock to Left';
+  }
+  if (selectRailDockPosition) selectRailDockPosition.value = pos;
+}
+
+async function loadCompanionNotes(preferredNoteId = null) {
+  try {
+    companionNotesList = await ipcRenderer.invoke('companion:get-notes') || [];
+    populateNoteSelector(preferredNoteId);
+  } catch (err) {
+    console.error('[Companion Rail] Failed to load notes:', err);
+  }
+}
+
+function populateNoteSelector(preferredNoteId = null) {
+  if (!companionNoteSelect) return;
+  if (companionNotesList.length === 0) {
+    companionNoteSelect.innerHTML = '<option value="">(No notes created)</option>';
+    if (companionNoteTitle) companionNoteTitle.value = '';
+    if (companionNoteContent) companionNoteContent.value = '';
+    activeNoteId = null;
+    updateWordCount();
+    return;
+  }
+
+  companionNoteSelect.innerHTML = companionNotesList.map(n => `
+    <option value="${escapeHtml(n.id)}">${escapeHtml(n.title || 'Untitled Note')}</option>
+  `).join('');
+
+  const targetId = preferredNoteId || activeNoteId || companionNotesList[0].id;
+  selectNote(targetId);
+}
+
+function selectNote(noteId) {
+  activeNoteId = noteId;
+  if (companionNoteSelect) companionNoteSelect.value = noteId;
+  const note = companionNotesList.find(n => n.id === noteId);
+  if (note) {
+    if (companionNoteTitle) companionNoteTitle.value = note.title || '';
+    if (companionNoteContent) companionNoteContent.value = note.content || '';
+    updateWordCount();
+    if (railCurrentMode === 'preview') {
+      renderMarkdownPreview(note.content || '');
+    }
+  }
+}
+
+async function saveActiveNote() {
+  if (!companionNoteTitle || !companionNoteContent) return;
+  const title = companionNoteTitle.value.trim() || 'Untitled Note';
+  const content = companionNoteContent.value;
+  
+  try {
+    const saved = await ipcRenderer.invoke('companion:save-note', {
+      id: activeNoteId,
+      title,
+      content,
+      tags: ['research']
+    });
+
+    if (saved) {
+      activeNoteId = saved.id;
+      showToast(`✓ Note saved: "${title}"`);
+      await loadCompanionNotes(saved.id);
+    }
+  } catch (err) {
+    showToast(`Failed to save note: ${err.message}`);
+  }
+}
+
+async function createNewNote() {
+  try {
+    const newNote = await ipcRenderer.invoke('companion:save-note', {
+      title: 'New Research Note',
+      content: '# New Research Note\n\n'
+    });
+    if (newNote) {
+      showToast('Created new companion note');
+      await loadCompanionNotes(newNote.id);
+      if (companionNoteTitle) companionNoteTitle.focus();
+    }
+  } catch (err) {
+    showToast(`Failed to create note: ${err.message}`);
+  }
+}
+
+async function deleteActiveNote() {
+  if (!activeNoteId) return;
+  const confirmed = confirm('Are you sure you want to delete this companion note?');
+  if (!confirmed) return;
+
+  try {
+    await ipcRenderer.invoke('companion:delete-note', activeNoteId);
+    showToast('Note deleted');
+    activeNoteId = null;
+    await loadCompanionNotes();
+  } catch (err) {
+    showToast(`Failed to delete note: ${err.message}`);
+  }
+}
+
+function updateWordCount() {
+  if (!railWordCount || !companionNoteContent) return;
+  const text = companionNoteContent.value || '';
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const chars = text.length;
+  railWordCount.textContent = `${words} words (${chars} chars)`;
+}
+
+function renderMarkdownPreview(md) {
+  if (!companionMarkdownPreview) return;
+  if (!md || !md.trim()) {
+    companionMarkdownPreview.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">Note is empty.</p>';
+    return;
+  }
+
+  let html = escapeHtml(md);
+  html = html.replace(/^### (.*$)/gim, '<h4 style="margin: 8px 0 4px; color: var(--accent-purple); font-size: 13px;">$1</h4>');
+  html = html.replace(/^## (.*$)/gim, '<h3 style="margin: 10px 0 4px; color: var(--accent-purple); font-size: 14px;">$1</h3>');
+  html = html.replace(/^# (.*$)/gim, '<h2 style="margin: 12px 0 6px; color: var(--text-main); font-size: 16px;">$1</h2>');
+  html = html.replace(/^\> (.*$)/gim, '<blockquote style="border-left: 3px solid var(--accent-purple); padding-left: 8px; margin: 4px 0; color: var(--text-muted); font-style: italic;">$1</blockquote>');
+  html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+  html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">$1</a>');
+  html = html.replace(/^\- (.*$)/gim, '<li style="margin-left: 14px;">$1</li>');
+  html = html.replace(/\n\n/g, '<br/><br/>');
+  html = html.replace(/\n/g, '<br/>');
+
+  companionMarkdownPreview.innerHTML = html;
+}
+
+async function clipSelectionFromActiveTab() {
+  const tab = tabs.get(activeTabId);
+  if (!tab || !tab.webviewEl || tab.url.includes('startpage.html')) {
+    showToast('Cannot clip selection from local startpage');
+    return;
+  }
+
+  try {
+    const text = await tab.webviewEl.executeJavaScript('window.getSelection().toString()');
+    if (text && text.trim()) {
+      appendSelectionToCompanionRail(text.trim());
+    } else {
+      showToast('No text selected on page. Highlight text first.');
+    }
+  } catch (err) {
+    showToast('Failed to get selection from page');
+  }
+}
+
+async function appendSelectionToCompanionRail(text) {
+  if (!text || !text.trim()) return;
+  const tab = tabs.get(activeTabId);
+  const sourceUrl = tab ? tab.url : '';
+  const sourceTitle = tab ? tab.title : '';
+
+  if (companionRail && companionRail.classList.contains('companion-rail-hidden')) {
+    toggleCompanionRail(true);
+  }
+
+  try {
+    const updatedNote = await ipcRenderer.invoke('companion:append-snippet', {
+      noteId: activeNoteId,
+      data: {
+        text: text.trim(),
+        sourceUrl,
+        sourceTitle,
+        date: new Date().toISOString().slice(0, 10)
+      }
+    });
+
+    if (updatedNote) {
+      showToast('✓ Snippet appended to Author Desk Companion');
+      await loadCompanionNotes(updatedNote.id);
+    }
+  } catch (err) {
+    showToast(`Failed to append snippet: ${err.message}`);
+  }
+}
+
+async function exportActiveNoteMarkdown() {
+  if (!companionNoteTitle || !companionNoteContent) return;
+  const title = companionNoteTitle.value.trim() || 'companion_note';
+  const content = companionNoteContent.value;
+  try {
+    const res = await ipcRenderer.invoke('companion:export-note-md', { title, content });
+    if (res.canceled) return;
+    if (res.success) {
+      showToast(`✓ Note exported to ${res.path}`);
+    } else {
+      showToast(`Export failed: ${res.error || 'Unknown error'}`);
+    }
+  } catch (err) {
+    showToast(`Export error: ${err.message}`);
+  }
+}
+
+async function sendNoteToAuthorDesk() {
+  if (!companionNoteTitle || !companionNoteContent) return;
+  const title = companionNoteTitle.value.trim() || 'Companion Draft';
+  const content = companionNoteContent.value;
+
+  showToast('⚡ Dispatching note to Author Desk...');
+  try {
+    const res = await ipcRenderer.invoke('app-link:send-clip', {
+      targetAppId: 'rt-author-desk',
+      name: `${title}.md`,
+      documentText: content,
+      metadata: {
+        title,
+        source_app: 'recon-browser',
+        type: 'companion_draft',
+        date: new Date().toISOString().slice(0, 10)
+      }
+    });
+
+    if (res && res.success) {
+      showToast('✓ Successfully sent draft to RT Author Desk');
+    } else {
+      showToast(res && res.message ? res.message : 'Author Desk is not currently running');
+    }
+  } catch (err) {
+    showToast(`Dispatch failed: ${err.message}`);
+  }
+}
+
+// Resizer logic
+if (railResizer && companionRail) {
+  railResizer.addEventListener('mousedown', (e) => {
+    isResizingRail = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    function onMouseMove(ev) {
+      if (!isResizingRail) return;
+      const isLeft = companionRail.classList.contains('companion-rail-left');
+      let newWidth;
+      if (isLeft) {
+        newWidth = ev.clientX;
+      } else {
+        newWidth = window.innerWidth - ev.clientX;
+      }
+      if (newWidth >= 280 && newWidth <= 650) {
+        companionRail.style.width = `${newWidth}px`;
+      }
+    }
+
+    function onMouseUp() {
+      isResizingRail = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    }
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+}
+
+// Companion Rail Event Listeners
+if (btnToggleCompanionRail) btnToggleCompanionRail.addEventListener('click', () => toggleCompanionRail());
+if (btnRailClose) btnRailClose.addEventListener('click', () => toggleCompanionRail(false));
+if (btnRailDockPos) {
+  btnRailDockPos.addEventListener('click', () => {
+    const isLeft = companionRail.classList.contains('companion-rail-left');
+    setCompanionRailDockPosition(isLeft ? 'right' : 'left');
+  });
+}
+
+if (companionNoteSelect) {
+  companionNoteSelect.addEventListener('change', (e) => {
+    if (e.target.value) selectNote(e.target.value);
+  });
+}
+
+if (btnRailNewNote) btnRailNewNote.addEventListener('click', createNewNote);
+if (btnRailDeleteNote) btnRailDeleteNote.addEventListener('click', deleteActiveNote);
+if (btnRailSaveNote) btnRailSaveNote.addEventListener('click', saveActiveNote);
+if (btnRailExportMd) btnRailExportMd.addEventListener('click', exportActiveNoteMarkdown);
+if (btnRailSendAuthorDesk) btnRailSendAuthorDesk.addEventListener('click', sendNoteToAuthorDesk);
+if (btnRailClipSelection) btnRailClipSelection.addEventListener('click', clipSelectionFromActiveTab);
+
+if (companionNoteContent) {
+  companionNoteContent.addEventListener('input', () => {
+    updateWordCount();
+  });
+}
+
+if (btnRailModeEdit && btnRailModePreview) {
+  btnRailModeEdit.addEventListener('click', () => {
+    railCurrentMode = 'edit';
+    btnRailModeEdit.classList.add('active');
+    btnRailModePreview.classList.remove('active');
+    if (companionNoteContent) companionNoteContent.style.display = 'block';
+    if (companionMarkdownPreview) companionMarkdownPreview.style.display = 'none';
+  });
+
+  btnRailModePreview.addEventListener('click', () => {
+    railCurrentMode = 'preview';
+    btnRailModePreview.classList.add('active');
+    btnRailModeEdit.classList.remove('active');
+    if (companionNoteContent) companionNoteContent.style.display = 'none';
+    if (companionMarkdownPreview) {
+      companionMarkdownPreview.style.display = 'block';
+      renderMarkdownPreview(companionNoteContent ? companionNoteContent.value : '');
+    }
+  });
+}
+
+// ==========================================================================
+// RT Audio Studio Grabber Drawer & Mini Player (v1.6.0)
+// ==========================================================================
+
+function openAudioGrabberDrawer() {
+  if (audioGrabberDrawer) {
+    audioGrabberDrawer.classList.remove('inspector-drawer-hidden');
+    audioGrabberDrawer.classList.add('inspector-drawer-visible');
+    refreshAudioDetection();
+    loadSavedAudioClips();
+  }
+}
+
+function closeAudioGrabberDrawer() {
+  if (audioGrabberDrawer) {
+    audioGrabberDrawer.classList.add('inspector-drawer-hidden');
+    audioGrabberDrawer.classList.remove('inspector-drawer-visible');
+  }
+}
+
+async function refreshAudioDetection() {
+  const tab = tabs.get(activeTabId);
+  let wcId = null;
+  let domain = 'Active Tab';
+  if (tab && tab.webviewEl && typeof tab.webviewEl.getWebContentsId === 'function') {
+    try { wcId = tab.webviewEl.getWebContentsId(); } catch {}
+    if (tab.url && !tab.url.includes('startpage.html')) {
+      try { domain = new URL(tab.url).hostname; } catch {}
+    } else {
+      domain = 'Recon Start';
+    }
+  }
+
+  if (audioGrabberDomainBadge) audioGrabberDomainBadge.textContent = domain;
+
+  let detected = [];
+  if (wcId) {
+    detected = await ipcRenderer.invoke('audio-grabber:get-detected', wcId) || [];
+  }
+
+  if (audioCountDetected) audioCountDetected.textContent = String(detected.length);
+  if (railMediaCountBadge) railMediaCountBadge.textContent = `${detected.length} streams`;
+
+  renderDetectedAudioStreams(detected);
+}
+
+function renderDetectedAudioStreams(streams) {
+  const html = (!streams || streams.length === 0)
+    ? `<div style="text-align: center; color: var(--text-muted); padding: 18px; font-size: 11.5px;">No audio streams detected yet on this page. Click <strong>🔍 Scan Page</strong> or play audio.</div>`
+    : streams.map(s => `
+      <div class="audio-stream-card">
+        <div class="audio-stream-meta">
+          <strong style="color: var(--text-main);">${escapeHtml(s.title || 'Audio Stream')}</strong>
+          <span style="text-transform: uppercase; font-size: 10px; color: var(--accent-purple);">${escapeHtml(s.mimeType || 'audio')}</span>
+        </div>
+        <div class="audio-stream-url" title="${escapeHtml(s.url)}">${escapeHtml(s.url)}</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+          <audio controls src="${escapeHtml(s.url)}" style="height: 26px; max-width: 240px;"></audio>
+          <button class="btn-primary btn-save-audio" data-url="${escapeHtml(s.url)}" data-title="${escapeHtml(s.title)}" style="font-size: 10.5px; padding: 3px 8px;">📥 Save to Audio Studio</button>
+        </div>
+      </div>
+    `).join('');
+
+  if (audioStreamsList) audioStreamsList.innerHTML = html;
+  if (railAudioList) railAudioList.innerHTML = html;
+
+  document.querySelectorAll('.btn-save-audio').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const url = btn.getAttribute('data-url');
+      const title = btn.getAttribute('data-title');
+      const tab = tabs.get(activeTabId);
+      showToast('📥 Downloading audio clip for RT Audio Studio...');
+      try {
+        const res = await ipcRenderer.invoke('audio-grabber:download-clip', {
+          url,
+          title: title || 'Audio Sample',
+          pageUrl: tab ? tab.url : '',
+          domain: tab && tab.url ? new URL(tab.url).hostname : ''
+        });
+        if (res && res.success) {
+          showToast(`✓ Saved audio clip to Audio Studio library (${(res.clip.sizeBytes / 1024).toFixed(1)} KB)`);
+          loadSavedAudioClips();
+        } else {
+          showToast(`Download failed: ${res && res.error ? res.error : 'Unknown error'}`);
+        }
+      } catch (err) {
+        showToast(`Download failed: ${err.message}`);
+      }
+    });
+  });
+}
+
+async function loadSavedAudioClips() {
+  if (!audioSavedList) return;
+  try {
+    const clips = await ipcRenderer.invoke('audio-grabber:get-saved-clips') || [];
+    if (audioCountSaved) audioCountSaved.textContent = String(clips.length);
+
+    if (clips.length === 0) {
+      audioSavedList.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 25px; font-size: 12px;">No saved clips in RT Audio Studio library yet.</div>`;
+      return;
+    }
+
+    audioSavedList.innerHTML = clips.map(c => `
+      <div class="audio-stream-card">
+        <div class="audio-stream-meta">
+          <strong style="color: var(--text-main);">${escapeHtml(c.title)}</strong>
+          <span>${(c.sizeBytes / 1024).toFixed(1)} KB • ${new Date(c.createdAt).toLocaleDateString()}</span>
+        </div>
+        <div class="audio-stream-url" title="${escapeHtml(c.filePath)}">${escapeHtml(c.filename)}</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+          <audio controls src="file:///${c.filePath.replace(/\\/g, '/')}" style="height: 26px; max-width: 240px;"></audio>
+          <div style="display: flex; gap: 4px;">
+            <button class="btn-subtle btn-delete-audio-clip" data-id="${escapeHtml(c.id)}" style="font-size: 10.5px; padding: 2px 6px;" title="Delete Clip">🗑️</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    audioSavedList.querySelectorAll('.btn-delete-audio-clip').forEach(b => {
+      b.addEventListener('click', async () => {
+        const id = b.getAttribute('data-id');
+        if (id) {
+          await ipcRenderer.invoke('audio-grabber:delete-clip', id);
+          loadSavedAudioClips();
+          showToast('Audio clip deleted');
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Failed to load saved audio clips:', err);
+  }
+}
+
+async function scanActivePageForAudio() {
+  const tab = tabs.get(activeTabId);
+  if (!tab || !tab.webviewEl || tab.url.includes('startpage.html')) {
+    showToast('Open a live website to scan for audio');
+    return;
+  }
+  showToast('🔍 Scanning page for media & audio streams...');
+  try {
+    const script = `
+      (function() {
+        const results = [];
+        const foundUrls = new Set();
+        document.querySelectorAll('audio, video').forEach(el => {
+          const src = el.currentSrc || el.src;
+          if (src && !foundUrls.has(src) && !src.startsWith('blob:')) {
+            foundUrls.add(src);
+            results.push({ url: src, title: document.title || 'In-Page Media', duration: el.duration || 0 });
+          }
+        });
+        document.querySelectorAll('source').forEach(el => {
+          const src = el.src;
+          if (src && !foundUrls.has(src) && !src.startsWith('blob:')) {
+            foundUrls.add(src);
+            results.push({ url: src, title: document.title || 'In-Page Source', mimeType: el.type });
+          }
+        });
+        document.querySelectorAll('a[href]').forEach(a => {
+          const href = a.href;
+          if (href && /\\.(mp3|wav|ogg|m4a|aac|flac|opus)(\\?.*)?$/i.test(href) && !foundUrls.has(href)) {
+            foundUrls.add(href);
+            results.push({ url: href, title: a.innerText.trim() || 'Linked Audio', mimeType: 'audio/mpeg' });
+          }
+        });
+        return results;
+      })();
+    `;
+
+    const found = await tab.webviewEl.executeJavaScript(script);
+    let wcId = null;
+    try { wcId = tab.webviewEl.getWebContentsId(); } catch {}
+    if (Array.isArray(found) && found.length > 0) {
+      for (const item of found) {
+        await ipcRenderer.invoke('audio-grabber:record-detected', { tabId: wcId, mediaItem: item });
+      }
+      showToast(`✓ Found ${found.length} audio streams/files on page`);
+    } else {
+      showToast('No audio elements found in page DOM');
+    }
+    refreshAudioDetection();
+  } catch (err) {
+    console.error('Failed to scan page audio:', err);
+    showToast('Failed to scan page for audio');
+  }
+}
+
+if (btnAudioGrabber) btnAudioGrabber.addEventListener('click', openAudioGrabberDrawer);
+if (btnCloseAudioDrawer) btnCloseAudioDrawer.addEventListener('click', closeAudioGrabberDrawer);
+if (btnScanAudioPage) btnScanAudioPage.addEventListener('click', scanActivePageForAudio);
+if (btnRailRefreshAudio) btnRailRefreshAudio.addEventListener('click', scanActivePageForAudio);
+
+if (btnAudioTabDetected && btnAudioTabSaved) {
+  btnAudioTabDetected.addEventListener('click', () => {
+    btnAudioTabDetected.classList.add('active');
+    btnAudioTabSaved.classList.remove('active');
+    if (audioGrabberContentDetected) audioGrabberContentDetected.style.display = 'block';
+    if (audioGrabberContentSaved) audioGrabberContentSaved.style.display = 'none';
+  });
+
+  btnAudioTabSaved.addEventListener('click', () => {
+    btnAudioTabSaved.classList.add('active');
+    btnAudioTabDetected.classList.remove('active');
+    if (audioGrabberContentDetected) audioGrabberContentDetected.style.display = 'none';
+    if (audioGrabberContentSaved) audioGrabberContentSaved.style.display = 'block';
+    loadSavedAudioClips();
+  });
+}
+
+function loadStudioSettings() {
+  const savedPos = localStorage.getItem('recon_rail_dock_pos') || 'right';
+  if (selectRailDockPosition) selectRailDockPosition.value = savedPos;
+  if (toggleRailLivePreview) toggleRailLivePreview.checked = localStorage.getItem('recon_rail_live_preview') !== 'false';
+  if (toggleAudioAutoSniff) toggleAudioAutoSniff.checked = localStorage.getItem('recon_audio_auto_sniff') !== 'false';
+}
+
+if (selectRailDockPosition) {
+  selectRailDockPosition.addEventListener('change', (e) => {
+    setCompanionRailDockPosition(e.target.value);
+  });
+}
+
+if (toggleRailLivePreview) {
+  toggleRailLivePreview.addEventListener('change', (e) => {
+    localStorage.setItem('recon_rail_live_preview', String(e.target.checked));
+  });
+}
+
+if (toggleAudioAutoSniff) {
+  toggleAudioAutoSniff.addEventListener('change', (e) => {
+    localStorage.setItem('recon_audio_auto_sniff', String(e.target.checked));
+  });
+}
+
+if (btnOpenAudioDrawerSettings) {
+  btnOpenAudioDrawerSettings.addEventListener('click', () => {
+    closeSettingsModal();
+    openAudioGrabberDrawer();
+  });
+}
+
+// Initialize Companion Rail Dock Position Preference
+const savedRailPos = localStorage.getItem('recon_rail_dock_pos') || 'right';
+setCompanionRailDockPosition(savedRailPos);
 
 // ==========================================================================
 // Initialization

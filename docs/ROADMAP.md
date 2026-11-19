@@ -31,6 +31,7 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 | **v1.1.0** | ✅ **Live** | Ecosystem Bridge, Auto-Updates & Polish | Auto-updater via GitHub Releases, 11 Recon themes, Linked Apps IPC, Shields Popover vs Settings Drawer, About Us modal |
 | **v1.2.0** | 🚀 **Live** | Reader View, Read Aloud & Universal Aspects | Distraction-free Reader View, Read Aloud TTS with sentence highlighting, Solid/Metallic/Glass Aspects, ADA & Colorblind themes, configurable Home URL, local app auto-launch |
 | **v1.3.1** | ✅ **Live** | App Link Research Clips & Stability | App Link v1 protocol (`recon-browser`), research clip ingestion to RT Story Tracker & RT Markdown Reader, safe storage encryption, shields & DoH persistence, rich finish gradients |
+| **v1.3.2** | ✅ **Live** | Tab Dragging, Spectrum Themes & Auto-Updater | Tab dragging & rearranging, 4 new paired spectrum themes (blues, reds, yellows), auto-updater manifest pipeline & interactive check dialog |
 | **v1.4.0** | 📋 Planned | Zero-Knowledge Sync | Folder-based sync (No account required), AES-256 encryption, local Wi-Fi pairing |
 | **v1.5.0** | 📋 Planned | Offline Archives | `.reconarchive` single-file bundles, SQLite FTS5 local research search engine |
 | **v1.6.0** | 📋 Planned | Shields 2.0 & Inspector | Custom filter list subscriptions, live HTTP/3 & TLS network inspector drawer |

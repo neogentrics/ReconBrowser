@@ -147,8 +147,23 @@ function showToast(message, duration = 3000) {
 }
 
 // ==========================================================================
-// Tab Management (Independent Webview per Tab)
+// Tab Management (Independent Webview per Tab & Drag-and-Drop)
 // ==========================================================================
+let draggedTabEl = null;
+
+function reorderTabsFromDom() {
+  const tabEls = tabsContainer.querySelectorAll('.tab');
+  const newTabsMap = new Map();
+  tabEls.forEach(el => {
+    const tabId = parseInt(el.getAttribute('data-tab-id'), 10);
+    if (tabs.has(tabId)) {
+      newTabsMap.set(tabId, tabs.get(tabId));
+    }
+  });
+  tabs.clear();
+  newTabsMap.forEach((val, key) => tabs.set(key, val));
+}
+
 function createTab(initialUrl = null, activate = true) {
   const id = nextTabId++;
   const url = initialUrl || getStartPageURL();
@@ -159,11 +174,59 @@ function createTab(initialUrl = null, activate = true) {
   const tabEl = document.createElement('div');
   tabEl.className = 'tab';
   tabEl.setAttribute('data-tab-id', id);
+  tabEl.setAttribute('draggable', 'true');
   tabEl.innerHTML = `
     <span class="tab-favicon">${isStart ? '⚡' : '🌐'}</span>
     <span class="tab-title">${title}</span>
     <span class="tab-close" title="Close Tab (Ctrl+W)">×</span>
   `;
+
+  // Drag and drop tab reordering
+  tabEl.addEventListener('dragstart', (e) => {
+    draggedTabEl = tabEl;
+    tabEl.classList.add('tab-dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(id));
+  });
+
+  tabEl.addEventListener('dragend', () => {
+    tabEl.classList.remove('tab-dragging');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-drag-over-left', 'tab-drag-over-right'));
+    draggedTabEl = null;
+  });
+
+  tabEl.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (!draggedTabEl || draggedTabEl === tabEl) return;
+    const rect = tabEl.getBoundingClientRect();
+    const midX = rect.left + rect.width / 2;
+    if (e.clientX < midX) {
+      tabEl.classList.add('tab-drag-over-left');
+      tabEl.classList.remove('tab-drag-over-right');
+    } else {
+      tabEl.classList.add('tab-drag-over-right');
+      tabEl.classList.remove('tab-drag-over-left');
+    }
+  });
+
+  tabEl.addEventListener('dragleave', () => {
+    tabEl.classList.remove('tab-drag-over-left', 'tab-drag-over-right');
+  });
+
+  tabEl.addEventListener('drop', (e) => {
+    e.preventDefault();
+    tabEl.classList.remove('tab-drag-over-left', 'tab-drag-over-right');
+    if (!draggedTabEl || draggedTabEl === tabEl) return;
+    const rect = tabEl.getBoundingClientRect();
+    const midX = rect.left + rect.width / 2;
+    if (e.clientX < midX) {
+      tabsContainer.insertBefore(draggedTabEl, tabEl);
+    } else {
+      tabsContainer.insertBefore(draggedTabEl, tabEl.nextSibling);
+    }
+    reorderTabsFromDom();
+  });
 
   tabEl.addEventListener('click', (e) => {
     if (e.target.classList.contains('tab-close')) {

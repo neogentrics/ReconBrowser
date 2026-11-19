@@ -232,6 +232,66 @@ body.theme-colorblind-cyan-magenta {
   --popover-bg: #211a30;
 }
 
+body.theme-ocean {
+  --bg-primary: #070e1c;
+  --bg-secondary: #0f1c35;
+  --bg-hover: #182b52;
+  --border-color: #24417a;
+  --accent-purple: #3b82f6;
+  --accent-cyan: #60a5fa;
+  --accent-green: #10b981;
+  --text-main: #f0f7ff;
+  --text-muted: #8ba5c9;
+  --card-bg: #0c172d;
+  --input-bg: #040913;
+  --popover-bg: #0f1c35;
+}
+
+body.theme-azure {
+  --bg-primary: #06151e;
+  --bg-secondary: #0c2a3b;
+  --bg-hover: #133e56;
+  --border-color: #1e5a7d;
+  --accent-purple: #06b6d4;
+  --accent-cyan: #38bdf8;
+  --accent-green: #34d399;
+  --text-main: #f0fdff;
+  --text-muted: #84adbf;
+  --card-bg: #0a2230;
+  --input-bg: #030d14;
+  --popover-bg: #0c2a3b;
+}
+
+body.theme-scarlet {
+  --bg-primary: #1f0507;
+  --bg-secondary: #3b0d12;
+  --bg-hover: #57141b;
+  --border-color: #821c27;
+  --accent-purple: #f43f5e;
+  --accent-cyan: #fb7185;
+  --accent-green: #22c55e;
+  --text-main: #fff1f2;
+  --text-muted: #e29ca6;
+  --card-bg: #2d090d;
+  --input-bg: #140204;
+  --popover-bg: #3b0d12;
+}
+
+body.theme-solar {
+  --bg-primary: #161205;
+  --bg-secondary: #2d240c;
+  --bg-hover: #453612;
+  --border-color: #6b531c;
+  --accent-purple: #f59e0b;
+  --accent-cyan: #fbbf24;
+  --accent-green: #10b981;
+  --text-main: #fffbeb;
+  --text-muted: #c7b68a;
+  --card-bg: #221b08;
+  --input-bg: #0c0a02;
+  --popover-bg: #2d240c;
+}
+
 /* ==========================================================================
    Aspect Variations (Solid, Metallic, Glass)
    ========================================================================== */
@@ -433,6 +493,25 @@ body {
   color: var(--text-main);
   border-top: 2px solid var(--accent-purple);
   height: 32px;
+}
+
+/* Tab Drag and Drop */
+.tab[draggable="true"] {
+  cursor: grab;
+}
+
+.tab.tab-dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+  transform: scale(0.97);
+}
+
+.tab.tab-drag-over-left {
+  border-left: 2.5px solid var(--accent-purple) !important;
+}
+
+.tab.tab-drag-over-right {
+  border-right: 2.5px solid var(--accent-purple) !important;
 }
 
 .tab-title {

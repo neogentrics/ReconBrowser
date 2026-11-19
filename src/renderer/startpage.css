@@ -187,6 +187,54 @@ body.theme-colorblind-cyan-magenta {
   --app-card-bg: #110e19;
 }
 
+body.theme-ocean {
+  --start-bg: radial-gradient(circle at 50% 25%, #132446 0%, #050a14 80%);
+  --card-bg: #0c172d;
+  --border-color: #24417a;
+  --accent-purple: #3b82f6;
+  --accent-cyan: #60a5fa;
+  --accent-green: #10b981;
+  --text-main: #f0f7ff;
+  --text-muted: #8ba5c9;
+  --app-card-bg: #080f1e;
+}
+
+body.theme-azure {
+  --start-bg: radial-gradient(circle at 50% 25%, #10344a 0%, #040e14 80%);
+  --card-bg: #0a2230;
+  --border-color: #1e5a7d;
+  --accent-purple: #06b6d4;
+  --accent-cyan: #38bdf8;
+  --accent-green: #34d399;
+  --text-main: #f0fdff;
+  --text-muted: #84adbf;
+  --app-card-bg: #071720;
+}
+
+body.theme-scarlet {
+  --start-bg: radial-gradient(circle at 50% 25%, #4c0f17 0%, #140305 80%);
+  --card-bg: #2d090d;
+  --border-color: #821c27;
+  --accent-purple: #f43f5e;
+  --accent-cyan: #fb7185;
+  --accent-green: #22c55e;
+  --text-main: #fff1f2;
+  --text-muted: #e29ca6;
+  --app-card-bg: #1f0507;
+}
+
+body.theme-solar {
+  --start-bg: radial-gradient(circle at 50% 25%, #3d3010 0%, #0f0c03 80%);
+  --card-bg: #221b08;
+  --border-color: #6b531c;
+  --accent-purple: #f59e0b;
+  --accent-cyan: #fbbf24;
+  --accent-green: #10b981;
+  --text-main: #fffbeb;
+  --text-muted: #c7b68a;
+  --app-card-bg: #171205;
+}
+
 /* ==========================================================================
    Aspect Variations (Solid, Metallic, Glass) for Start Page
    ========================================================================== */

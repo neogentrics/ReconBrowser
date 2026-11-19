@@ -24,7 +24,7 @@
 
 ## Downloads
 
-The latest version is **v1.3.1**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
+The latest version is **v1.3.2**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
 
 | Platform | Download Package | Description |
 | :--- | :--- | :--- |
@@ -61,6 +61,18 @@ An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 ---
 
 ## What's New
+
+### v1.3.2: Tab Dragging, Spectrum Themes & Auto-Updater Pipeline
+
+- **Tab Dragging & Rearranging**: full drag-and-drop support to reorder open tabs dynamically with smooth visual indicators and synced keyboard navigation.
+- **Spectrum Theme Pairs**: balanced the palette spectrum with 4 new themes, including dedicated blues:
+  - **Blue Pair**: Cobalt Abyss (`ocean`) and Glacial Azure (`azure`).
+  - **Red Pair**: Crimson Horizon (`red`) and Scarlet Blaze (`scarlet`).
+  - **Yellow Pair**: Amber Sunset (`yellow`) and Solar Flare (`solar`).
+  - **Green Pair**: Deep Forest (`forest`) and Evergreen (`evergreen`).
+  - **Purple Pair**: Recon Cyber Dark (`cyber`) and Midnight Dusk (`dusk`).
+- **In-App Auto-Updater Publishing**: configured `build.publish` and update manifests (`latest.yml`, `latest-linux.yml`, blockmaps) so background updates and "Restart to install" execute smoothly.
+- **Interactive Check for Updates**: manual check opens direct download and install dialogues when an update is available.
 
 ### v1.3.1: App Link Research Clips & Ecosystem Polish
 
@@ -136,6 +148,7 @@ The full plan, with every feature, is in [docs/ROADMAP.md](docs/ROADMAP.md). In 
 | **v1.1** | Released | Updates, tab isolation, themes and the shields popover |
 | **v1.2** | Released | Reader View, Read Aloud, aspects and accessible themes |
 | **v1.3.1**| Released | StoryTracker & Markdown Reader research: send research clips with YAML front matter via App Link |
+| **v1.3.2**| Released | Tab dragging & rearranging, 4 spectrum themes (blues/reds/yellows), auto-updater manifest pipeline |
 | **v1.4** | Planned | Sync with no account, through a folder you already sync, with encryption |
 | **v1.5** | Planned | Offline archives: save a page as one file, search all your saved research |
 | **v1.6** | Planned | Shields 2.0: filter list subscriptions and a live network inspector |

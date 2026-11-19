@@ -16,9 +16,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: windows, os: windows-latest, target: win, files: "release/ReconBrowser-*-Setup.exe\nrelease/ReconBrowser-*-Portable.exe" }
+          - { name: windows, os: windows-latest, target: win, files: "release/ReconBrowser-*-Setup.exe\nrelease/ReconBrowser-*-Setup.exe.blockmap\nrelease/ReconBrowser-*-Portable.exe\nrelease/latest.yml" }
           - { name: macos, os: macos-latest, target: mac, files: "release/*.dmg" }
-          - { name: linux, os: ubuntu-latest, target: linux, files: "release/*.AppImage\nrelease/*.deb" }
+          - { name: linux, os: ubuntu-latest, target: linux, files: "release/*.AppImage\nrelease/*.deb\nrelease/latest-linux.yml" }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

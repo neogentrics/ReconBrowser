@@ -146,7 +146,7 @@ function buildMenu() {
         {
           label: 'Check for Updates...',
           click: () => {
-            if (updater) updater.check({ silent: false });
+            checkForUpdatesInteractive(mainWindow);
           }
         },
         { type: 'separator' },
@@ -384,12 +384,61 @@ ipcMain.on('open-external-url', (event, url) => {
   }
 });
 
+async function checkForUpdatesInteractive(win) {
+  if (!updater) return;
+  const parent = win || mainWindow;
+  const res = await updater.check({ silent: false });
+  if (res.state === 'current') {
+    dialog.showMessageBox(parent, {
+      type: 'info',
+      title: 'Check for Updates',
+      message: 'You’re up to date',
+      detail: `Recon Browser ${app.getVersion()} is the latest version.`,
+      buttons: ['OK']
+    });
+  } else if (res.state === 'available') {
+    const { response } = await dialog.showMessageBox(parent, {
+      type: 'info',
+      title: 'Update Available',
+      message: `Recon Browser v${res.version} is available!`,
+      detail: 'A new version of Recon Browser is ready for download from GitHub Releases.',
+      buttons: ['Download Update', 'Later'],
+      defaultId: 0,
+      cancelId: 1
+    });
+    if (response === 0) {
+      shell.openExternal(res.url || 'https://github.com/neogentrics/ReconBrowser/releases/latest');
+    }
+  } else if (res.state === 'downloading' || res.state === 'ready') {
+    const isReady = res.state === 'ready';
+    const { response } = await dialog.showMessageBox(parent, {
+      type: 'info',
+      title: isReady ? 'Update Ready to Install' : 'Downloading Update',
+      message: `Recon Browser v${res.version} is ${isReady ? 'ready to install' : 'downloading in the background'}`,
+      detail: isReady ? 'Restart Recon Browser now to apply the update?' : 'You will be notified as soon as the download finishes.',
+      buttons: isReady ? ['Restart to Update', 'Later'] : ['OK'],
+      defaultId: 0,
+      cancelId: 1
+    });
+    if (isReady && response === 0) {
+      updater.installNow();
+    }
+  } else if (res.state === 'error') {
+    dialog.showMessageBox(parent, {
+      type: 'warning',
+      title: 'Update Check',
+      message: 'Couldn’t check for updates',
+      detail: res.message || 'Check your internet connection and try again.'
+    });
+  }
+}
+
 ipcMain.on('copy-to-clipboard', (event, text) => {
   clipboard.writeText(text);
 });
 
 ipcMain.on('check-updates-manual', () => {
-  if (updater) updater.check({ silent: false });
+  checkForUpdatesInteractive(mainWindow);
 });
 
 ipcMain.on('install-update-now', () => {

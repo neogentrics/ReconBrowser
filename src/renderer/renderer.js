@@ -30,10 +30,13 @@ const popoverOptFingerprint = document.getElementById('popover-opt-fingerprint')
 const popoverOptWebrtc = document.getElementById('popover-opt-webrtc');
 const popoverOptParams = document.getElementById('popover-opt-params');
 
-// Settings Drawer
-const settingsDrawer = document.getElementById('settings-drawer');
+// Settings Modal
 const btnSettingsToggle = document.getElementById('btn-settings-toggle');
-const btnCloseDrawer = document.getElementById('btn-close-drawer');
+const settingsModal = document.getElementById('settings-modal');
+const btnCloseSettingsModal = document.getElementById('btn-close-settings-modal');
+const btnCloseSettingsModalFooter = document.getElementById('btn-close-settings-modal-footer');
+const settingsNavBtns = document.querySelectorAll('.settings-nav-btn');
+const settingsPanels = document.querySelectorAll('.settings-panel');
 const selectTheme = document.getElementById('select-theme');
 const selectAspect = document.getElementById('select-aspect');
 const selectEngine = document.getElementById('select-engine');
@@ -41,6 +44,8 @@ const selectHomeDest = document.getElementById('select-home-dest');
 const customHomeGroup = document.getElementById('custom-home-group');
 const inputCustomHome = document.getElementById('input-custom-home');
 const toggleStartpageApps = document.getElementById('toggle-startpage-apps');
+const dropdownToggleStartpageApps = document.getElementById('dropdown-toggle-startpage-apps');
+const dropdownItemToggleApps = document.getElementById('dropdown-item-toggle-apps');
 const toggleNavbarApps = document.getElementById('toggle-navbar-apps');
 const toggleDoh = document.getElementById('toggle-doh');
 const toggleAdblock = document.getElementById('toggle-adblock');
@@ -50,7 +55,8 @@ const toggleStripParams = document.getElementById('toggle-strip-params');
 const btnDrawerStartRead = document.getElementById('btn-drawer-start-read');
 const selectVoiceSpeed = document.getElementById('select-voice-speed');
 const toggleTtsHighlight = document.getElementById('toggle-tts-highlight');
-const btnOpenAbout = document.getElementById('btn-open-about');
+const btnSettingsCheckUpdates = document.getElementById('btn-settings-check-updates');
+const settingsAboutCopy = document.getElementById('settings-about-copy');
 
 // Ecosystem Menu
 const btnEcosystem = document.getElementById('btn-ecosystem');
@@ -290,25 +296,38 @@ function createTab(initialUrl = null, activate = true) {
   webviewEl.addEventListener('console-message', (e) => {
     const msg = e.message;
     if (msg === 'RECON_ACTION:TOGGLE_SHIELDS') {
-      shieldsGlobalActive = !shieldsGlobalActive;
-      toggleAdblock.checked = shieldsGlobalActive;
-      popoverOptAdblock.checked = shieldsGlobalActive;
-      localStorage.setItem('recon_shields_active', String(shieldsGlobalActive));
-      localStorage.setItem('recon_opt_adblock', String(shieldsGlobalActive));
-      ipcRenderer.send('toggle-shields', shieldsGlobalActive);
-      updateShieldsPopoverDisplay();
-      tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
-      showToast(shieldsGlobalActive ? 'Recon Shields: Active' : 'Recon Shields: Paused');
+      if (tabData && tabData.shieldsPaused) {
+        tabData.shieldsPaused = false;
+        popoverToggleSite.checked = true;
+        let domain = 'startpage';
+        if (tabData.url && !tabData.url.includes('startpage.html')) {
+          try { domain = new URL(tabData.url).hostname; } catch {}
+        }
+        ipcRenderer.send('set-site-shields', { host: domain, enabled: true });
+        updateShieldsPopoverDisplay();
+        syncThemeToWebview(tabData);
+        showToast('Recon Shields: Resumed for this site');
+      } else {
+        shieldsGlobalActive = !shieldsGlobalActive;
+        toggleAdblock.checked = shieldsGlobalActive;
+        popoverOptAdblock.checked = shieldsGlobalActive;
+        localStorage.setItem('recon_shields_active', String(shieldsGlobalActive));
+        localStorage.setItem('recon_opt_adblock', String(shieldsGlobalActive));
+        ipcRenderer.send('toggle-shields', shieldsGlobalActive);
+        updateShieldsPopoverDisplay();
+        tabs.forEach(tab => syncThemeToWebview(tab));
+        showToast(shieldsGlobalActive ? 'Recon Shields: Active' : 'Recon Shields: Paused');
+      }
     } else if (msg === 'RECON_ACTION:TOGGLE_DOH') {
       const current = localStorage.getItem('recon_doh_enabled') !== 'false';
       const next = !current;
       localStorage.setItem('recon_doh_enabled', String(next));
       if (toggleDoh) toggleDoh.checked = next;
       ipcRenderer.send('toggle-doh', next);
-      tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
+      tabs.forEach(tab => syncThemeToWebview(tab));
       showToast(next ? 'DNS-over-HTTPS: Encrypted (Cloudflare)' : 'DNS-over-HTTPS: Standard (System DNS)');
     } else if (msg === 'RECON_ACTION:SHOW_TELEMETRY_INFO') {
-      showToast('⚡ Ultra Mode Active: Zero telemetry, zero usage pings, and 100% local privacy.');
+      openSettingsModal('privacy');
     }
   });
 
@@ -540,11 +559,11 @@ btnHome.addEventListener('click', () => {
 btnNewTab.addEventListener('click', () => createTab());
 
 // ==========================================================================
-// Shields Popover vs Settings Drawer Separation
+// Shields Popover & Settings Modal Controls
 // ==========================================================================
 shieldsWidget.addEventListener('click', (e) => {
   e.stopPropagation();
-  settingsDrawer.classList.add('drawer-closed');
+  closeSettingsModal();
   ecosystemDropdown.style.display = 'none';
   shieldsPopover.classList.toggle('popover-hidden');
   updateShieldsPopoverDisplay();
@@ -558,25 +577,102 @@ btnSettingsToggle.addEventListener('click', (e) => {
   e.stopPropagation();
   shieldsPopover.classList.add('popover-hidden');
   ecosystemDropdown.style.display = 'none';
-  settingsDrawer.classList.toggle('drawer-closed');
+  openSettingsModal('appearance');
 });
 
-btnCloseDrawer.addEventListener('click', () => {
-  settingsDrawer.classList.add('drawer-closed');
+function openSettingsModal(tabId = 'appearance') {
+  shieldsPopover.classList.add('popover-hidden');
+  ecosystemDropdown.style.display = 'none';
+
+  switchSettingsTab(tabId);
+
+  if (tabId === 'about') {
+    loadAboutSettingsInfo();
+  }
+
+  if (settingsModal && !settingsModal.open) {
+    settingsModal.showModal();
+  }
+}
+
+function closeSettingsModal() {
+  if (settingsModal && settingsModal.open) {
+    settingsModal.close();
+  }
+}
+
+function switchSettingsTab(tabId) {
+  settingsNavBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+  });
+  settingsPanels.forEach(panel => {
+    panel.classList.toggle('active', panel.id === `panel-${tabId}`);
+  });
+}
+
+if (btnCloseSettingsModal) {
+  btnCloseSettingsModal.addEventListener('click', closeSettingsModal);
+}
+if (btnCloseSettingsModalFooter) {
+  btnCloseSettingsModalFooter.addEventListener('click', closeSettingsModal);
+}
+
+settingsNavBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tabId = btn.getAttribute('data-tab');
+    switchSettingsTab(tabId);
+    if (tabId === 'about') {
+      loadAboutSettingsInfo();
+    }
+  });
 });
+
+if (settingsModal) {
+  settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+      closeSettingsModal();
+    }
+  });
+}
+
+async function loadAboutSettingsInfo() {
+  try {
+    const info = await ipcRenderer.invoke('get-app-info');
+    const verEl = document.getElementById('settings-about-version');
+    const techEl = document.getElementById('settings-about-tech');
+    if (verEl) verEl.textContent = `Version ${info.version}`;
+    if (techEl) techEl.textContent = `Electron ${info.electron} · Chromium ${info.chrome} · Node ${info.node} · ${info.os}`;
+  } catch (err) {}
+}
+
+if (btnSettingsCheckUpdates) {
+  btnSettingsCheckUpdates.addEventListener('click', () => {
+    ipcRenderer.send('check-updates-manual');
+  });
+}
+
+if (settingsAboutCopy) {
+  settingsAboutCopy.addEventListener('click', async () => {
+    const info = await ipcRenderer.invoke('get-app-info');
+    const details = [
+      `Recon Browser ${info.version}`,
+      `Electron ${info.electron} · Chromium ${info.chrome} · Node ${info.node}`,
+      `${info.os}`
+    ].join('\n');
+    ipcRenderer.send('copy-to-clipboard', details);
+    showToast('Version details copied to clipboard');
+  });
+}
 
 btnPopoverOpenSettings.addEventListener('click', (e) => {
   e.stopPropagation();
   shieldsPopover.classList.add('popover-hidden');
-  settingsDrawer.classList.remove('drawer-closed');
+  openSettingsModal('privacy');
 });
 
 document.addEventListener('click', (e) => {
   if (!shieldsPopover.contains(e.target) && !shieldsWidget.contains(e.target)) {
     shieldsPopover.classList.add('popover-hidden');
-  }
-  if (!settingsDrawer.contains(e.target) && !btnSettingsToggle.contains(e.target)) {
-    settingsDrawer.classList.add('drawer-closed');
   }
   if (!btnEcosystem.contains(e.target) && !ecosystemDropdown.contains(e.target)) {
     ecosystemDropdown.style.display = 'none';
@@ -599,16 +695,6 @@ function updateShieldsPopoverDisplay() {
   }
 
   shieldsPopoverDomain.textContent = domain;
-  const count = activeTab.blockedCount || 0;
-  popoverStatCount.textContent = count;
-  blockedCountEl.textContent = count;
-
-  if (count > 0) {
-    blockedCountEl.classList.add('has-blocked');
-  } else {
-    blockedCountEl.classList.remove('has-blocked');
-  }
-
   const isPaused = activeTab.shieldsPaused || !shieldsGlobalActive;
   popoverToggleSite.checked = !isPaused;
   document.getElementById('site-protection-state').textContent = !isPaused ? 'Active protection enabled' : 'Shields paused for this site';
@@ -619,11 +705,22 @@ function updateShieldsPopoverDisplay() {
     shieldStatus.style.color = '#ef4444';
     shieldsWidget.classList.add('shields-paused');
     popoverProtectionsList.classList.add('protections-disabled');
+    blockedCountEl.textContent = '0';
+    popoverStatCount.textContent = '0';
+    blockedCountEl.classList.remove('has-blocked');
   } else {
     shieldStatus.textContent = 'ON';
     shieldStatus.style.color = '#22c55e';
     shieldsWidget.classList.remove('shields-paused');
     popoverProtectionsList.classList.remove('protections-disabled');
+    const count = activeTab.blockedCount || 0;
+    popoverStatCount.textContent = count;
+    blockedCountEl.textContent = count;
+    if (count > 0) {
+      blockedCountEl.classList.add('has-blocked');
+    } else {
+      blockedCountEl.classList.remove('has-blocked');
+    }
   }
 }
 
@@ -631,7 +728,7 @@ function updateShieldsPopoverDisplay() {
 ipcRenderer.on('shield-blocked-update', (event, data) => {
   totalBlockedCount++;
   const activeTab = tabs.get(activeTabId);
-  if (activeTab) {
+  if (activeTab && !activeTab.shieldsPaused && shieldsGlobalActive) {
     activeTab.blockedCount = (activeTab.blockedCount || 0) + 1;
     updateShieldsPopoverDisplay();
   }
@@ -645,7 +742,7 @@ toggleAdblock.addEventListener('change', (e) => {
   popoverOptAdblock.checked = shieldsGlobalActive;
   ipcRenderer.send('toggle-shields', shieldsGlobalActive);
   updateShieldsPopoverDisplay();
-  tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
+  tabs.forEach(tab => syncThemeToWebview(tab));
 });
 
 // Per-Site Shields Toggle
@@ -655,6 +752,9 @@ popoverToggleSite.addEventListener('change', (e) => {
   if (!activeTab) return;
 
   activeTab.shieldsPaused = !siteActive;
+  if (!siteActive) {
+    activeTab.blockedCount = 0;
+  }
   let host = 'startpage';
   if (activeTab.url && !activeTab.url.includes('startpage.html')) {
     try {
@@ -664,7 +764,7 @@ popoverToggleSite.addEventListener('change', (e) => {
 
   ipcRenderer.send('set-site-shields', { host, enabled: siteActive });
   updateShieldsPopoverDisplay();
-  tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
+  tabs.forEach(tab => syncThemeToWebview(tab));
 });
 
 // Synchronize Popover Protection Switches
@@ -699,22 +799,42 @@ function applyThemeAndAspect(theme, aspect) {
   localStorage.setItem('recon_theme', activeTheme);
   localStorage.setItem('recon_aspect', activeAspect);
 
-  selectTheme.value = activeTheme;
-  selectAspect.value = activeAspect;
+  if (selectTheme) selectTheme.value = activeTheme;
+  if (selectAspect) selectAspect.value = activeAspect;
 
   // Broadcast to all active webviews
   tabs.forEach(tab => {
-    syncThemeToWebview(tab.webviewEl, activeTheme, activeAspect);
+    syncThemeToWebview(tab, activeTheme, activeAspect);
   });
 }
 
-function syncThemeToWebview(webviewEl, theme = null, aspect = null) {
+function syncThemeToWebview(target, theme = null, aspect = null) {
+  let webviewEl = target;
+  let tab = null;
+  if (target && target.webviewEl) {
+    tab = target;
+    webviewEl = target.webviewEl;
+  } else {
+    for (const [, t] of tabs) {
+      if (t.webviewEl === target) {
+        tab = t;
+        break;
+      }
+    }
+    if (!tab) tab = tabs.get(activeTabId);
+  }
+
+  if (!webviewEl) return;
+
   const activeTheme = theme || localStorage.getItem('recon_theme') || 'cyber';
   const activeAspect = aspect || localStorage.getItem('recon_aspect') || 'solid';
   const engine = localStorage.getItem('recon_default_engine') || 'duckduckgo';
   const showApps = localStorage.getItem('recon_show_startpage_apps') !== 'false';
-  const shieldsActive = shieldsGlobalActive;
+  
+  const isPaused = !shieldsGlobalActive || (tab && tab.shieldsPaused);
+  const shieldsActive = !isPaused;
   const dohActive = localStorage.getItem('recon_doh_enabled') !== 'false';
+
   try {
     webviewEl.executeJavaScript(`
       if (typeof window.applyReconTheme === 'function') {
@@ -732,8 +852,8 @@ function syncThemeToWebview(webviewEl, theme = null, aspect = null) {
       if (typeof window.applyReconDohState === 'function') {
         window.applyReconDohState(${dohActive});
       }
-    `);
-  } catch {}
+    `).catch(() => {});
+  } catch (err) {}
 }
 
 selectTheme.addEventListener('change', (e) => {
@@ -766,13 +886,30 @@ function setupHomeSetting() {
 }
 setupHomeSetting();
 
-// Start Page Apps Hub Toggle
-toggleStartpageApps.checked = localStorage.getItem('recon_show_startpage_apps') !== 'false';
-toggleStartpageApps.addEventListener('change', (e) => {
-  const show = e.target.checked;
+// Start Page Apps Hub Toggle (Synchronized across Settings Modal & Recon Apps dropdown)
+function setStartpageAppsVisibility(show) {
   localStorage.setItem('recon_show_startpage_apps', String(show));
-  tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
-});
+  if (toggleStartpageApps) toggleStartpageApps.checked = show;
+  if (dropdownToggleStartpageApps) dropdownToggleStartpageApps.checked = show;
+  tabs.forEach(tab => syncThemeToWebview(tab));
+}
+
+const initialAppsVisibility = localStorage.getItem('recon_show_startpage_apps') !== 'false';
+if (toggleStartpageApps) {
+  toggleStartpageApps.checked = initialAppsVisibility;
+  toggleStartpageApps.addEventListener('change', (e) => setStartpageAppsVisibility(e.target.checked));
+}
+
+if (dropdownToggleStartpageApps) {
+  dropdownToggleStartpageApps.checked = initialAppsVisibility;
+  dropdownToggleStartpageApps.addEventListener('change', (e) => setStartpageAppsVisibility(e.target.checked));
+}
+
+if (dropdownItemToggleApps) {
+  dropdownItemToggleApps.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+}
 
 // Navbar Recon Apps Button Toggle
 toggleNavbarApps.checked = localStorage.getItem('recon_show_navbar_apps') !== 'false';
@@ -822,7 +959,7 @@ if (toggleDoh) {
 if (btnVerifyDoh) {
   btnVerifyDoh.addEventListener('click', () => {
     createTab('https://one.one.one.one/help', true);
-    settingsDrawer.classList.add('drawer-hidden');
+    closeSettingsModal();
   });
 }
 
@@ -834,6 +971,8 @@ ipcRenderer.send('toggle-doh', localStorage.getItem('recon_doh_enabled') !== 'fa
 // ==========================================================================
 btnEcosystem.addEventListener('click', (e) => {
   e.stopPropagation();
+  shieldsPopover.classList.add('popover-hidden');
+  closeSettingsModal();
   const isShown = ecosystemDropdown.style.display === 'block';
   ecosystemDropdown.style.display = isShown ? 'none' : 'block';
 });
@@ -1069,7 +1208,7 @@ function stopReadAloud() {
 btnReadAloud.addEventListener('click', () => startReadAloud());
 btnReaderListen.addEventListener('click', () => startReadAloud());
 btnDrawerStartRead.addEventListener('click', () => {
-  settingsDrawer.classList.add('drawer-closed');
+  closeSettingsModal();
   startReadAloud();
 });
 
@@ -1104,10 +1243,11 @@ async function openAboutDialog() {
   aboutDlg.showModal();
 }
 
-btnOpenAbout.addEventListener('click', () => {
-  settingsDrawer.classList.add('drawer-closed');
-  openAboutDialog();
-});
+if (btnOpenAbout) {
+  btnOpenAbout.addEventListener('click', () => {
+    openSettingsModal('about');
+  });
+}
 
 aboutClose.addEventListener('click', () => aboutDlg.close());
 aboutDone.addEventListener('click', () => aboutDlg.close());
@@ -1124,14 +1264,18 @@ aboutCopy.addEventListener('click', async () => {
   showToast('Version details copied to clipboard');
 });
 
-// External Links in About Modal
+// External Links in About Modal & Settings Modal
 const externalLinks = {
   'about-website': 'https://recontowers.com',
   'about-notes': 'https://github.com/neogentrics/ReconBrowser/releases',
   'about-issue': 'https://github.com/neogentrics/ReconBrowser/issues',
   'about-source': 'https://github.com/neogentrics/ReconBrowser',
   'about-license': 'https://github.com/neogentrics/ReconBrowser/blob/main/LICENSE',
-  'about-notices': 'https://github.com/neogentrics/ReconBrowser/blob/main/README.md'
+  'about-notices': 'https://github.com/neogentrics/ReconBrowser/blob/main/README.md',
+  'settings-about-website': 'https://recontowers.com',
+  'settings-about-notes': 'https://github.com/neogentrics/ReconBrowser/releases',
+  'settings-about-issue': 'https://github.com/neogentrics/ReconBrowser/issues',
+  'settings-about-source': 'https://github.com/neogentrics/ReconBrowser'
 };
 
 for (const [id, url] of Object.entries(externalLinks)) {
@@ -1145,7 +1289,15 @@ for (const [id, url] of Object.entries(externalLinks)) {
 }
 
 // Menu IPC Events
-ipcRenderer.on('open-about-dialog', () => openAboutDialog());
+ipcRenderer.on('open-about-dialog', () => openSettingsModal('about'));
+ipcRenderer.on('menu-set-theme', (_, theme) => {
+  applyThemeAndAspect(theme, null);
+  showToast(`Theme switched to: ${theme}`);
+});
+ipcRenderer.on('menu-set-aspect', (_, aspect) => {
+  applyThemeAndAspect(null, aspect);
+  showToast(`Theme finish switched to: ${aspect}`);
+});
 ipcRenderer.on('menu-new-tab', () => createTab());
 ipcRenderer.on('menu-close-tab', () => closeTab(activeTabId));
 ipcRenderer.on('menu-reload', () => {
@@ -1175,8 +1327,7 @@ ipcRenderer.on('menu-toggle-reader', () => toggleReaderView());
 ipcRenderer.on('menu-read-aloud', () => startReadAloud());
 ipcRenderer.on('menu-stop-reading', () => stopReadAloud());
 ipcRenderer.on('menu-open-settings', () => {
-  shieldsPopover.classList.add('popover-hidden');
-  settingsDrawer.classList.toggle('drawer-closed');
+  openSettingsModal('appearance');
 });
 
 // Auto-Updater status listener
@@ -1577,7 +1728,11 @@ document.addEventListener('keydown', (e) => {
     }
   } else if ((e.ctrlKey || e.metaKey) && e.key === ',') {
     e.preventDefault();
-    settingsDrawer.classList.toggle('drawer-closed');
+    if (settingsModal && settingsModal.open) {
+      closeSettingsModal();
+    } else {
+      openSettingsModal('appearance');
+    }
   }
 });
 

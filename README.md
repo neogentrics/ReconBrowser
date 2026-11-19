@@ -24,7 +24,7 @@
 
 ## Downloads
 
-The latest version is **v1.3.2**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
+The latest version is **v1.3.3**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
 
 | Platform | Download Package | Description |
 | :--- | :--- | :--- |
@@ -61,6 +61,15 @@ An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 ---
 
 ## What's New
+
+### v1.3.3: Tabbed Settings Pop-Up, View Menu Quick Themes & Shields Sync
+
+- **Centered Tabbed Settings Modal**: Replaced the sliding right-hand sidebar with a focused, centered pop-up window featuring 6 organized tabs (*Appearance*, *Interface & Layout*, *Search & Privacy*, *Read Aloud*, *Recon App Link*, *About*). Clicking outside the modal or pressing `Esc` instantly dismisses it so you can get right back to the page.
+- **View Menu Quick Theme Switching**: Added native `Themes` and `Theme Finishes & Aspects` submenus under the application menu bar `View`, allowing one-click theme switching across all 15 palettes and 3 finishes without opening settings.
+- **Start Page & Site Shields Bidirectional Sync**: Fixed site-specific paused shields so the Start Page badge displays `Paused` in red when shields are paused for that site, and clicking it unpauses the site.
+- **Precise Site Shields Bypass**: Enhanced request filtering so when a user pauses shields for complex media sites like YouTube Music, media chunks and background streams bypass shields cleanly without ticking up blocked counts.
+- **Recon Apps Hub Toggle Placement**: Added a quick `Show Apps on Start Page` switch directly inside the `⚡ Recon Apps` dropdown menu as well as within the Settings modal, keeping both synchronized in real time.
+- **Interactive Ultra Telemetry Hub**: Clicking the center `Ultra / Zero Telemetry Overhead` badge on the Start Page opens directly into the *Search & Privacy* tab detailing Recon's zero-telemetry architecture and local-only processing.
 
 ### v1.3.2: Tab Dragging, Spectrum Themes & Auto-Updater Pipeline
 

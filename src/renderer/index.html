@@ -51,6 +51,11 @@
         <a href="#" data-app="rt-story-tracker" data-url="https://recontowers.com/apps/rt-story-tracker/" class="menu-item">📚 StoryTracker & Author Desk</a>
         <div style="height: 1px; background: var(--border-color); margin: 6px 0; opacity: 0.6;"></div>
         <a href="#" id="menu-send-clip" class="menu-item">📎 Send Research Clip (Ctrl+Shift+C)</a>
+        <div style="height: 1px; background: var(--border-color); margin: 6px 0; opacity: 0.6;"></div>
+        <label class="dropdown-toggle-item" id="dropdown-item-toggle-apps" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; font-size: 12px; cursor: pointer; user-select: none;">
+          <span>Show Apps on Start Page</span>
+          <input type="checkbox" id="dropdown-toggle-startpage-apps" checked style="cursor: pointer;" />
+        </label>
       </div>
     </div>
 
@@ -159,157 +164,291 @@
     </div>
   </div>
 
-  <!-- Side Settings Drawer (Opened only via ⚙ gear button) -->
-  <aside id="settings-drawer" class="drawer-closed">
-    <div class="drawer-header">
-      <h3>Recon Settings</h3>
-      <button id="btn-close-drawer">×</button>
-    </div>
-    <div class="drawer-content">
-      <div class="setting-group">
-        <h4>Appearance & Themes</h4>
-        <label class="select-row">
-          <span>Theme (Palette)</span>
-          <select id="select-theme">
-            <optgroup label="Default & Neutrals">
-              <option value="cyber" selected>Recon Cyber Dark (Default)</option>
-              <option value="obsidian">Pure Obsidian</option>
-              <option value="slate">Recon Slate</option>
-              <option value="sepia">Warm Sepia</option>
-              <option value="mist">Nordic Mist</option>
-            </optgroup>
-            <optgroup label="Blue Spectrum">
-              <option value="ocean">Cobalt Abyss (Deep Blue)</option>
-              <option value="azure">Glacial Azure (Light Blue)</option>
-            </optgroup>
-            <optgroup label="Purple Spectrum">
-              <option value="dusk">Midnight Dusk (Royal Purple)</option>
-              <option value="dark">Classic Recon Dark</option>
-            </optgroup>
-            <optgroup label="Red Spectrum">
-              <option value="red">Crimson Horizon (Burgundy Red)</option>
-              <option value="scarlet">Scarlet Blaze (Vivid Red)</option>
-            </optgroup>
-            <optgroup label="Yellow & Gold Spectrum">
-              <option value="yellow">Amber Sunset (Bronze Yellow)</option>
-              <option value="solar">Solar Flare (Cyber Gold)</option>
-            </optgroup>
-            <optgroup label="Green Spectrum">
-              <option value="forest">Deep Forest (Dark Green)</option>
-              <option value="evergreen">Evergreen (Vivid Green)</option>
-            </optgroup>
-            <optgroup label="Accessibility & ADA">
-              <option value="contrast">High Contrast (ADA Compliant)</option>
-              <option value="colorblind-blue-orange">Colorblind Blue-Orange (ADA)</option>
-              <option value="colorblind-cyan-magenta">Colorblind Cyan-Magenta (ADA)</option>
-            </optgroup>
-          </select>
-        </label>
-        <label class="select-row" style="margin-top: 8px;">
-          <span>Theme Aspect (Finish)</span>
-          <select id="select-aspect">
-            <option value="solid" selected>Solid (Matte)</option>
-            <option value="metallic">Metallic (Brushed Sheen)</option>
-            <option value="glass">Glass (Frosted Acrylic)</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="setting-group">
-        <h4>Interface & Layout</h4>
-        <label class="select-row">
-          <span>Home Button Destination</span>
-          <select id="select-home-dest">
-            <option value="recontowers" selected>Recon Towers (recontowers.com)</option>
-            <option value="startpage">Recon Start Page</option>
-            <option value="custom">Custom URL...</option>
-          </select>
-        </label>
-        <div id="custom-home-group" style="display: none; margin-top: 6px;">
-          <input type="text" id="input-custom-home" placeholder="https://recontowers.com" class="drawer-input" />
+  <!-- Centered Settings Modal (Tabbed Pop-up Window) -->
+  <dialog id="settings-modal" class="settings-modal">
+    <div class="settings-modal-wrapper">
+      <div class="settings-modal-header">
+        <div class="settings-modal-title">
+          <span class="settings-icon">⚙</span>
+          <h3>Recon Settings</h3>
         </div>
-        <label class="switch-row" style="margin-top: 10px;">
-          <span>Show Apps Hub on Start Page</span>
-          <input type="checkbox" id="toggle-startpage-apps" checked />
-        </label>
-        <label class="switch-row">
-          <span>Show Recon Apps in Top Bar</span>
-          <input type="checkbox" id="toggle-navbar-apps" checked />
-        </label>
+        <button id="btn-close-settings-modal" class="modal-close-btn" title="Close (Esc)">×</button>
       </div>
 
-      <div class="setting-group">
-        <h4>Search & Privacy</h4>
-        <label class="select-row">
-          <span>Default Engine</span>
-          <select id="select-engine">
-            <option value="duckduckgo" selected>DuckDuckGo (Recommended)</option>
-            <option value="google">Google</option>
-            <option value="bing">Bing</option>
-          </select>
-        </label>
-        <label class="switch-row">
-          <span>DNS-over-HTTPS (Cloudflare)</span>
-          <input type="checkbox" id="toggle-doh" checked />
-        </label>
-        <button id="btn-verify-doh" class="btn-subtle" style="margin-top: 8px; font-size: 11px; width: 100%;">🔍 Test DoH Status (Cloudflare)...</button>
-      </div>
+      <div class="settings-modal-body">
+        <!-- Sidebar Navigation -->
+        <nav class="settings-nav">
+          <button class="settings-nav-btn active" data-tab="appearance">
+            <span class="nav-icon">🎨</span> Appearance
+          </button>
+          <button class="settings-nav-btn" data-tab="interface">
+            <span class="nav-icon">🖥️</span> Interface
+          </button>
+          <button class="settings-nav-btn" data-tab="privacy">
+            <span class="nav-icon">🛡️</span> Privacy & Shields
+          </button>
+          <button class="settings-nav-btn" data-tab="readaloud">
+            <span class="nav-icon">🔊</span> Read Aloud
+          </button>
+          <button class="settings-nav-btn" data-tab="applink">
+            <span class="nav-icon">⚡</span> Recon App Link
+          </button>
+          <button class="settings-nav-btn" data-tab="about">
+            <span class="nav-icon">ℹ️</span> About
+          </button>
+        </nav>
 
-      <div class="setting-group">
-        <h4>Global Shield Protections</h4>
-        <label class="switch-row">
-          <span>Block Trackers & Ads</span>
-          <input type="checkbox" id="toggle-adblock" checked />
-        </label>
-        <label class="switch-row">
-          <span>Anti-Fingerprinting Noise</span>
-          <input type="checkbox" id="toggle-fingerprint" checked />
-        </label>
-        <label class="switch-row">
-          <span>WebRTC IP Leak Protection</span>
-          <input type="checkbox" id="toggle-webrtc" checked />
-        </label>
-        <label class="switch-row">
-          <span>Strip Tracking URLs (utm, fbclid)</span>
-          <input type="checkbox" id="toggle-strip-params" checked />
-        </label>
-      </div>
+        <!-- Tab Content Panels -->
+        <div class="settings-content">
+          <!-- 1. Appearance & Themes -->
+          <div class="settings-panel active" id="panel-appearance">
+            <h4 class="panel-heading">Appearance & Themes</h4>
+            <div class="setting-row">
+              <div class="setting-label-group">
+                <strong>Theme Palette</strong>
+                <small>Choose your color palette scheme</small>
+              </div>
+              <select id="select-theme" class="settings-select">
+                <optgroup label="Default & Neutrals">
+                  <option value="cyber" selected>Recon Cyber Dark (Default)</option>
+                  <option value="obsidian">Pure Obsidian</option>
+                  <option value="slate">Recon Slate</option>
+                  <option value="sepia">Warm Sepia</option>
+                  <option value="mist">Nordic Mist</option>
+                </optgroup>
+                <optgroup label="Blue Spectrum">
+                  <option value="ocean">Cobalt Abyss (Deep Blue)</option>
+                  <option value="azure">Glacial Azure (Light Blue)</option>
+                </optgroup>
+                <optgroup label="Purple Spectrum">
+                  <option value="dusk">Midnight Dusk (Royal Purple)</option>
+                  <option value="dark">Classic Recon Dark</option>
+                </optgroup>
+                <optgroup label="Red Spectrum">
+                  <option value="red">Crimson Horizon (Burgundy Red)</option>
+                  <option value="scarlet">Scarlet Blaze (Vivid Red)</option>
+                </optgroup>
+                <optgroup label="Yellow & Gold Spectrum">
+                  <option value="yellow">Amber Sunset (Bronze Yellow)</option>
+                  <option value="solar">Solar Flare (Cyber Gold)</option>
+                </optgroup>
+                <optgroup label="Green Spectrum">
+                  <option value="forest">Deep Forest (Dark Green)</option>
+                  <option value="evergreen">Evergreen (Vivid Green)</option>
+                </optgroup>
+                <optgroup label="Accessibility & ADA">
+                  <option value="contrast">High Contrast (ADA Compliant)</option>
+                  <option value="colorblind-blue-orange">Colorblind Blue-Orange (ADA)</option>
+                  <option value="colorblind-cyan-magenta">Colorblind Cyan-Magenta (ADA)</option>
+                </optgroup>
+              </select>
+            </div>
 
-      <div class="setting-group">
-        <h4>Read Aloud & Speech</h4>
-        <button id="btn-drawer-start-read" class="btn-subtle-full" style="margin-bottom: 10px; font-weight: 600;">🔊 Start Reading Aloud (Ctrl+Shift+A)</button>
-        <label class="select-row">
-          <span>Voice Speed</span>
-          <select id="select-voice-speed">
-            <option value="0.75">Relaxed (0.75x)</option>
-            <option value="1.0" selected>Normal (1.0x)</option>
-            <option value="1.25">Brisk (1.25x)</option>
-            <option value="1.5">Fast (1.5x)</option>
-          </select>
-        </label>
-        <label class="switch-row">
-          <span>Auto-highlight reading line</span>
-          <input type="checkbox" id="toggle-tts-highlight" checked />
-        </label>
-      </div>
+            <div class="setting-row">
+              <div class="setting-label-group">
+                <strong>Theme Aspect (Finish)</strong>
+                <small>Surface lighting and material finish</small>
+              </div>
+              <select id="select-aspect" class="settings-select">
+                <option value="solid" selected>Solid (Matte)</option>
+                <option value="metallic">Metallic (Brushed Sheen)</option>
+                <option value="glass">Glass (Frosted Acrylic)</option>
+              </select>
+            </div>
+          </div>
 
-      <div class="setting-group" id="app-link-settings-group">
-        <h4>Recon App Link Ecosystem</h4>
-        <p class="setting-hint" style="font-size: 11px; opacity: 0.8; margin-bottom: 8px;">
-          Connect with RT Story Tracker and RT Markdown Reader to send research clips and documents.
-        </p>
-        <div id="app-link-status-list" class="app-link-status-container">
-          <div class="app-link-loading" style="font-size: 12px; opacity: 0.6; padding: 4px 0;">Scanning for Recon Apps...</div>
+          <!-- 2. Interface & Layout -->
+          <div class="settings-panel" id="panel-interface">
+            <h4 class="panel-heading">Interface & Layout</h4>
+            <div class="setting-row">
+              <div class="setting-label-group">
+                <strong>Home Button Destination</strong>
+                <small>Page to open when clicking the home button (⌂)</small>
+              </div>
+              <select id="select-home-dest" class="settings-select">
+                <option value="recontowers" selected>Recon Towers (recontowers.com)</option>
+                <option value="startpage">Recon Start Page</option>
+                <option value="custom">Custom URL...</option>
+              </select>
+            </div>
+            <div id="custom-home-group" style="display: none; margin-top: 6px;">
+              <input type="text" id="input-custom-home" placeholder="https://recontowers.com" class="settings-input" />
+            </div>
+
+            <div class="setting-toggle-row">
+              <div class="setting-label-group">
+                <strong>Show Apps Hub on Start Page</strong>
+                <small>Display the Recon Apps grid on new tabs and start page</small>
+              </div>
+              <input type="checkbox" id="toggle-startpage-apps" class="recon-checkbox" checked />
+            </div>
+
+            <div class="setting-toggle-row">
+              <div class="setting-label-group">
+                <strong>Show Recon Apps in Top Bar</strong>
+                <small>Display the ⚡ Recon Apps quick menu button in navigation bar</small>
+              </div>
+              <input type="checkbox" id="toggle-navbar-apps" class="recon-checkbox" checked />
+            </div>
+          </div>
+
+          <!-- 3. Search & Privacy -->
+          <div class="settings-panel" id="panel-privacy">
+            <h4 class="panel-heading">Search & Privacy</h4>
+            <div class="setting-row">
+              <div class="setting-label-group">
+                <strong>Default Search Engine</strong>
+                <small>Engine used for omnibar queries</small>
+              </div>
+              <select id="select-engine" class="settings-select">
+                <option value="duckduckgo" selected>DuckDuckGo (Recommended)</option>
+                <option value="google">Google</option>
+                <option value="bing">Bing</option>
+              </select>
+            </div>
+
+            <div class="setting-toggle-row">
+              <div class="setting-label-group">
+                <strong>DNS-over-HTTPS (Cloudflare DoH)</strong>
+                <small>Encrypts DNS lookups against ISP snooping</small>
+              </div>
+              <input type="checkbox" id="toggle-doh" class="recon-checkbox" checked />
+            </div>
+            <div style="margin: 6px 0 12px;">
+              <button id="btn-verify-doh" class="btn-subtle" style="font-size: 12px;">🔍 Test DoH Status (Cloudflare)...</button>
+            </div>
+
+            <h5 class="subpanel-heading" style="margin-top: 14px; margin-bottom: 8px;">Global Shield Protections</h5>
+            <div class="setting-toggle-row">
+              <div class="setting-label-group">
+                <strong>Block Trackers & Ads</strong>
+                <small>Filter invasive ad networks and tracking scripts</small>
+              </div>
+              <input type="checkbox" id="toggle-adblock" class="recon-checkbox" checked />
+            </div>
+            <div class="setting-toggle-row">
+              <div class="setting-label-group">
+                <strong>Anti-Fingerprinting Noise</strong>
+                <small>Add subtle jitter to canvas and audio contexts</small>
+              </div>
+              <input type="checkbox" id="toggle-fingerprint" class="recon-checkbox" checked />
+            </div>
+            <div class="setting-toggle-row">
+              <div class="setting-label-group">
+                <strong>WebRTC IP Leak Protection</strong>
+                <small>Prevent real IP exposure via WebRTC ICE candidates</small>
+              </div>
+              <input type="checkbox" id="toggle-webrtc" class="recon-checkbox" checked />
+            </div>
+            <div class="setting-toggle-row">
+              <div class="setting-label-group">
+                <strong>Strip Tracking URLs</strong>
+                <small>Removes utm_*, fbclid, gclid from navigation queries</small>
+              </div>
+              <input type="checkbox" id="toggle-strip-params" class="recon-checkbox" checked />
+            </div>
+
+            <div class="privacy-ultra-banner" style="margin-top: 16px;">
+              <div class="ultra-banner-header">
+                <span class="ultra-icon">⚡</span>
+                <div>
+                  <strong>Ultra Zero-Telemetry Architecture</strong>
+                  <div style="font-size: 11px; opacity: 0.8;">Zero telemetry, zero usage pings, and 100% local privacy.</div>
+                </div>
+              </div>
+              <p class="ultra-banner-desc" style="font-size: 11px; margin: 8px 0 0; opacity: 0.85; line-height: 1.4;">
+                Recon Browser never transmits diagnostic reports, user telemetry, or device identifiers to remote servers. Filtering shields execute exclusively within your local environment.
+              </p>
+            </div>
+          </div>
+
+          <!-- 4. Read Aloud -->
+          <div class="settings-panel" id="panel-readaloud">
+            <h4 class="panel-heading">Read Aloud & Speech</h4>
+            <div style="margin-bottom: 16px;">
+              <button id="btn-drawer-start-read" class="btn-primary" style="font-size: 12px; font-weight: 600;">🔊 Start Reading Aloud Current Page (Ctrl+Shift+A)</button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label-group">
+                <strong>Voice Speed</strong>
+                <small>Adjust speech narration rate</small>
+              </div>
+              <select id="select-voice-speed" class="settings-select">
+                <option value="0.75">Relaxed (0.75x)</option>
+                <option value="1.0" selected>Normal (1.0x)</option>
+                <option value="1.25">Brisk (1.25x)</option>
+                <option value="1.5">Fast (1.5x)</option>
+              </select>
+            </div>
+            <div class="setting-toggle-row">
+              <div class="setting-label-group">
+                <strong>Auto-highlight reading line</strong>
+                <small>Scrolls and highlights sentences as they are spoken</small>
+              </div>
+              <input type="checkbox" id="toggle-tts-highlight" class="recon-checkbox" checked />
+            </div>
+          </div>
+
+          <!-- 5. Recon App Link Ecosystem -->
+          <div class="settings-panel" id="panel-applink">
+            <h4 class="panel-heading">Recon App Link Ecosystem</h4>
+            <p class="setting-hint" style="font-size: 12px; opacity: 0.8; margin-bottom: 12px;">
+              Pair Recon Browser with RT Story Tracker and RT Markdown Reader to send research clips and documents directly across applications.
+            </p>
+            <div id="app-link-status-list" class="app-link-status-container">
+              <div class="app-link-loading" style="font-size: 12px; opacity: 0.6; padding: 4px 0;">Scanning for Recon Apps...</div>
+            </div>
+            <button id="btn-refresh-app-link" class="btn-subtle" style="margin-top: 12px; font-size: 12px;">↻ Refresh Linked Apps</button>
+          </div>
+
+          <!-- 6. About -->
+          <div class="settings-panel" id="panel-about">
+            <div class="about-panel-header" style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
+              <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
+              <div>
+                <h3 style="margin: 0; font-size: 18px;">Recon Browser</h3>
+                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.3.3</span>
+              </div>
+            </div>
+            <p class="about-desc" style="font-size: 12px; opacity: 0.85; margin: 8px 0 14px; line-height: 1.4;">
+              A privacy-hardened, bloat-free browser for the Recon Apps ecosystem. Built with native shields, zero telemetry, and DuckDuckGo search.
+            </p>
+            <div style="margin-bottom: 16px;">
+              <button id="btn-settings-check-updates" class="btn-primary" style="font-size: 12px;">Check for Updates...</button>
+            </div>
+            <div class="about-links" style="display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
+              <div class="about-link-row">
+                <span class="link-label" style="opacity: 0.6; width: 140px; display: inline-block;">Website:</span>
+                <a href="#" id="settings-about-website" class="ext-link" style="color: var(--accent-cyan); text-decoration: none;">Recon Browser on Recon Towers</a>
+              </div>
+              <div class="about-link-row">
+                <span class="link-label" style="opacity: 0.6; width: 140px; display: inline-block;">Release Notes:</span>
+                <a href="#" id="settings-about-notes" class="ext-link" style="color: var(--accent-cyan); text-decoration: none;">GitHub Releases</a>
+              </div>
+              <div class="about-link-row">
+                <span class="link-label" style="opacity: 0.6; width: 140px; display: inline-block;">Issues & Feedback:</span>
+                <a href="#" id="settings-about-issue" class="ext-link" style="color: var(--accent-cyan); text-decoration: none;">GitHub Issues</a>
+              </div>
+              <div class="about-link-row">
+                <span class="link-label" style="opacity: 0.6; width: 140px; display: inline-block;">Source Code:</span>
+                <a href="#" id="settings-about-source" class="ext-link" style="color: var(--accent-cyan); text-decoration: none;">github.com/neogentrics/ReconBrowser</a>
+              </div>
+            </div>
+            <div class="about-tech" id="settings-about-tech" style="margin: 16px 0 10px; font-size: 11px; opacity: 0.6;">
+              Electron · Chromium · Node · Windows 10 (x64)
+            </div>
+            <div class="about-actions" style="margin-top: 14px; display: flex; gap: 8px;">
+              <button id="settings-about-copy" class="btn-secondary" style="font-size: 12px;">Copy Version Details</button>
+            </div>
+          </div>
         </div>
-        <button id="btn-refresh-app-link" class="btn-subtle" style="margin-top: 8px; font-size: 11px; width: 100%;">↻ Refresh Linked Apps</button>
       </div>
 
-      <div class="setting-group">
-        <h4>About Recon Browser</h4>
-        <button id="btn-open-about" class="btn-subtle">About & Version Details...</button>
+      <div class="settings-modal-footer">
+        <button id="btn-close-settings-modal-footer" class="btn-primary" style="font-size: 13px; padding: 6px 18px;">Done</button>
       </div>
     </div>
-  </aside>
+  </dialog>
 
   <!-- About Recon Browser Modal (Modeled directly on RT Markdown Reader) -->
   <dialog id="about-dlg" class="about-modal">

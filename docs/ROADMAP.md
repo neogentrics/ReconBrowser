@@ -72,16 +72,29 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 - [x] **11 Recon Themes**: Support for Cyber Dark, Pure Obsidian, Slate, Dark, Sepia, Mist, Forest, Dusk, Evergreen, Aero Glass, and High Contrast Cyber.
 - [x] **About Recon Browser Modal**: Full About dialog modeled directly on RT Markdown Reader with tech specs, release notes, license, and one-click "Copy Version Details".
 
-### Milestone 3: v1.3.1 — App Link Research Clips & Stability [Complete & Live]
-- [x] **App Link Protocol v1 (`recon-browser`)**: Registered presence file in `%APPDATA%\Recon Towers\app-link` / `~/.config/Recon Towers/app-link`, local socket/pipe endpoints, and handshake.
-- [x] **Cross-App Pairing & Safe Storage**: Secure pairing with **RT Story Tracker** and **RT Markdown Reader**; 32-byte shared keys encrypted via Electron `safeStorage`.
-- [x] **Pre-Send Review Modal (`Ctrl+Shift+C`)**: Title, category taxonomy (`lore`, `character`, `setting`, `historical`, `science`, `general`), tags, metadata, and markdown preview before transmission.
-- [x] **Document Sanitization & Citation Formatting**: YAML front matter (`source_url`, `source_title`, `source_author`, `source_date`, `accessed`), stripped scripts/styles/embeds, and bottom citation line.
-- [x] **Safety Guardrails**: 1 MB clip truncation warning, safe document naming from title slugs without leaking URLs/body text, and private window transmission protection.
-- [x] **Shields & DoH Persistence**: Preferences reliably persist across reboots, with bidirectional sync between startpage badges and top bar popovers.
-- [x] **Theme Finishes Shading**: Distinct multi-stop gradients, brushed metallic sheen, and frosted glass blur.
+### Milestone 3: v1.2.0 — Reader View, Read Aloud & Universal Aspects [Complete & Live]
+- [x] **Distraction-Free Reader View (`Ctrl+Alt+R`)**: Cleans advertising, headers, and navigation noise into pure typography with estimated read times.
+- [x] **Read Aloud TTS Engine (`Ctrl+Shift+A`, `Ctrl+Shift+X`)**: Integrated speech synthesis with interactive floating controller bar, adjustable speeds (0.75x–1.5x), and live sentence highlighting.
+- [x] **Universal Aspects (Finishes)**: Real-time rendering of Solid (Matte), Metallic (Brushed Sheen & Chamfered edges), and Glass (Frosted Acrylic blur & glow) across tabs, navbars, and startpages.
+- [x] **Accessibility & ADA Themes**: High Contrast, Colorblind Blue-Orange, and Colorblind Cyan-Magenta palettes.
+- [x] **Configurable Home Destination**: Instant routing to Recon Towers, Recon Start, or custom user URLs.
+- [x] **Local Companion App Auto-Launch**: Direct launch invocation of installed Recon ecosystem desktop apps from the start page and navbar.
 
-### Milestone 4: v1.4.0 — Zero-Knowledge Sync & Vault Backup
+### Milestone 4: v1.3.x — App Link Research Clips, Tab Dragging & UI Polish [Active / Current]
+- [x] **App Link Protocol v1 (`recon-browser`)**: Registered presence file in `%APPDATA%\Recon Towers\app-link` / `~/.config/Recon Towers/app-link`, local socket/pipe endpoints, and handshake (v1.3.1).
+- [x] **Cross-App Pairing & Safe Storage**: Secure pairing with **RT Story Tracker** and **RT Markdown Reader**; 32-byte shared keys encrypted via Electron `safeStorage` (v1.3.1).
+- [x] **Pre-Send Review Modal (`Ctrl+Shift+C`)**: Title, category taxonomy (`lore`, `character`, `setting`, `historical`, `science`, `general`), tags, metadata, and markdown preview before transmission (v1.3.1).
+- [x] **Document Sanitization & Citation Formatting**: YAML front matter (`source_url`, `source_title`, `source_author`, `source_date`, `accessed`), stripped scripts/styles/embeds, and bottom citation line (v1.3.1).
+- [x] **Safety Guardrails**: 1 MB clip truncation warning, safe document naming from title slugs without leaking URLs/body text (v1.3.1).
+- [x] **Shields & DoH Persistence**: Preferences reliably persist across reboots, with bidirectional sync between startpage badges and top bar popovers (v1.3.1).
+- [x] **Tab Dragging & Rearranging**: Smooth HTML5 drag-and-drop tab ordering with animated insertion indicators (v1.3.2).
+- [x] **Paired Spectrum Themes**: 4 new paired color schemes (Cobalt Abyss / Glacial Azure, Crimson Horizon / Scarlet Blaze, Amber Sunset / Solar Flare, Deep Forest / Evergreen) (v1.3.2).
+- [x] **Auto-Updater Release Manifest**: Embedded `publish` configuration and CI/CD artifact inclusion for `latest.yml` & `*.blockmap` (v1.3.2).
+- [x] **Tabbed Settings Modal (v1.3.3)**: Centered pop-up window with 6 organized tabs (*Appearance*, *Interface*, *Privacy & Shields*, *Read Aloud*, *Recon App Link*, *About*) and clean backdrop dismiss.
+- [x] **View Menu Quick Themes (v1.3.3)**: Instant theme and aspect switching directly from the native application menu bar.
+- [x] **Shields & Apps Hub Sync (v1.3.3)**: Real-time synchronization of site-specific paused shields to the Start Page badge, and quick toggle for Recon Apps in both dropdown and settings.
+
+### Milestone 5: v1.4.0 — Zero-Knowledge Sync & Vault Backup [Planned]
 - [ ] Folder-based sync (No account required): Sync bookmarks, history, and preferences via user-owned folder (OneDrive, Google Drive, Dropbox, Syncthing).
 - [ ] Zero-Knowledge encryption: AES-256-GCM encryption with Argon2id master passphrase.
 - [ ] Local network Wi-Fi device pairing with Android companion app.

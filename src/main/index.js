@@ -101,7 +101,44 @@ function buildMenu() {
         },
         { type: 'separator' },
         {
-          label: 'Customize Themes & Aspects...',
+          label: 'Themes',
+          submenu: [
+            { label: 'Recon Cyber Dark (Default)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'cyber') },
+            { label: 'Pure Obsidian', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'obsidian') },
+            { label: 'Recon Slate', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'slate') },
+            { label: 'Warm Sepia', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'sepia') },
+            { label: 'Nordic Mist', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'mist') },
+            { type: 'separator' },
+            { label: 'Cobalt Abyss (Deep Blue)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'ocean') },
+            { label: 'Glacial Azure (Light Blue)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'azure') },
+            { type: 'separator' },
+            { label: 'Midnight Dusk (Royal Purple)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'dusk') },
+            { label: 'Classic Recon Dark', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'dark') },
+            { type: 'separator' },
+            { label: 'Crimson Horizon (Burgundy Red)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'red') },
+            { label: 'Scarlet Blaze (Vivid Red)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'scarlet') },
+            { type: 'separator' },
+            { label: 'Amber Sunset (Bronze Yellow)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'yellow') },
+            { label: 'Solar Flare (Cyber Gold)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'solar') },
+            { type: 'separator' },
+            { label: 'Deep Forest (Dark Green)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'forest') },
+            { label: 'Evergreen (Vivid Green)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'evergreen') },
+            { type: 'separator' },
+            { label: 'High Contrast (ADA Compliant)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'contrast') },
+            { label: 'Colorblind Blue-Orange (ADA)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'colorblind-blue-orange') },
+            { label: 'Colorblind Cyan-Magenta (ADA)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'colorblind-cyan-magenta') }
+          ]
+        },
+        {
+          label: 'Theme Finishes & Aspects',
+          submenu: [
+            { label: 'Solid (Matte)', click: () => mainWindow && mainWindow.webContents.send('menu-set-aspect', 'solid') },
+            { label: 'Metallic (Brushed Sheen)', click: () => mainWindow && mainWindow.webContents.send('menu-set-aspect', 'metallic') },
+            { label: 'Glass (Frosted Acrylic)', click: () => mainWindow && mainWindow.webContents.send('menu-set-aspect', 'glass') }
+          ]
+        },
+        {
+          label: 'Settings...',
           accelerator: 'CmdOrCtrl+,',
           click: () => mainWindow && mainWindow.webContents.send('menu-open-settings')
         },
@@ -189,6 +226,62 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 
+  function isSiteShieldsPaused(details) {
+    if (!pausedHosts || pausedHosts.size === 0) return false;
+
+    const candidates = [];
+    try {
+      const url = new URL(details.url);
+      if (url.hostname) candidates.push(url.hostname.toLowerCase());
+    } catch {}
+
+    if (details.initiator) {
+      try {
+        const initUrl = new URL(details.initiator);
+        if (initUrl.hostname) candidates.push(initUrl.hostname.toLowerCase());
+      } catch {}
+    }
+
+    if (details.referrer) {
+      try {
+        const refUrl = new URL(details.referrer);
+        if (refUrl.hostname) candidates.push(refUrl.hostname.toLowerCase());
+      } catch {}
+    }
+
+    if (details.webContentsId) {
+      try {
+        const wc = webContents.fromId(details.webContentsId);
+        if (wc && !wc.isDestroyed()) {
+          const pageUrl = wc.getURL();
+          if (pageUrl) {
+            const u = new URL(pageUrl);
+            if (u.hostname) candidates.push(u.hostname.toLowerCase());
+          }
+        }
+      } catch {}
+    }
+
+    for (const candidate of candidates) {
+      const baseCandidate = candidate.replace(/^www\./, '');
+      for (const p of pausedHosts) {
+        const cleanP = p.toLowerCase().trim();
+        const baseP = cleanP.replace(/^www\./, '');
+        if (
+          candidate === cleanP ||
+          candidate.endsWith('.' + cleanP) ||
+          cleanP.endsWith('.' + candidate) ||
+          baseCandidate === baseP ||
+          baseCandidate.endsWith('.' + baseP) ||
+          baseP.endsWith('.' + baseCandidate)
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // Network request interception (Recon Shields)
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
     if (!shieldsEnabled) {
@@ -196,20 +289,12 @@ function createWindow() {
     }
 
     try {
-      const url = new URL(details.url);
-      const host = url.hostname.toLowerCase();
-
-      // Check if site or initiator is paused
-      let initiatorHost = '';
-      if (details.initiator) {
-        try { initiatorHost = new URL(details.initiator).hostname.toLowerCase(); } catch {}
-      } else if (details.referrer) {
-        try { initiatorHost = new URL(details.referrer).hostname.toLowerCase(); } catch {}
-      }
-
-      if (pausedHosts.has(host) || (initiatorHost && (pausedHosts.has(initiatorHost) || Array.from(pausedHosts).some(p => initiatorHost.endsWith('.' + p))))) {
+      if (isSiteShieldsPaused(details)) {
         return callback({ cancel: false });
       }
+
+      const url = new URL(details.url);
+      const host = url.hostname.toLowerCase();
 
       for (const domain of trackingDomains) {
         if (host === domain || host.endsWith('.' + domain)) {
@@ -335,12 +420,15 @@ ipcMain.on('toggle-shields', (event, enabled) => {
 ipcMain.on('set-site-shields', (event, { host, enabled }) => {
   if (!host) return;
   const cleanHost = host.toLowerCase().trim();
+  const baseHost = cleanHost.replace(/^www\./, '');
   if (enabled) {
     pausedHosts.delete(cleanHost);
+    pausedHosts.delete(baseHost);
   } else {
     pausedHosts.add(cleanHost);
+    pausedHosts.add(baseHost);
   }
-  console.log(`[Recon Shields] Host ${cleanHost} set to: ${enabled ? 'ACTIVE' : 'PAUSED'}`);
+  console.log(`[Recon Shields] Host ${cleanHost} (${baseHost}) set to: ${enabled ? 'ACTIVE' : 'PAUSED'}`);
 });
 
 ipcMain.handle('launch-or-open-app', async (event, { appName, storeUrl }) => {

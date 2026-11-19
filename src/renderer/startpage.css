@@ -439,8 +439,16 @@ body {
   transform: translateY(0);
 }
 
+.stat-item.paused {
+  border-color: rgba(239, 68, 68, 0.45) !important;
+}
+
 .stat-item.paused .stat-icon {
-  opacity: 0.5;
+  opacity: 0.6;
+}
+
+.stat-item.paused strong {
+  color: #ef4444 !important;
 }
 
 .stat-icon {

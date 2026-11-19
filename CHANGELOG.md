@@ -5,6 +5,29 @@ All notable changes to **Recon Browser** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2026-11-18
+
+### Added
+- **Centered Tabbed Settings Modal**:
+  - Replaced sliding sidebar drawer with a centered pop-up window `<dialog id="settings-modal">`.
+  - 6 dedicated tab navigation panels: *Appearance*, *Interface & Layout*, *Search & Privacy*, *Read Aloud*, *Recon App Link*, and *About*.
+  - Outside backdrop click dismiss and `Esc` key support to avoid blocking web interaction.
+- **View Menu Quick Themes & Finishes**:
+  - Direct theme switching under application menu `View → Themes` for all 15 color palettes.
+  - Quick finish switching under `View → Theme Finishes & Aspects` (Solid, Metallic, Glass).
+- **Recon Apps Hub Start Page Toggle**:
+  - Added `Show Apps on Start Page` quick switch in both the `⚡ Recon Apps` dropdown menu and Settings modal with two-way real-time synchronization.
+
+### Fixed
+- **Start Page & Site Shields Bidirectional Sync**:
+  - Resolved issue where Start Page badge displayed "Active" while site shields were paused.
+  - Clicking the Start Page badge when paused unpauses the site.
+- **Precise Site Shields Bypass for Media Streams**:
+  - Fixed request matching in main process `onBeforeRequest` using webContents URL and base host comparison so media streaming (e.g. YouTube Music) functions without false tracker increments when paused.
+  - Reset active blocked count to 0 when shields are paused for a site to eliminate confusing status indicators.
+- **Start Page Ultra Badge Interactivity**:
+  - Clicking the center `Ultra / Zero Telemetry Overhead` badge now opens directly to the *Search & Privacy* tab with detailed zero-telemetry architecture explanations.
+
 ## [1.3.2] - 2026-11-18
 
 ### Added

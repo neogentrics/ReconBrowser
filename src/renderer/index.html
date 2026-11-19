@@ -28,6 +28,23 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
       </div>
+      <!-- Container Pill Badge (v1.7.0) -->
+      <div class="container-badge" id="omnibar-container-badge" title="Active Container Persona. Click to switch persona or launch ephemeral tab.">
+        <span class="container-badge-icon" id="omnibar-container-icon">🌐</span>
+        <span class="container-badge-name" id="omnibar-container-name">Default</span>
+      </div>
+      <!-- Container Quick Picker Dropdown -->
+      <div id="container-picker-menu" class="container-picker-dropdown" style="display: none;">
+        <div class="container-picker-header">
+          <span>📦 Active Persona Jars</span>
+          <span style="font-size: 10px; color: var(--text-muted);">Partition Isolated</span>
+        </div>
+        <div id="container-picker-list" class="container-picker-items"></div>
+        <div class="container-picker-footer">
+          <button id="btn-picker-new-ephemeral" class="picker-action-btn">🔥 New Ephemeral Tab (Ctrl+Shift+N)</button>
+          <button id="btn-picker-manage" class="picker-action-btn">⚙️ Containers &amp; Proxies...</button>
+        </div>
+      </div>
       <input type="text" id="omnibar" placeholder="Search with DuckDuckGo or enter address (!g for Google, !b for Bing)..." />
       <button id="btn-reader-view" class="omnibar-action-btn" title="Toggle Reader View (Ctrl+Alt+R)">📖</button>
       <button id="btn-read-aloud" class="omnibar-action-btn" title="Read Aloud (Ctrl+Shift+A)">🔊</button>
@@ -344,6 +361,9 @@
           </button>
           <button class="settings-nav-btn" data-tab="vault">
             <span class="nav-icon">🔑</span> Password Vault
+          </button>
+          <button class="settings-nav-btn" data-tab="containers">
+            <span class="nav-icon">📦</span> Containers & Proxies
           </button>
           <button class="settings-nav-btn" data-tab="sync">
             <span class="nav-icon">🔄</span> Sync & Backup
@@ -887,13 +907,83 @@
             </div>
           </div>
 
-          <!-- 10. About -->
+          <!-- 10. Containers & Persona Jars (v1.7.0) -->
+          <div class="settings-panel" id="panel-containers">
+            <h4 class="panel-heading" style="margin-bottom: 12px;">Recon Containers &amp; Persona Jars</h4>
+
+            <!-- Banner -->
+            <div class="sync-banner" style="display: flex; align-items: center; gap: 10px; background: rgba(124, 58, 237, 0.1); border: 1px solid rgba(124, 58, 237, 0.35); border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;">
+              <span style="font-size: 22px;">📦</span>
+              <div style="font-size: 11.5px; line-height: 1.4;">
+                <strong style="color: var(--accent-purple); display: block;">Partition-Isolated Cookie Jars &amp; Tor/SOCKS5 Proxy Routing</strong>
+                <span style="color: var(--text-muted);">Isolate work, research, banking, personal, and darknet tasks into distinct cryptographic jars with zero cross-leakage.</span>
+              </div>
+            </div>
+
+            <!-- Active Containers List -->
+            <div class="sync-config-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 14px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h5 class="subpanel-heading" style="margin: 0;">Configured Containers</h5>
+                <button id="btn-show-add-container" class="btn-primary" style="font-size: 11px; padding: 4px 10px;">+ New Container</button>
+              </div>
+              <div id="containers-settings-list" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Populated dynamically via JS -->
+              </div>
+            </div>
+
+            <!-- Add / Edit Container Form (Collapsible) -->
+            <div id="container-form-card" class="sync-config-card" style="display: none; background: var(--card-bg); border: 1px solid var(--accent-purple); border-radius: 6px; padding: 14px; margin-bottom: 14px;">
+              <h5 id="container-form-title" class="subpanel-heading" style="margin: 0 0 10px; color: var(--accent-purple);">Create New Container</h5>
+              <input type="hidden" id="input-container-id" value="" />
+              <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div style="flex: 2;">
+                  <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Container Name</label>
+                  <input type="text" id="input-container-name" class="settings-input" placeholder="e.g. Tor Research, Banking..." />
+                </div>
+                <div style="flex: 1;">
+                  <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Icon</label>
+                  <input type="text" id="input-container-icon" class="settings-input" placeholder="🔬" maxlength="4" style="text-align: center;" />
+                </div>
+                <div style="flex: 1;">
+                  <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Color</label>
+                  <input type="color" id="input-container-color" class="settings-input" value="#7c3aed" style="padding: 2px; height: 32px; cursor: pointer;" />
+                </div>
+              </div>
+              <div style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <label style="font-size: 11px; color: var(--text-muted);">Proxy Rules (Optional: SOCKS5 / HTTP / HTTPS)</label>
+                  <button id="btn-preset-tor-proxy" type="button" style="background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--accent-cyan); font-size: 10.5px; padding: 2px 8px; border-radius: 4px; cursor: pointer;">🧅 Use Tor SOCKS5 (127.0.0.1:9050)</button>
+                </div>
+                <input type="text" id="input-container-proxy" class="settings-input" placeholder="e.g. socks5://127.0.0.1:9050 or http://127.0.0.1:8080" />
+              </div>
+              <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button id="btn-cancel-container-form" class="btn-secondary" style="font-size: 11px; padding: 4px 12px;">Cancel</button>
+                <button id="btn-save-container" class="btn-primary" style="font-size: 11px; padding: 4px 14px;">Save Container</button>
+              </div>
+            </div>
+
+            <!-- Ephemeral Disposable Sessions -->
+            <div class="sync-config-card" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; padding: 14px;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                <span style="font-size: 18px;">🔥</span>
+                <h5 class="subpanel-heading" style="margin: 0;">Ephemeral Disposable Tabs</h5>
+              </div>
+              <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 10px; line-height: 1.45;">
+                Ephemeral tabs run entirely in volatile memory (<code style="font-family: monospace; color: var(--accent-purple);">recon_ephemeral_*</code>). Cookies, local storage, indexedDB, and cache are isolated from all persistent jars and automatically incinerated with a cryptographic wipe when the tab is closed.
+              </p>
+              <div style="display: flex; gap: 10px;">
+                <button id="btn-quick-new-ephemeral" class="btn-primary" style="font-size: 11.5px; padding: 5px 14px; background: #dc2626; border-color: #ef4444;">🔥 Open Ephemeral Tab (Ctrl+Shift+N)</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 11. About -->
           <div class="settings-panel" id="panel-about">
             <div class="about-panel-header" style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
               <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
               <div>
                 <h3 style="margin: 0; font-size: 18px;">Recon Browser</h3>
-                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.6.0</span>
+                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.7.0</span>
               </div>
             </div>
             <p class="about-desc" style="font-size: 12px; opacity: 0.85; margin: 8px 0 14px; line-height: 1.4;">
@@ -948,7 +1038,7 @@
         <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
         <div>
           <h2>Recon Browser</h2>
-          <span id="about-version" class="about-ver">Version 1.6.0</span>
+          <span id="about-version" class="about-ver">Version 1.7.0</span>
         </div>
       </div>
 

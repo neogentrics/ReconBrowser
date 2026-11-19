@@ -5,6 +5,31 @@ All notable changes to **Recon Browser** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-11-19
+
+### Added
+- **Recon Containers & Isolated Persona Jars**:
+  - Full partition-level isolation for cookies, localStorage, indexedDB, and cache across distinct persona jars.
+  - Six pre-configured containers with color palettes and custom icons: **Research** (`🔬` cyan), **Work** (`💼` blue), **Personal** (`👤` amber), **Finance** (`💳` emerald), **Social** (`💬` pink), and **Default** (`🌐` purple).
+  - Custom container creation: user-defined names, emojis/icons, color swatches, and independent proxy routing.
+  - Zero cross-jar leakage: logging into accounts in one container persona leaves other containers completely untracked.
+- **Ephemeral Disposable Tabs (`Ctrl+Shift+N`)**:
+  - In-memory volatile partitions (`recon_ephemeral_*`) with zero footprint written to disk.
+  - Automatic cryptographic wipe: closing the tab instantly executes `clearStorageData()` and `clearCache()`, incinerating cookies, DOM storage, and memory assets.
+  - Distinct visual presentation: glowing red/orange top border, flame badge (`🔥`), and status indicator.
+- **Per-Container SOCKS5 / Tor Proxy Routing**:
+  - Independent proxy configuration per container persona via Electron session proxy API.
+  - 1-click **Tor SOCKS5 Preset** (`socks5://127.0.0.1:9050`) for immediate onion routing in dedicated darknet or research containers without affecting other browser tabs.
+  - Support for SOCKS5, HTTP, and HTTPS proxy rules.
+- **Container UI, Omnibar Badge & Switching Suite**:
+  - **Omnibar Container Persona Pill**: live display of the active container persona next to the search icon.
+  - **Quick Container Switcher Dropdown**: 1-click menu to switch the active tab into another container persona, open a new tab in any container, or spawn an ephemeral tab.
+  - Tab color strips (`.tab-container-strip`) visually identifying each tab's container persona at a glance.
+  - Link context menu integration: `Open Link in Ephemeral Tab` and `Open Link in Container...`.
+  - Page navigation context menu integration: `Reopen in Container...` and `Reopen in Ephemeral Session`.
+  - Application menu shortcuts: `Ctrl+Shift+N` (New Ephemeral Tab) and `Ctrl+Alt+T` (Container Tab / Picker).
+  - Settings *Containers & Proxies* panel (`panel-containers`): full CRUD management, container data wipe / purge buttons, proxy configuration, and ephemeral tab launcher.
+
 ## [1.6.0] - 2026-11-19
 
 ### Added

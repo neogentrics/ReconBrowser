@@ -10,6 +10,7 @@ const { ArchiveManager } = require('./archive');
 const { ShieldsManager } = require('./shields2');
 const { CompanionRailManager } = require('./companion-rail');
 const { AudioGrabberManager } = require('./audio-grabber');
+const { ContainerManager } = require('./containers');
 const { exportBookmarksToHtml, parseBookmarksHtml, exportVaultToCsv, parseVaultCsv } = require('./importer-exporter');
 const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link');
 const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
@@ -26,6 +27,7 @@ const archiveManager = new ArchiveManager();
 const shieldsManager = new ShieldsManager();
 const companionRailManager = new CompanionRailManager();
 const audioGrabberManager = new AudioGrabberManager();
+const containerManager = new ContainerManager();
 
 // Load tracking domains blocklist
 const filterPath = path.join(__dirname, '../../config/filters/default-trackers.txt');
@@ -57,6 +59,16 @@ function buildMenu() {
           label: 'New Tab',
           accelerator: 'CmdOrCtrl+T',
           click: () => mainWindow && mainWindow.webContents.send('menu-new-tab')
+        },
+        {
+          label: 'New Ephemeral Tab (Burn on Close)',
+          accelerator: 'CmdOrCtrl+Shift+N',
+          click: () => mainWindow && mainWindow.webContents.send('menu-new-ephemeral-tab')
+        },
+        {
+          label: 'New Container Tab...',
+          accelerator: 'CmdOrCtrl+Alt+T',
+          click: () => mainWindow && mainWindow.webContents.send('menu-new-container-tab')
         },
         {
           label: 'Close Tab',
@@ -165,6 +177,17 @@ function buildMenu() {
     {
       label: 'Tabs',
       submenu: [
+        {
+          label: 'New Ephemeral Tab (Burn on Close)',
+          accelerator: 'CmdOrCtrl+Shift+N',
+          click: () => mainWindow && mainWindow.webContents.send('menu-new-ephemeral-tab')
+        },
+        {
+          label: 'New Container Tab...',
+          accelerator: 'CmdOrCtrl+Alt+T',
+          click: () => mainWindow && mainWindow.webContents.send('menu-new-container-tab')
+        },
+        { type: 'separator' },
         {
           label: 'Next Tab',
           accelerator: 'Ctrl+Tab',
@@ -891,6 +914,19 @@ ipcMain.handle('audio-grabber:get-saved-clips', () => audioGrabberManager.getSav
 ipcMain.handle('audio-grabber:delete-clip', (event, id) => audioGrabberManager.deleteClip(id));
 
 // ==========================================================================
+// Recon Containers & Isolated Persona Jars IPC (v1.7.0)
+// ==========================================================================
+ipcMain.handle('containers:get-all', () => containerManager.getAll());
+ipcMain.handle('containers:get', (event, id) => containerManager.getContainer(id));
+ipcMain.handle('containers:save', (event, data) => containerManager.saveContainer(data));
+ipcMain.handle('containers:delete', (event, id) => containerManager.deleteContainer(id));
+ipcMain.handle('containers:clear-data', (event, id) => containerManager.clearContainerData(id));
+ipcMain.handle('containers:wipe-ephemeral', (event, key) => containerManager.wipeEphemeralPartition(key));
+ipcMain.handle('containers:get-partition-key', (event, { containerId, isEphemeral, ephemeralId }) => {
+  return containerManager.getPartitionKey(containerId, isEphemeral, ephemeralId);
+});
+
+// ==========================================================================
 // Recon App Link & Research Clips (v1.3.0)
 // ==========================================================================
 let appLinkInstance = null;
@@ -1074,6 +1110,25 @@ app.on('web-contents-created', (event, contents) => {
             }
           },
           {
+            label: '🔥 Open Link in Ephemeral Tab',
+            click: () => {
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('open-link-ephemeral', { url: params.linkURL });
+              }
+            }
+          },
+          {
+            label: '📦 Open Link in Container',
+            submenu: containerManager.getAll().map(c => ({
+              label: `${c.icon} ${c.name}`,
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('open-link-container', { url: params.linkURL, containerId: c.id });
+                }
+              }
+            }))
+          },
+          {
             label: '★ Bookmark Link',
             click: () => {
               if (mainWindow && !mainWindow.isDestroyed()) {
@@ -1178,6 +1233,26 @@ app.on('web-contents-created', (event, contents) => {
           {
             label: 'Reload',
             click: () => contents.reload()
+          },
+          { type: 'separator' },
+          {
+            label: '📦 Reopen in Container',
+            submenu: containerManager.getAll().map(c => ({
+              label: `${c.icon} ${c.name}`,
+              click: () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send('tab-reopen-container', { containerId: c.id });
+                }
+              }
+            }))
+          },
+          {
+            label: '🔥 Reopen in Ephemeral Session',
+            click: () => {
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('tab-reopen-ephemeral');
+              }
+            }
           },
           { type: 'separator' },
           {

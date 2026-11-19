@@ -24,7 +24,7 @@
 
 ## Downloads
 
-The latest version is **v1.6.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
+The latest version is **v1.7.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
 
 | Platform | Download Package | Description |
 | :--- | :--- | :--- |
@@ -61,6 +61,28 @@ An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 ---
 
 ## What's New
+
+### v1.7.0: Recon Containers, Isolated Persona Jars & Ephemeral Disposable Tabs
+
+- **Recon Containers & Isolated Persona Jars**:
+  - True partition-level cryptographic isolation for cookies, localStorage, indexedDB, and cache across separate containers.
+  - Six pre-configured personas with distinct color identities and icons: **Research** (`🔬` cyan), **Work** (`💼` blue), **Personal** (`👤` amber), **Finance** (`💳` emerald), **Social** (`💬` pink), and **Default** (`🌐` purple).
+  - Custom container creation: easily define custom persona names, icons, color accents, and dedicated network routing.
+  - Zero cross-jar tracking: signing into accounts or tracking scripts in one container cannot access or correlate cookies from any other container.
+- **Ephemeral Disposable Tabs (`Ctrl+Shift+N` / 🔥)**:
+  - Non-persistent volatile in-memory sessions (`recon_ephemeral_*`) that leave zero remnants on disk.
+  - Automatic cryptographic wipe: closing the tab immediately triggers storage incineration (`clearStorageData()` + `clearCache()`), completely burning session cookies, storage, and cache.
+  - Glowing visual indicator with flame icon (`🔥`) and orange/red border highlights.
+- **Per-Container SOCKS5 / Tor Proxy Routing**:
+  - Independent proxy configuration per container persona routed directly through Electron's partition session network stack.
+  - 1-click **Tor SOCKS5 Preset** (`socks5://127.0.0.1:9050`) for onion darknet routing in dedicated containers without leaking traffic from your other normal tabs.
+  - Supports SOCKS5, HTTP, and HTTPS proxies with custom authentication endpoints.
+- **Container UI, Omnibar Badge & Switching Suite**:
+  - **Omnibar Container Persona Pill**: interactive container badge in the address bar displaying active persona and privacy mode.
+  - **Quick Container Switcher Dropdown**: switch current active tab into another container persona, open fresh container tabs, or launch disposable ephemeral tabs with a single click.
+  - Color-coded tab indicators (`.tab-container-strip`) clearly marking container affiliation.
+  - Webview context menu options: `Open Link in Ephemeral Tab`, `Open Link in Container...`, `Reopen in Container...`, and `Reopen in Ephemeral Session`.
+  - Settings *Containers & Proxies* panel (`panel-containers`): full CRUD management, container data wipe / purge buttons, proxy configuration, and ephemeral tab launcher.
 
 ### v1.6.0: Docked Author Desk Companion Rail, RT Audio Studio Grabber & Studio Suite Hub
 

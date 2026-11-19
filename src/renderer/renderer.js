@@ -171,19 +171,62 @@ function reorderTabsFromDom() {
   newTabsMap.forEach((val, key) => tabs.set(key, val));
 }
 
-function createTab(initialUrl = null, activate = true) {
+// Container and Persona State (v1.7.0)
+const DEFAULT_CONTAINERS_CLIENT = [
+  { id: 'default', name: 'Default', icon: '🌐', color: '#7c3aed', proxy: '', isDefault: true },
+  { id: 'research', name: 'Research', icon: '🔬', color: '#06b6d4', proxy: '', isDefault: false },
+  { id: 'work', name: 'Work', icon: '💼', color: '#3b82f6', proxy: '', isDefault: false },
+  { id: 'personal', name: 'Personal', icon: '👤', color: '#f59e0b', proxy: '', isDefault: false },
+  { id: 'finance', name: 'Finance', icon: '💳', color: '#10b981', proxy: '', isDefault: false },
+  { id: 'social', name: 'Social', icon: '💬', color: '#ec4899', proxy: '', isDefault: false }
+];
+let activeContainers = [...DEFAULT_CONTAINERS_CLIENT];
+
+function createTab(initialUrl = null, activate = true, containerId = 'default', isEphemeral = false) {
   const id = nextTabId++;
   const url = initialUrl || getStartPageURL();
   const isStart = url.includes('startpage.html');
   const title = isStart ? 'Recon Start' : 'New Tab';
 
+  if (containerId === 'ephemeral' || isEphemeral) {
+    isEphemeral = true;
+    containerId = 'ephemeral';
+  }
+
+  // Determine container metadata
+  let containerObj;
+  if (isEphemeral) {
+    containerObj = { id: 'ephemeral', name: 'Ephemeral (Burn on Close)', icon: '🔥', color: '#ef4444', isEphemeral: true };
+  } else {
+    const list = activeContainers.length > 0 ? activeContainers : DEFAULT_CONTAINERS_CLIENT;
+    containerObj = list.find(c => c.id === containerId) || list[0];
+  }
+
+  // Generate partition key
+  let partitionKey;
+  if (isEphemeral) {
+    const ephemRand = Math.random().toString(36).substring(2, 8);
+    partitionKey = `recon_ephemeral_${Date.now()}_${ephemRand}`;
+  } else if (!containerId || containerId === 'default') {
+    partitionKey = 'persist:recon_default';
+  } else {
+    partitionKey = `persist:recon_container_${containerId}`;
+  }
+
   // 1. Create Tab Header
   const tabEl = document.createElement('div');
   tabEl.className = 'tab';
+  if (isEphemeral) tabEl.classList.add('tab-ephemeral');
   tabEl.setAttribute('data-tab-id', id);
   tabEl.setAttribute('draggable', 'true');
+  tabEl.style.setProperty('--tab-container-color', containerObj.color);
+
+  const containerBadgeHtml = `<div class="tab-container-strip" style="background-color: ${containerObj.color};"></div>`;
+  const iconDisplay = isStart ? '⚡' : (containerObj.isEphemeral ? '🔥' : (containerObj.id !== 'default' ? containerObj.icon : '🌐'));
+
   tabEl.innerHTML = `
-    <span class="tab-favicon">${isStart ? '⚡' : '🌐'}</span>
+    ${containerBadgeHtml}
+    <span class="tab-favicon">${iconDisplay}</span>
     <span class="tab-title">${title}</span>
     <span class="tab-close" title="Close Tab (Ctrl+W)">×</span>
   `;
@@ -250,6 +293,7 @@ function createTab(initialUrl = null, activate = true) {
   const webviewEl = document.createElement('webview');
   webviewEl.className = 'tab-webview';
   webviewEl.setAttribute('id', `webview-${id}`);
+  webviewEl.setAttribute('partition', partitionKey);
   webviewEl.setAttribute('src', url);
   webviewEl.setAttribute('allowpopups', '');
   webviewEl.style.display = 'none';
@@ -352,7 +396,11 @@ function createTab(initialUrl = null, activate = true) {
     webviewEl,
     blockedCount: 0,
     shieldsPaused: false,
-    readerActive: false
+    readerActive: false,
+    containerId: containerObj.id,
+    isEphemeral,
+    partitionKey,
+    containerObj
   };
 
   tabs.set(id, tabData);
@@ -382,6 +430,7 @@ function switchTab(id) {
   updateOmnibar(activeTab.url);
   updateNavButtons();
   updateShieldsPopoverDisplay();
+  updateOmnibarContainerBadge(activeTab.containerObj);
   
   if (activeTab.readerActive) {
     readerOverlay.classList.remove('reader-overlay-hidden');
@@ -400,6 +449,13 @@ function switchTab(id) {
 function closeTab(id) {
   if (!tabs.has(id)) return;
   const tab = tabs.get(id);
+
+  if (tab.isEphemeral && tab.partitionKey) {
+    ipcRenderer.invoke('containers:wipe-ephemeral', tab.partitionKey).catch(err => {
+      console.error('[Containers] Ephemeral wipe error:', err);
+    });
+  }
+
   tab.tabEl.remove();
   tab.webviewEl.remove();
   tabs.delete(id);
@@ -424,7 +480,10 @@ function onTabNavigated(id, newUrl) {
 
   const isStart = newUrl.includes('startpage.html');
   const faviconEl = tab.tabEl.querySelector('.tab-favicon');
-  if (faviconEl) faviconEl.textContent = isStart ? '⚡' : '🌐';
+  if (faviconEl) {
+    const icon = isStart ? '⚡' : (tab.isEphemeral ? '🔥' : (tab.containerObj && tab.containerObj.id !== 'default' ? tab.containerObj.icon : '🌐'));
+    faviconEl.textContent = icon;
+  }
 
   if (isStart) {
     onTabTitleUpdated(id, 'Recon Start');
@@ -603,6 +662,8 @@ function openSettingsModal(tabId = 'appearance') {
   if (bDrop) bDrop.style.display = 'none';
   const vDrop = document.getElementById('vault-dropdown');
   if (vDrop) vDrop.style.display = 'none';
+  const cDrop = document.getElementById('container-picker-menu');
+  if (cDrop) cDrop.style.display = 'none';
 
   switchSettingsTab(tabId);
 
@@ -612,6 +673,8 @@ function openSettingsModal(tabId = 'appearance') {
     loadAndRenderHistory();
   } else if (tabId === 'vault' && typeof loadAndRenderVault === 'function') {
     loadAndRenderVault();
+  } else if (tabId === 'containers' && typeof loadAndRenderContainersSettings === 'function') {
+    loadAndRenderContainersSettings();
   } else if (tabId === 'interface' && typeof checkDefaultBrowserStatus === 'function') {
     checkDefaultBrowserStatus();
   }
@@ -787,6 +850,11 @@ document.addEventListener('click', (e) => {
   const vDrop = document.getElementById('vault-dropdown');
   if (vDrop && vToggle && !vToggle.contains(e.target) && !vDrop.contains(e.target)) {
     vDrop.style.display = 'none';
+  }
+  const cBadge = document.getElementById('omnibar-container-badge');
+  const cDrop = document.getElementById('container-picker-menu');
+  if (cDrop && cBadge && !cBadge.contains(e.target) && !cDrop.contains(e.target)) {
+    cDrop.style.display = 'none';
   }
 });
 
@@ -1413,6 +1481,8 @@ ipcRenderer.on('menu-set-aspect', (_, aspect) => {
   showToast(`Theme finish switched to: ${aspect}`);
 });
 ipcRenderer.on('menu-new-tab', () => createTab());
+ipcRenderer.on('menu-new-ephemeral-tab', () => createTab(null, true, 'ephemeral', true));
+ipcRenderer.on('menu-new-container-tab', () => toggleContainerPicker());
 ipcRenderer.on('menu-close-tab', () => closeTab(activeTabId));
 ipcRenderer.on('menu-reload', () => {
   const activeTab = tabs.get(activeTabId);
@@ -1832,7 +1902,17 @@ document.addEventListener('keydown', (e) => {
   } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'c') {
     e.preventDefault();
     triggerClipWorkflow();
+  } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'n') {
+    e.preventDefault();
+    createTab(null, true, 'ephemeral', true);
+  } else if ((e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === 't') {
+    e.preventDefault();
+    toggleContainerPicker();
   } else if (e.key === 'Escape') {
+    const cDrop = document.getElementById('container-picker-menu');
+    if (cDrop && cDrop.style.display !== 'none') {
+      cDrop.style.display = 'none';
+    }
     if (modalResearchClip && modalResearchClip.open) {
       modalResearchClip.close();
     }
@@ -2127,6 +2207,22 @@ ipcRenderer.on('open-link-new-tab', (event, { url }) => {
   if (url) {
     createTab(url, true);
   }
+});
+
+ipcRenderer.on('open-link-ephemeral', (event, { url }) => {
+  if (url) createTab(url, true, 'ephemeral', true);
+});
+
+ipcRenderer.on('open-link-container', (event, { url, containerId }) => {
+  if (url) createTab(url, true, containerId, false);
+});
+
+ipcRenderer.on('tab-reopen-container', (event, { containerId }) => {
+  reopenActiveTabInContainer(containerId, false);
+});
+
+ipcRenderer.on('tab-reopen-ephemeral', () => {
+  reopenActiveTabInContainer('ephemeral', true);
 });
 
 ipcRenderer.on('archive-active-page', () => {
@@ -4115,6 +4211,297 @@ if (btnOpenAudioDrawerSettings) {
 // Initialize Companion Rail Dock Position Preference
 const savedRailPos = localStorage.getItem('recon_rail_dock_pos') || 'right';
 setCompanionRailDockPosition(savedRailPos);
+
+// ==========================================================================
+// Recon Containers, Persona Jars & Ephemeral Tabs (v1.7.0)
+// ==========================================================================
+const omnibarContainerBadge = document.getElementById('omnibar-container-badge');
+const containerPickerMenu = document.getElementById('container-picker-menu');
+const btnPickerNewEphemeral = document.getElementById('btn-picker-new-ephemeral');
+const btnPickerManage = document.getElementById('btn-picker-manage');
+
+const btnShowAddContainer = document.getElementById('btn-show-add-container');
+const btnCancelContainerForm = document.getElementById('btn-cancel-container-form');
+const btnSaveContainer = document.getElementById('btn-save-container');
+const btnPresetTorProxy = document.getElementById('btn-preset-tor-proxy');
+const btnQuickNewEphemeral = document.getElementById('btn-quick-new-ephemeral');
+
+function updateOmnibarContainerBadge(container) {
+  if (!container) {
+    container = { id: 'default', name: 'Default', icon: '🌐', color: '#7c3aed' };
+  }
+  const badgeEl = document.getElementById('omnibar-container-badge');
+  const iconEl = document.getElementById('omnibar-container-icon');
+  const nameEl = document.getElementById('omnibar-container-name');
+  if (!badgeEl || !iconEl || !nameEl) return;
+
+  iconEl.textContent = container.icon || '🌐';
+  nameEl.textContent = container.name || 'Default';
+
+  if (container.isEphemeral || container.id === 'ephemeral') {
+    badgeEl.classList.add('badge-ephemeral');
+    badgeEl.style.borderColor = '#ef4444';
+    badgeEl.style.color = '#f87171';
+    badgeEl.title = 'Ephemeral Tab (Volatile RAM only · Burn on Close)';
+  } else {
+    badgeEl.classList.remove('badge-ephemeral');
+    badgeEl.style.borderColor = `${container.color}66`;
+    badgeEl.style.color = 'var(--text-main)';
+    badgeEl.title = `Container: ${container.name} · Click to switch persona or manage jars`;
+  }
+}
+
+function toggleContainerPicker() {
+  if (!containerPickerMenu) return;
+  if (containerPickerMenu.style.display === 'block') {
+    containerPickerMenu.style.display = 'none';
+  } else {
+    renderContainerPickerItems();
+    containerPickerMenu.style.display = 'block';
+  }
+}
+
+function renderContainerPickerItems() {
+  const listEl = document.getElementById('container-picker-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  const list = activeContainers.length > 0 ? activeContainers : DEFAULT_CONTAINERS_CLIENT;
+  const currentTab = tabs.get(activeTabId);
+  const currentContainerId = currentTab ? currentTab.containerId : 'default';
+
+  list.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'container-picker-item';
+    if (c.id === currentContainerId && !currentTab?.isEphemeral) {
+      item.classList.add('active');
+    }
+    item.style.borderLeftColor = c.color;
+
+    const proxyNotice = c.proxy ? `<span style="font-size: 10px; color: var(--accent-cyan); font-family: monospace;">⚡ Proxy</span>` : '';
+
+    item.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 14px;">${c.icon}</span>
+        <span style="font-weight: 500;">${c.name}</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        ${proxyNotice}
+        <button class="picker-open-btn" style="background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-muted); font-size: 10.5px; padding: 2px 6px; border-radius: 4px; cursor: pointer;" title="Open new tab in this container">+ Tab</button>
+      </div>
+    `;
+
+    item.addEventListener('click', (e) => {
+      if (e.target.classList.contains('picker-open-btn')) {
+        e.stopPropagation();
+        createTab(null, true, c.id, false);
+        toggleContainerPicker();
+      } else {
+        reopenActiveTabInContainer(c.id, false);
+        toggleContainerPicker();
+      }
+    });
+
+    listEl.appendChild(item);
+  });
+}
+
+function reopenActiveTabInContainer(targetContainerId, isEphemeral = false) {
+  if (!activeTabId || !tabs.has(activeTabId)) return;
+  const currentTab = tabs.get(activeTabId);
+  const currentUrl = currentTab.url;
+  const oldTabId = activeTabId;
+
+  createTab(currentUrl, true, targetContainerId, isEphemeral);
+  closeTab(oldTabId);
+  showToast(`Switched tab to ${isEphemeral ? '🔥 Ephemeral' : targetContainerId} container`);
+}
+
+async function loadAndRenderContainersSettings() {
+  const listEl = document.getElementById('containers-settings-list');
+  if (!listEl) return;
+
+  try {
+    activeContainers = await ipcRenderer.invoke('containers:get-all');
+  } catch (err) {
+    console.error('Failed to load containers:', err);
+    activeContainers = DEFAULT_CONTAINERS_CLIENT;
+  }
+
+  listEl.innerHTML = '';
+  activeContainers.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'container-setting-row';
+
+    const proxyBadge = c.proxy
+      ? `<span class="container-proxy-badge" title="${c.proxy}">⚡ ${c.proxy}</span>`
+      : `<span style="font-size: 11px; color: var(--text-muted);">Direct Connection</span>`;
+
+    const deleteBtn = !c.isDefault
+      ? `<button class="btn-delete-container" data-id="${c.id}" style="background: transparent; border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer;">Delete</button>`
+      : '';
+
+    row.innerHTML = `
+      <div class="container-setting-info">
+        <span class="container-color-dot" style="background-color: ${c.color};"></span>
+        <span style="font-size: 16px;">${c.icon}</span>
+        <div>
+          <strong style="font-size: 12.5px; color: var(--text-main);">${c.name}</strong>
+          ${c.isDefault ? '<span style="font-size: 10px; background: rgba(124, 58, 237, 0.2); color: var(--accent-purple); padding: 1px 5px; border-radius: 3px; margin-left: 6px;">Default</span>' : ''}
+          <div style="margin-top: 2px;">${proxyBadge}</div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn-clear-container-data" data-id="${c.id}" data-name="${c.name}" style="background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-main); font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer;" title="Clear cookies, storage and cache for this jar">🧹 Clear Data</button>
+        <button class="btn-edit-container" data-id="${c.id}" style="background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-main); font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer;">Edit</button>
+        ${deleteBtn}
+      </div>
+    `;
+
+    row.querySelector('.btn-clear-container-data').addEventListener('click', async () => {
+      if (confirm(`Clear all cookies, cache, and local storage for container "${c.name}"?`)) {
+        await ipcRenderer.invoke('containers:clear-data', c.id);
+        showToast(`Cleared storage for container: ${c.name}`);
+      }
+    });
+
+    row.querySelector('.btn-edit-container').addEventListener('click', () => {
+      showContainerForm(c);
+    });
+
+    const delBtnEl = row.querySelector('.btn-delete-container');
+    if (delBtnEl) {
+      delBtnEl.addEventListener('click', async () => {
+        if (confirm(`Delete container "${c.name}" and erase its data?`)) {
+          await ipcRenderer.invoke('containers:delete', c.id);
+          showToast(`Deleted container: ${c.name}`);
+          loadAndRenderContainersSettings();
+        }
+      });
+    }
+
+    listEl.appendChild(row);
+  });
+}
+
+function showContainerForm(container = null) {
+  const card = document.getElementById('container-form-card');
+  const title = document.getElementById('container-form-title');
+  const inputId = document.getElementById('input-container-id');
+  const inputName = document.getElementById('input-container-name');
+  const inputIcon = document.getElementById('input-container-icon');
+  const inputColor = document.getElementById('input-container-color');
+  const inputProxy = document.getElementById('input-container-proxy');
+  if (!card) return;
+
+  if (container) {
+    title.textContent = `Edit Container: ${container.name}`;
+    inputId.value = container.id || '';
+    inputName.value = container.name || '';
+    inputIcon.value = container.icon || '📦';
+    inputColor.value = container.color || '#7c3aed';
+    inputProxy.value = container.proxy || '';
+  } else {
+    title.textContent = 'Create New Container';
+    inputId.value = '';
+    inputName.value = '';
+    inputIcon.value = '📦';
+    inputColor.value = '#06b6d4';
+    inputProxy.value = '';
+  }
+  card.style.display = 'block';
+  inputName.focus();
+}
+
+function hideContainerForm() {
+  const card = document.getElementById('container-form-card');
+  if (card) card.style.display = 'none';
+}
+
+async function saveContainerFromForm() {
+  const inputId = document.getElementById('input-container-id');
+  const inputName = document.getElementById('input-container-name');
+  const inputIcon = document.getElementById('input-container-icon');
+  const inputColor = document.getElementById('input-container-color');
+  const inputProxy = document.getElementById('input-container-proxy');
+
+  const name = inputName.value.trim();
+  if (!name) {
+    showToast('Please enter a container name');
+    return;
+  }
+
+  const payload = {
+    id: inputId.value || undefined,
+    name,
+    icon: inputIcon.value.trim() || '📦',
+    color: inputColor.value || '#7c3aed',
+    proxy: inputProxy.value.trim()
+  };
+
+  await ipcRenderer.invoke('containers:save', payload);
+  showToast(`Container "${name}" saved`);
+  hideContainerForm();
+  loadAndRenderContainersSettings();
+}
+
+if (omnibarContainerBadge) {
+  omnibarContainerBadge.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleContainerPicker();
+  });
+}
+
+if (btnPickerNewEphemeral) {
+  btnPickerNewEphemeral.addEventListener('click', () => {
+    toggleContainerPicker();
+    createTab(null, true, 'ephemeral', true);
+  });
+}
+
+if (btnPickerManage) {
+  btnPickerManage.addEventListener('click', () => {
+    toggleContainerPicker();
+    openSettingsModal('containers');
+  });
+}
+
+if (btnShowAddContainer) {
+  btnShowAddContainer.addEventListener('click', () => showContainerForm());
+}
+
+if (btnCancelContainerForm) {
+  btnCancelContainerForm.addEventListener('click', hideContainerForm);
+}
+
+if (btnSaveContainer) {
+  btnSaveContainer.addEventListener('click', saveContainerFromForm);
+}
+
+if (btnPresetTorProxy) {
+  btnPresetTorProxy.addEventListener('click', () => {
+    const inputProxy = document.getElementById('input-container-proxy');
+    if (inputProxy) inputProxy.value = 'socks5://127.0.0.1:9050';
+  });
+}
+
+if (btnQuickNewEphemeral) {
+  btnQuickNewEphemeral.addEventListener('click', () => {
+    closeSettingsModal();
+    createTab(null, true, 'ephemeral', true);
+  });
+}
+
+// Initial container list load
+ipcRenderer.invoke('containers:get-all').then(res => {
+  if (Array.isArray(res) && res.length > 0) {
+    activeContainers = res;
+    const activeTab = tabs.get(activeTabId);
+    if (activeTab && activeTab.containerObj) {
+      updateOmnibarContainerBadge(activeTab.containerObj);
+    }
+  }
+}).catch(() => {});
 
 // ==========================================================================
 // Initialization

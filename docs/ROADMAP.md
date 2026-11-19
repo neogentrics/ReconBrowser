@@ -36,7 +36,7 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 | **v1.4.0** | ✅ **Live** | Password Vault, Opt-In Autofill, Bookmarks & History | Encrypted credential vault (`safeStorage`), permission-based opt-in autofill, bookmarks bar & right-click bookmarking, daily-sorted history manager, in-app updater |
 | **v1.5.0** | ✅ **Live** | Zero-Knowledge Sync, Shields 2.0 & Offline Research Archives | Accountless AES-256-GCM folder sync, universal bookmarks import/export (**Brave**, Chrome, Firefox, Edge, Safari), passwords CSV import/export, encrypted backup (`.reconbackup`), custom filter list subscriptions, live sliding network inspector drawer, cosmetic element zapper, and `.reconarchive` (MHTML) offline library |
 | **v1.6.0** | ✅ **Live** | Creative Suite Dock & Audio Grabber | Docked Author Desk companion rail, multi-note scratchpad, contextual citations (`Ctrl+Shift+E`), in-page audio stream sniffer & RT Audio Studio grabber |
-| **v1.7.0** | 📋 Planned | Containers & Ephemeral Tabs | Isolated cookie containers, per-container SOCKS5/Tor routing, disposable private tabs |
+| **v1.7.0** | ✅ **Live** | Containers & Ephemeral Personas | Isolated cookie & cache containers, per-container SOCKS5/Tor routing, ephemeral disposable tabs (`Ctrl+Shift+N`) with cryptographic wipe on close |
 | **v1.8.0** | 📋 Planned | Local AI Integration | Ollama bridge (`localhost:11434`), zero-cloud summarization & claim extraction |
 | **v1.9.0** | 📋 Planned | Decentralized Gateway | Native IPFS (`ipfs://`) and Gemini (`gemini://`) protocol handlers |
 | **v2.0.0** | 🎯 Milestone | The Connected Studio Browser | **All Gen 1 features graduate to permanent production**; unified Recon Spotlight (`Ctrl+K`) |
@@ -110,20 +110,25 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 - [x] **In-App Background Auto-Updater**: Direct background binary downloads and one-click "Update Now" with clean UAC elevation, eliminating external browser redirects.
 - [x] **Default Browser Integration**: First-run prompt and Settings toggle to set Recon Browser as the default system browser via `app.setAsDefaultProtocolClient()`.
 
-### Milestone 6: v1.5.0 — Recon Shields 2.0 & Network Inspector
-- [ ] Custom filter list subscriptions (EasyPrivacy, Fanboy Annoyances, uBlock Badware).
-- [ ] Live HTTP/3, QUIC, and TLS 1.3 network request inspector drawer.
-- [ ] Per-domain element zapper.
+### Milestone 6: v1.5.0 — Zero-Knowledge Sync, Shields 2.0 & Offline Research Archives [Complete & Live]
+- [x] Custom filter list subscriptions (EasyPrivacy, Fanboy Annoyances, uBlock Badware).
+- [x] Live HTTP/3, QUIC, and TLS 1.3 network request inspector drawer.
+- [x] Per-domain cosmetic element zapper.
+- [x] Zero-knowledge AES-256-GCM folder sync & encrypted backup (`.reconbackup`).
+- [x] Universal bookmarks import/export (Brave, Chrome, Firefox, Edge, Safari) & passwords CSV import/export.
+- [x] Offline Research Archives (`.reconarchive` / MHTML) library with full-text search.
 
-### Milestone 7: v1.6.0 — Creative Suite Hooks & Read Aloud
-- [ ] Author Desk docked companion rail.
-- [ ] Audio Studio media grabber for audio references.
-- [ ] Read Aloud neural text-to-speech for any web page with synchronized highlighting.
+### Milestone 7: v1.6.0 — Creative Suite Dock & Audio Grabber [Complete & Live]
+- [x] Author Desk docked companion rail with multi-note scratchpad and Markdown live preview.
+- [x] RT Audio Studio media grabber for audio/video streams, podcasts, and media asset ingestion (`Ctrl+Shift+G`).
+- [x] Contextual quick citations (`Ctrl+Shift+E`) appending selections to companion rail.
 
-### Milestone 8: v1.7.0 — Containers & Ephemeral Personas
-- [ ] Recon Containers: Isolated cookie and cache jars for Research, Personal, Finance, and Social.
-- [ ] Per-container proxy routing (SOCKS5, Tor, WireGuard).
-- [ ] Ephemeral disposable tabs with cryptographic wipe on close.
+### Milestone 8: v1.7.0 — Containers & Ephemeral Personas [Complete & Live]
+- [x] Recon Containers & Isolated Persona Jars: Partition-isolated cookie, storage, and cache jars for Research (`🔬`), Personal (`👤`), Work (`💼`), Finance (`💳`), Social (`💬`), and Custom containers.
+- [x] Per-container proxy routing: Independent proxy rules per container (e.g. `socks5://127.0.0.1:9050` for Tor / SOCKS5 / HTTP proxies) via Electron session partition routing.
+- [x] Ephemeral disposable tabs (`Ctrl+Shift+N`): Volatile in-memory sessions (`recon_ephemeral_*`) with zero disk footprint and cryptographic purge on close.
+- [x] Omnibar container picker badge & quick switcher dropdown.
+- [x] Container settings & proxy manager panel with one-click Tor preset and jar wipe actions.
 
 ### Milestone 9: v1.8.0 — Local AI & Ollama Integration
 - [ ] Ollama bridge (`http://localhost:11434`) for local private AI (Qwen, Llama, Gemma).

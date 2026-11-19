@@ -1,14 +1,14 @@
 {
   "name": "recon-browser",
   "productName": "Recon Browser",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "A privacy-hardened, bloat-free browser for the Recon Apps ecosystem. Built with native shields, zero telemetry, and DuckDuckGo search.",
   "author": "Recon Towers Dev Department <author@neogentrics.com>",
   "license": "MIT",
   "main": "src/main/index.js",
   "scripts": {
     "start": "electron .",
-    "test": "python3 -m unittest discover tests",
+    "test": "node --test tests/*.mjs && python3 -m unittest discover tests",
     "dist:win": "electron-builder --win nsis portable --x64 --publish never",
     "dist:mac": "electron-builder --mac dmg --arm64 --x64 --publish never",
     "dist:linux": "electron-builder --linux AppImage deb --publish never"

@@ -5,6 +5,35 @@ All notable changes to **Recon Browser** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-11-19
+
+### Added
+- **Zero-Knowledge Sync & Encrypted Vault / Backup Suite**:
+  - Accountless folder-based sync encrypted via authenticated `AES-256-GCM` with `scrypt` key derivation.
+  - Sync across any user directory: Syncthing, Nextcloud, local network share, or USB drive with zero accounts and zero remote cloud trust.
+  - Multi-device union merging for bookmarks, password vault, history, and preferences.
+  - **Universal Netscape Bookmarks HTML Import & Export**:
+    - Full 1-click import and export support for bookmarks from **Brave**, Google Chrome, Mozilla Firefox, Microsoft Edge, Safari, and Opera.
+    - Preserves nested `<H3>` folder structures, timestamps (`ADD_DATE`), and URLs with automatic deduplication.
+  - **Universal Passwords CSV Import & Export**:
+    - Full import and export compatibility with **Brave**, Bitwarden, 1Password, Chrome, and Firefox CSV formats.
+    - Handles multiline quotes, comma-escaping, and domain normalization.
+  - **Encrypted Complete System Backup & Restore (`.reconbackup`)**:
+    - 1-click encrypted snapshot generation protecting bookmarks, logins, history, and settings under a user-defined master passphrase.
+- **Recon Shields 2.0 & Live Network Inspector**:
+  - Custom filter list subscription manager (`EasyPrivacy`, `Fanboy's Annoyance List`, and custom external URL subscriptions).
+  - Sliding **Live Network Inspector Drawer** (`🔍 Live Inspector`):
+    - Real-time logging of network requests per tab (status, HTTP method, resource type, block reason, and target URL).
+    - Granular filters: All, Blocked, Allowed.
+    - Visual status badges for blocked trackers vs allowed assets.
+  - **Cosmetic Element Zapper (`⚡ Zap Element on Page`)**:
+    - Interactive element picker via right-click context menu or Shields popover button.
+    - Real-time hover outline and 1-click removal with instant DOM removal and persistent per-domain CSS rule injection.
+    - Persistent rule manager in Settings *Privacy* panel with 1-click rule removal.
+- **Offline Research Archives (`.reconarchive` / MHTML)**:
+  - 1-click webpage preservation into self-contained single-file MHTML archives bundling complete DOM, stylesheets, and images (`Ctrl+S` or omnibar `📦` button).
+  - Built-in **Offline Research Library** in Settings with real-time search, file sizes, creation dates, domain tags, 1-click tab launch, and archive deletion.
+
 ## [1.4.0] - 2026-11-19
 
 ### Added

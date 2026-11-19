@@ -329,6 +329,16 @@ function createTab(initialUrl = null, activate = true) {
       showToast(next ? 'DNS-over-HTTPS: Encrypted (Cloudflare)' : 'DNS-over-HTTPS: Standard (System DNS)');
     } else if (msg === 'RECON_ACTION:SHOW_TELEMETRY_INFO') {
       openSettingsModal('privacy');
+    } else if (msg.startsWith('RECON_ZAP:')) {
+      const selector = msg.replace('RECON_ZAP:', '').trim();
+      let domain = '';
+      try { domain = new URL(tabData.url).hostname; } catch {}
+      if (domain && selector) {
+        ipcRenderer.invoke('zapper:add-rule', { domain, selector }).then(() => {
+          showToast(`⚡ Zapped element: ${selector} on ${domain}`);
+          tabData.webviewEl.insertCSS(`${selector} { display: none !important; visibility: hidden !important; }`).catch(() => {});
+        });
+      }
     }
   });
 
@@ -379,6 +389,11 @@ function switchTab(id) {
   } else {
     readerOverlay.classList.add('reader-overlay-hidden');
     btnReaderView.classList.remove('active');
+  }
+
+  const inspectorDrawer = document.getElementById('network-inspector-drawer');
+  if (inspectorDrawer && inspectorDrawer.classList.contains('inspector-drawer-visible')) {
+    refreshNetworkInspectorLogs();
   }
 }
 
@@ -640,6 +655,12 @@ settingsNavBtns.forEach(btn => {
       loadAndRenderHistory();
     } else if (tabId === 'vault' && typeof loadAndRenderVault === 'function') {
       loadAndRenderVault();
+    } else if (tabId === 'sync' && typeof loadSyncSettings === 'function') {
+      loadSyncSettings();
+    } else if (tabId === 'archive' && typeof loadAndRenderArchives === 'function') {
+      loadAndRenderArchives();
+    } else if (tabId === 'privacy' && typeof loadShields2Settings === 'function') {
+      loadShields2Settings();
     } else if (tabId === 'interface' && typeof checkDefaultBrowserStatus === 'function') {
       checkDefaultBrowserStatus();
     }
@@ -2106,6 +2127,14 @@ ipcRenderer.on('open-link-new-tab', (event, { url }) => {
   }
 });
 
+ipcRenderer.on('archive-active-page', () => {
+  saveCurrentPageToArchive();
+});
+
+ipcRenderer.on('trigger-element-zapper', () => {
+  startElementZapper();
+});
+
 // ==========================================================================
 // Browsing History Tracking System (v1.4.0)
 // ==========================================================================
@@ -2705,6 +2734,728 @@ if (btnBannerDismissDefault) {
   btnBannerDismissDefault.addEventListener('click', () => {
     localStorage.setItem('recon_dismiss_default_browser', 'true');
     if (defaultBrowserBanner) defaultBrowserBanner.style.display = 'none';
+  });
+}
+
+// ==========================================================================
+// v1.5.0: Zero-Knowledge Sync & Encrypted Backup Suite
+// ==========================================================================
+const toggleSyncEnabled = document.getElementById('toggle-sync-enabled');
+const inputSyncFolderPath = document.getElementById('input-sync-folder-path');
+const btnSyncSelectFolder = document.getElementById('btn-sync-select-folder');
+const inputSyncPassphrase = document.getElementById('input-sync-passphrase');
+const btnSyncTogglePassphrase = document.getElementById('btn-sync-toggle-passphrase');
+const syncOptBookmarks = document.getElementById('sync-opt-bookmarks');
+const syncOptVault = document.getElementById('sync-opt-vault');
+const syncOptSettings = document.getElementById('sync-opt-settings');
+const syncOptHistory = document.getElementById('sync-opt-history');
+const syncLastTime = document.getElementById('sync-last-time');
+const btnSyncSaveConfig = document.getElementById('btn-sync-save-config');
+const btnSyncExecuteNow = document.getElementById('btn-sync-execute-now');
+const btnImportBookmarksHtml = document.getElementById('btn-import-bookmarks-html');
+const btnExportBookmarksHtml = document.getElementById('btn-export-bookmarks-html');
+const btnImportVaultCsv = document.getElementById('btn-import-vault-csv');
+const btnExportVaultCsv = document.getElementById('btn-export-vault-csv');
+const btnCreateBackup = document.getElementById('btn-create-backup');
+const btnRestoreBackup = document.getElementById('btn-restore-backup');
+
+async function loadSyncSettings() {
+  try {
+    const cfg = await ipcRenderer.invoke('sync:get-config');
+    if (cfg) {
+      if (toggleSyncEnabled) toggleSyncEnabled.checked = !!cfg.enabled;
+      if (inputSyncFolderPath) inputSyncFolderPath.value = cfg.syncFolderPath || '';
+      if (syncOptBookmarks) syncOptBookmarks.checked = cfg.syncBookmarks !== false;
+      if (syncOptVault) syncOptVault.checked = cfg.syncVault !== false;
+      if (syncOptSettings) syncOptSettings.checked = cfg.syncSettings !== false;
+      if (syncOptHistory) syncOptHistory.checked = !!cfg.syncHistory;
+      if (syncLastTime) {
+        syncLastTime.textContent = cfg.lastSyncedAt ? new Date(cfg.lastSyncedAt).toLocaleString() : 'Never';
+      }
+    }
+  } catch (err) {
+    console.error('[Sync] Error loading settings:', err);
+  }
+}
+
+async function saveSyncSettings() {
+  try {
+    const cfg = {
+      enabled: toggleSyncEnabled ? toggleSyncEnabled.checked : false,
+      syncFolderPath: inputSyncFolderPath ? inputSyncFolderPath.value.trim() : '',
+      syncBookmarks: syncOptBookmarks ? syncOptBookmarks.checked : true,
+      syncVault: syncOptVault ? syncOptVault.checked : true,
+      syncSettings: syncOptSettings ? syncOptSettings.checked : true,
+      syncHistory: syncOptHistory ? syncOptHistory.checked : false
+    };
+    const success = await ipcRenderer.invoke('sync:save-config', cfg);
+    if (success) {
+      showToast('✓ Sync settings saved successfully');
+    }
+  } catch (err) {
+    showToast(`Failed to save sync settings: ${err.message}`);
+  }
+}
+
+if (btnSyncSelectFolder) {
+  btnSyncSelectFolder.addEventListener('click', async () => {
+    const folder = await ipcRenderer.invoke('sync:select-folder');
+    if (folder && inputSyncFolderPath) {
+      inputSyncFolderPath.value = folder;
+      saveSyncSettings();
+    }
+  });
+}
+
+if (btnSyncTogglePassphrase && inputSyncPassphrase) {
+  btnSyncTogglePassphrase.addEventListener('click', () => {
+    const isPass = inputSyncPassphrase.type === 'password';
+    inputSyncPassphrase.type = isPass ? 'text' : 'password';
+    btnSyncTogglePassphrase.textContent = isPass ? '🔒' : '👁️';
+  });
+}
+
+if (btnSyncSaveConfig) {
+  btnSyncSaveConfig.addEventListener('click', saveSyncSettings);
+}
+
+if (btnSyncExecuteNow) {
+  btnSyncExecuteNow.addEventListener('click', executeFolderSyncNow);
+}
+
+async function executeFolderSyncNow() {
+  const passphrase = inputSyncPassphrase ? inputSyncPassphrase.value.trim() : '';
+  if (!passphrase || passphrase.length < 6) {
+    showToast('Please enter master passphrase (min 6 characters) for AES-256-GCM encryption');
+    if (inputSyncPassphrase) inputSyncPassphrase.focus();
+    return;
+  }
+
+  showToast('🔄 Running zero-knowledge folder sync...');
+  try {
+    const localData = {
+      bookmarks: loadBookmarks(),
+      vault: await ipcRenderer.invoke('vault:get-all'),
+      history: await ipcRenderer.invoke('history:get-all'),
+      settings: {
+        theme: localStorage.getItem('recon_theme'),
+        aspect: localStorage.getItem('recon_aspect'),
+        engine: localStorage.getItem('recon_default_engine')
+      }
+    };
+
+    const res = await ipcRenderer.invoke('sync:execute-now', { passphrase, localData });
+    if (res && res.success) {
+      if (res.mergedData) {
+        if (Array.isArray(res.mergedData.bookmarks)) {
+          saveBookmarks(res.mergedData.bookmarks);
+          renderBookmarks();
+        }
+        if (res.mergedData.settings) {
+          if (res.mergedData.settings.theme) localStorage.setItem('recon_theme', res.mergedData.settings.theme);
+          if (res.mergedData.settings.aspect) localStorage.setItem('recon_aspect', res.mergedData.settings.aspect);
+          applyThemeAndAspect(localStorage.getItem('recon_theme') || 'cyber', localStorage.getItem('recon_aspect') || 'solid');
+        }
+        if (typeof loadAndRenderVault === 'function') loadAndRenderVault();
+      }
+      if (syncLastTime) syncLastTime.textContent = new Date().toLocaleTimeString();
+      showToast(`✓ Zero-Knowledge Sync complete (${res.mergedCount || 'all'} records synced)`);
+    } else {
+      showToast(`Sync failed: ${res && res.error ? res.error : 'Check sync folder and passphrase'}`);
+    }
+  } catch (err) {
+    showToast(`Sync error: ${err.message}`);
+  }
+}
+
+// Universal Import & Export (Brave, Chrome, Firefox, Edge, Safari, Opera, Bitwarden, 1Password)
+async function importBookmarksHtml() {
+  try {
+    const res = await ipcRenderer.invoke('sync:import-bookmarks-html');
+    if (res.canceled) return;
+    if (res.success && Array.isArray(res.bookmarks)) {
+      const current = loadBookmarks();
+      const currentUrls = new Set(current.map(b => b.url));
+      let added = 0;
+      for (const bm of res.bookmarks) {
+        if (!currentUrls.has(bm.url)) {
+          current.push(bm);
+          currentUrls.add(bm.url);
+          added++;
+        }
+      }
+      saveBookmarks(current);
+      renderBookmarks();
+      showToast(`✓ Imported ${added} bookmarks (Brave, Chrome, Firefox, Edge compatible)`);
+    } else {
+      showToast(`Import failed: ${res.error || 'No valid bookmarks found'}`);
+    }
+  } catch (err) {
+    showToast(`Import error: ${err.message}`);
+  }
+}
+
+async function exportBookmarksHtml() {
+  try {
+    const bms = loadBookmarks();
+    const res = await ipcRenderer.invoke('sync:export-bookmarks-html', bms);
+    if (res.canceled) return;
+    if (res.success) {
+      showToast(`✓ Bookmarks exported to Netscape HTML format`);
+    } else {
+      showToast(`Export failed: ${res.error || 'Unknown error'}`);
+    }
+  } catch (err) {
+    showToast(`Export error: ${err.message}`);
+  }
+}
+
+async function importVaultCsv() {
+  try {
+    const res = await ipcRenderer.invoke('sync:import-vault-csv');
+    if (res.canceled) return;
+    if (res.success) {
+      showToast(`✓ Imported ${res.count} logins into Password Vault`);
+      if (typeof loadAndRenderVault === 'function') loadAndRenderVault();
+    } else {
+      showToast(`Import failed: ${res.error || 'Invalid CSV format'}`);
+    }
+  } catch (err) {
+    showToast(`Import error: ${err.message}`);
+  }
+}
+
+async function exportVaultCsv() {
+  try {
+    const res = await ipcRenderer.invoke('sync:export-vault-csv');
+    if (res.canceled) return;
+    if (res.success) {
+      showToast(`✓ Passwords exported to CSV format`);
+    } else {
+      showToast(`Export failed: ${res.error || 'Unknown error'}`);
+    }
+  } catch (err) {
+    showToast(`Export error: ${err.message}`);
+  }
+}
+
+async function createSystemBackup() {
+  const passphrase = inputSyncPassphrase ? inputSyncPassphrase.value.trim() : '';
+  if (!passphrase || passphrase.length < 6) {
+    showToast('Please enter a master passphrase (min 6 characters) in the Sync tab');
+    switchSettingsTab('sync');
+    if (inputSyncPassphrase) inputSyncPassphrase.focus();
+    return;
+  }
+
+  showToast('📦 Creating encrypted system backup (.reconbackup)...');
+  try {
+    const localData = {
+      bookmarks: loadBookmarks(),
+      vault: await ipcRenderer.invoke('vault:get-all'),
+      history: await ipcRenderer.invoke('history:get-all'),
+      settings: {
+        theme: localStorage.getItem('recon_theme'),
+        aspect: localStorage.getItem('recon_aspect'),
+        engine: localStorage.getItem('recon_default_engine')
+      }
+    };
+
+    const res = await ipcRenderer.invoke('sync:create-backup', { passphrase, data: localData });
+    if (res.canceled) return;
+    if (res.success) {
+      showToast('✓ Created authenticated encrypted backup (.reconbackup)');
+    } else {
+      showToast(`Backup failed: ${res.error || 'Unknown error'}`);
+    }
+  } catch (err) {
+    showToast(`Backup error: ${err.message}`);
+  }
+}
+
+async function restoreSystemBackup() {
+  const passphrase = inputSyncPassphrase ? inputSyncPassphrase.value.trim() : '';
+  if (!passphrase || passphrase.length < 6) {
+    showToast('Please enter your master backup passphrase in the Sync tab');
+    switchSettingsTab('sync');
+    if (inputSyncPassphrase) inputSyncPassphrase.focus();
+    return;
+  }
+
+  try {
+    const res = await ipcRenderer.invoke('sync:restore-backup', { passphrase });
+    if (res.canceled) return;
+    if (res.success && res.data) {
+      const d = res.data;
+      if (Array.isArray(d.bookmarks)) {
+        saveBookmarks(d.bookmarks);
+        renderBookmarks();
+      }
+      if (d.settings) {
+        if (d.settings.theme) localStorage.setItem('recon_theme', d.settings.theme);
+        if (d.settings.aspect) localStorage.setItem('recon_aspect', d.settings.aspect);
+        if (d.settings.engine) localStorage.setItem('recon_default_engine', d.settings.engine);
+        applyThemeAndAspect(localStorage.getItem('recon_theme') || 'cyber', localStorage.getItem('recon_aspect') || 'solid');
+      }
+      if (typeof loadAndRenderVault === 'function') loadAndRenderVault();
+      showToast('✓ Successfully restored environment from encrypted backup');
+    } else {
+      showToast(`Restore failed: ${res.error || 'Wrong passphrase or corrupted backup'}`);
+    }
+  } catch (err) {
+    showToast(`Restore error: ${err.message}`);
+  }
+}
+
+if (btnImportBookmarksHtml) btnImportBookmarksHtml.addEventListener('click', importBookmarksHtml);
+if (btnExportBookmarksHtml) btnExportBookmarksHtml.addEventListener('click', exportBookmarksHtml);
+if (btnImportVaultCsv) btnImportVaultCsv.addEventListener('click', importVaultCsv);
+if (btnExportVaultCsv) btnExportVaultCsv.addEventListener('click', exportVaultCsv);
+if (btnCreateBackup) btnCreateBackup.addEventListener('click', createSystemBackup);
+if (btnRestoreBackup) btnRestoreBackup.addEventListener('click', restoreSystemBackup);
+
+// ==========================================================================
+// v1.5.0: Offline Research Archives (.reconarchive / MHTML)
+// ==========================================================================
+const btnArchivePage = document.getElementById('btn-archive-page');
+const btnArchiveSaveCurrent = document.getElementById('btn-archive-save-current');
+const inputArchiveSearch = document.getElementById('input-archive-search');
+const btnArchiveRefresh = document.getElementById('btn-archive-refresh');
+const archiveListContainer = document.getElementById('archive-list-container');
+
+async function saveCurrentPageToArchive() {
+  const tab = tabs.get(activeTabId);
+  if (!tab || !tab.url || tab.url.includes('startpage.html')) {
+    showToast('Cannot archive local startpage');
+    return;
+  }
+  showToast('📦 Preserving page into Offline Research Archive (.reconarchive)...');
+  try {
+    const res = await ipcRenderer.invoke('archive:save-active-tab', {
+      url: tab.url,
+      title: tab.title || tab.url,
+      tags: ['research']
+    });
+    if (res && res.success) {
+      showToast(`✓ Page preserved offline (${(res.archive.sizeBytes / 1024).toFixed(1)} KB)`);
+      loadAndRenderArchives();
+    } else {
+      showToast(`Archive failed: ${res && res.error ? res.error : 'Unknown error'}`);
+    }
+  } catch (err) {
+    showToast(`Archive failed: ${err.message}`);
+  }
+}
+
+async function loadAndRenderArchives(query = '') {
+  if (!archiveListContainer) return;
+  try {
+    const archives = query
+      ? await ipcRenderer.invoke('archive:search', query)
+      : await ipcRenderer.invoke('archive:get-all');
+
+    if (!archives || archives.length === 0) {
+      archiveListContainer.innerHTML = `
+        <div style="text-align: center; color: var(--text-muted); padding: 30px; font-size: 12px;">
+          ${query ? 'No matching offline archives found.' : 'No saved offline archives yet. Click <strong>📦 Archive Active Tab</strong> or press <strong>Ctrl+S</strong> to preserve any page.'}
+        </div>
+      `;
+      return;
+    }
+
+    archiveListContainer.innerHTML = archives.map(item => {
+      const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—';
+      const sizeKb = (item.sizeBytes / 1024).toFixed(1);
+      return `
+        <div class="archive-card" data-archive-id="${escapeHtml(item.id)}">
+          <div class="archive-card-left">
+            <div class="archive-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
+            <div class="archive-card-meta">
+              <span class="archive-card-domain">${escapeHtml(item.domain)}</span>
+              <span>•</span>
+              <span>${dateStr}</span>
+              <span>•</span>
+              <span>${sizeKb} KB</span>
+            </div>
+          </div>
+          <div class="archive-card-actions">
+            <button class="btn-primary btn-open-archive" data-path="${escapeHtml(item.filePath)}" style="font-size: 11px; padding: 4px 10px;">📖 Open</button>
+            <button class="btn-subtle btn-delete-archive" data-id="${escapeHtml(item.id)}" style="font-size: 11px; padding: 4px 8px;" title="Delete Archive">🗑️</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    archiveListContainer.querySelectorAll('.btn-open-archive').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = btn.getAttribute('data-path');
+        if (p) {
+          const fileUrl = 'file:///' + p.replace(/\\/g, '/');
+          createTab(fileUrl, true);
+          closeSettingsModal();
+        }
+      });
+    });
+
+    archiveListContainer.querySelectorAll('.btn-delete-archive').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        if (id) {
+          await ipcRenderer.invoke('archive:delete', id);
+          loadAndRenderArchives(inputArchiveSearch ? inputArchiveSearch.value : '');
+          showToast('Offline archive deleted');
+        }
+      });
+    });
+  } catch (err) {
+    console.error('[Archives] Error rendering archives:', err);
+  }
+}
+
+if (btnArchivePage) btnArchivePage.addEventListener('click', saveCurrentPageToArchive);
+if (btnArchiveSaveCurrent) btnArchiveSaveCurrent.addEventListener('click', saveCurrentPageToArchive);
+if (btnArchiveRefresh) btnArchiveRefresh.addEventListener('click', () => loadAndRenderArchives());
+if (inputArchiveSearch) {
+  inputArchiveSearch.addEventListener('input', (e) => {
+    loadAndRenderArchives(e.target.value.trim());
+  });
+}
+
+// ==========================================================================
+// v1.5.0: Shields 2.0 Subscriptions, Live Inspector & Element Zapper
+// ==========================================================================
+const btnPopoverOpenInspector = document.getElementById('btn-popover-open-inspector');
+const btnPopoverZapElement = document.getElementById('btn-popover-zap-element');
+const btnCloseInspector = document.getElementById('btn-close-inspector');
+const btnClearInspector = document.getElementById('btn-clear-inspector');
+const toggleSubEasyprivacy = document.getElementById('toggle-sub-easyprivacy');
+const toggleSubFanboy = document.getElementById('toggle-sub-fanboy');
+const inputSubCustomUrl = document.getElementById('input-sub-custom-url');
+const btnSubAddCustom = document.getElementById('btn-sub-add-custom');
+const filterSubscriptionsContainer = document.getElementById('filter-subscriptions-container');
+const zapperRulesContainer = document.getElementById('zapper-rules-container');
+
+let inspectorActiveFilter = 'all';
+let currentTabInspectorLogs = [];
+
+function openNetworkInspector() {
+  const drawer = document.getElementById('network-inspector-drawer');
+  if (drawer) {
+    drawer.classList.remove('inspector-drawer-hidden');
+    drawer.classList.add('inspector-drawer-visible');
+  }
+  if (shieldsPopover) shieldsPopover.classList.add('popover-hidden');
+  refreshNetworkInspectorLogs();
+}
+
+function closeNetworkInspector() {
+  const drawer = document.getElementById('network-inspector-drawer');
+  if (drawer) {
+    drawer.classList.add('inspector-drawer-hidden');
+    drawer.classList.remove('inspector-drawer-visible');
+  }
+}
+
+async function refreshNetworkInspectorLogs() {
+  const tab = tabs.get(activeTabId);
+  const domainBadge = document.getElementById('inspector-domain-badge');
+  const countAll = document.getElementById('inspector-count-all');
+  const countBlocked = document.getElementById('inspector-count-blocked');
+  const countAllowed = document.getElementById('inspector-count-allowed');
+
+  let webContentsId = null;
+  let domain = 'Active Tab';
+  if (tab && tab.webviewEl && typeof tab.webviewEl.getWebContentsId === 'function') {
+    try {
+      webContentsId = tab.webviewEl.getWebContentsId();
+    } catch {}
+    if (tab.url && !tab.url.includes('startpage.html')) {
+      try { domain = new URL(tab.url).hostname; } catch {}
+    } else {
+      domain = 'Recon Start';
+    }
+  }
+
+  if (domainBadge) domainBadge.textContent = domain;
+
+  if (!webContentsId) {
+    currentTabInspectorLogs = [];
+  } else {
+    currentTabInspectorLogs = await ipcRenderer.invoke('network-inspector:get-logs', webContentsId) || [];
+  }
+
+  const blocked = currentTabInspectorLogs.filter(r => r.blocked).length;
+  const allowed = currentTabInspectorLogs.length - blocked;
+  if (countAll) countAll.textContent = String(currentTabInspectorLogs.length);
+  if (countBlocked) countBlocked.textContent = String(blocked);
+  if (countAllowed) countAllowed.textContent = String(allowed);
+
+  renderNetworkInspectorTable();
+}
+
+function renderNetworkInspectorTable() {
+  const tbody = document.getElementById('inspector-tbody');
+  if (!tbody) return;
+
+  let filtered = currentTabInspectorLogs;
+  if (inspectorActiveFilter === 'blocked') {
+    filtered = currentTabInspectorLogs.filter(r => r.blocked);
+  } else if (inspectorActiveFilter === 'allowed') {
+    filtered = currentTabInspectorLogs.filter(r => !r.blocked);
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 25px; font-size: 12px;">No matching network requests logged.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(req => {
+    const statusHtml = req.blocked
+      ? `<span class="req-status-blocked">🛡️ BLOCKED</span>`
+      : `<span class="req-status-allowed">✓ ALLOWED</span>`;
+    const methodHtml = `<span class="req-method-badge">${escapeHtml(req.method || 'GET')}</span>`;
+    const typeHtml = `<span class="req-type-badge">${escapeHtml(req.resourceType || 'other')}</span>`;
+    const reasonHtml = escapeHtml(req.reason || '—');
+    const urlHtml = `<span title="${escapeHtml(req.url)}">${escapeHtml(req.host || req.url)}</span>`;
+
+    return `<tr>
+      <td>${statusHtml}</td>
+      <td>${methodHtml}</td>
+      <td>${typeHtml}</td>
+      <td>${reasonHtml}</td>
+      <td style="font-family: monospace; font-size: 11px;">${urlHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+if (btnPopoverOpenInspector) btnPopoverOpenInspector.addEventListener('click', openNetworkInspector);
+if (btnCloseInspector) btnCloseInspector.addEventListener('click', closeNetworkInspector);
+if (btnClearInspector) {
+  btnClearInspector.addEventListener('click', async () => {
+    const tab = tabs.get(activeTabId);
+    if (tab && tab.webviewEl && typeof tab.webviewEl.getWebContentsId === 'function') {
+      try {
+        const wcId = tab.webviewEl.getWebContentsId();
+        await ipcRenderer.invoke('network-inspector:clear-logs', wcId);
+      } catch {}
+    }
+    refreshNetworkInspectorLogs();
+  });
+}
+
+document.querySelectorAll('.inspector-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.inspector-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    inspectorActiveFilter = btn.getAttribute('data-filter') || 'all';
+    renderNetworkInspectorTable();
+  });
+});
+
+// Element Zapper
+function startElementZapper() {
+  const tab = tabs.get(activeTabId);
+  if (!tab || !tab.webviewEl || tab.url.includes('startpage.html')) {
+    showToast('Element Zapper works on live web pages');
+    return;
+  }
+  if (shieldsPopover) shieldsPopover.classList.add('popover-hidden');
+  showToast('⚡ Element Zapper active: Hover over any element and click to zap it (Esc to cancel)');
+
+  const zapperCode = `
+    (function() {
+      if (window.__reconZapperActive) return;
+      window.__reconZapperActive = true;
+      let lastHovered = null;
+      let overlay = document.getElementById('__recon_zapper_highlighter');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = '__recon_zapper_highlighter';
+        overlay.style.position = 'fixed';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.border = '2px dashed #f43f5e';
+        overlay.style.backgroundColor = 'rgba(244, 63, 94, 0.2)';
+        overlay.style.zIndex = '2147483647';
+        overlay.style.transition = 'all 0.05s ease';
+        overlay.style.display = 'none';
+        document.documentElement.appendChild(overlay);
+      }
+
+      function onMouseMove(e) {
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        if (!el || el === overlay || el === document.documentElement || el === document.body) {
+          overlay.style.display = 'none';
+          return;
+        }
+        lastHovered = el;
+        const rect = el.getBoundingClientRect();
+        overlay.style.display = 'block';
+        overlay.style.top = rect.top + 'px';
+        overlay.style.left = rect.left + 'px';
+        overlay.style.width = rect.width + 'px';
+        overlay.style.height = rect.height + 'px';
+      }
+
+      function getSelector(el) {
+        if (el.id) return '#' + CSS.escape(el.id);
+        if (el.className && typeof el.className === 'string') {
+          const firstClass = el.className.trim().split(/\\s+/)[0];
+          if (firstClass) return '.' + CSS.escape(firstClass);
+        }
+        return el.tagName.toLowerCase();
+      }
+
+      function onClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        cleanup();
+        if (lastHovered) {
+          const selector = getSelector(lastHovered);
+          lastHovered.style.display = 'none';
+          console.log('RECON_ZAP:' + selector);
+        }
+      }
+
+      function onKeyDown(e) {
+        if (e.key === 'Escape') {
+          cleanup();
+        }
+      }
+
+      function cleanup() {
+        window.__reconZapperActive = false;
+        document.removeEventListener('mousemove', onMouseMove, true);
+        document.removeEventListener('click', onClick, true);
+        document.removeEventListener('keydown', onKeyDown, true);
+        if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      }
+
+      document.addEventListener('mousemove', onMouseMove, true);
+      document.addEventListener('click', onClick, true);
+      document.addEventListener('keydown', onKeyDown, true);
+    })();
+  `;
+
+  tab.webviewEl.executeJavaScript(zapperCode).catch(err => {
+    console.error('Failed to inject zapper code:', err);
+  });
+}
+
+if (btnPopoverZapElement) btnPopoverZapElement.addEventListener('click', startElementZapper);
+
+async function loadShields2Settings() {
+  try {
+    const subs = await ipcRenderer.invoke('shields:get-subscriptions');
+    if (subs) {
+      if (toggleSubEasyprivacy) toggleSubEasyprivacy.checked = subs.easyprivacy !== false;
+      if (toggleSubFanboy) toggleSubFanboy.checked = subs.fanboyAnnoyances !== false;
+
+      if (filterSubscriptionsContainer) {
+        const custom = Array.isArray(subs.customLists) ? subs.customLists : [];
+        if (custom.length === 0) {
+          filterSubscriptionsContainer.innerHTML = '<div style="padding: 4px; font-style: italic;">No custom list subscriptions added.</div>';
+        } else {
+          filterSubscriptionsContainer.innerHTML = custom.map(url => `
+            <div class="sub-list-item">
+              <span style="font-family: monospace; overflow: hidden; text-overflow: ellipsis; max-width: 320px;">${escapeHtml(url)}</span>
+              <button class="btn-subtle btn-remove-sub" data-url="${escapeHtml(url)}" style="font-size: 11px; padding: 2px 6px;">×</button>
+            </div>
+          `).join('');
+
+          filterSubscriptionsContainer.querySelectorAll('.btn-remove-sub').forEach(b => {
+            b.addEventListener('click', async () => {
+              const u = b.getAttribute('data-url');
+              subs.customLists = subs.customLists.filter(x => x !== u);
+              await ipcRenderer.invoke('shields:save-subscriptions', subs);
+              loadShields2Settings();
+              showToast('Removed custom filter list subscription');
+            });
+          });
+        }
+      }
+    }
+
+    // Load Zapper Rules for current domain
+    loadZapperRules();
+  } catch (err) {
+    console.error('[Shields 2.0] Error loading settings:', err);
+  }
+}
+
+async function loadZapperRules() {
+  if (!zapperRulesContainer) return;
+  const tab = tabs.get(activeTabId);
+  let domain = '';
+  if (tab && tab.url && !tab.url.includes('startpage.html')) {
+    try { domain = new URL(tab.url).hostname; } catch {}
+  }
+
+  if (!domain) {
+    zapperRulesContainer.innerHTML = '<div style="padding: 6px; text-align: center; font-style: italic;">Open a website to view active cosmetic zapper rules.</div>';
+    return;
+  }
+
+  const rules = await ipcRenderer.invoke('zapper:get-rules', domain);
+  if (!rules || rules.length === 0) {
+    zapperRulesContainer.innerHTML = `<div style="padding: 6px; text-align: center; font-style: italic;">No zapper rules active on ${domain}.</div>`;
+    return;
+  }
+
+  zapperRulesContainer.innerHTML = rules.map(sel => `
+    <div class="zapper-rule-item">
+      <div>
+        <span class="zapper-rule-selector">${escapeHtml(sel)}</span>
+        <small style="color: var(--text-muted); margin-left: 6px;">(${escapeHtml(domain)})</small>
+      </div>
+      <button class="btn-subtle btn-remove-zapper" data-domain="${escapeHtml(domain)}" data-sel="${escapeHtml(sel)}" style="font-size: 11px; padding: 2px 6px;">Remove</button>
+    </div>
+  `).join('');
+
+  zapperRulesContainer.querySelectorAll('.btn-remove-zapper').forEach(b => {
+    b.addEventListener('click', async () => {
+      const d = b.getAttribute('data-domain');
+      const s = b.getAttribute('data-sel');
+      await ipcRenderer.invoke('zapper:remove-rule', { domain: d, selector: s });
+      loadZapperRules();
+      showToast(`Removed zapper rule: ${s}`);
+    });
+  });
+}
+
+if (toggleSubEasyprivacy) {
+  toggleSubEasyprivacy.addEventListener('change', async (e) => {
+    const subs = await ipcRenderer.invoke('shields:get-subscriptions');
+    subs.easyprivacy = e.target.checked;
+    await ipcRenderer.invoke('shields:save-subscriptions', subs);
+    showToast(subs.easyprivacy ? 'EasyPrivacy blocklist enabled' : 'EasyPrivacy blocklist disabled');
+  });
+}
+
+if (toggleSubFanboy) {
+  toggleSubFanboy.addEventListener('change', async (e) => {
+    const subs = await ipcRenderer.invoke('shields:get-subscriptions');
+    subs.fanboyAnnoyances = e.target.checked;
+    await ipcRenderer.invoke('shields:save-subscriptions', subs);
+    showToast(subs.fanboyAnnoyances ? 'Fanboy Annoyances list enabled' : 'Fanboy Annoyances list disabled');
+  });
+}
+
+if (btnSubAddCustom && inputSubCustomUrl) {
+  btnSubAddCustom.addEventListener('click', async () => {
+    const url = inputSubCustomUrl.value.trim();
+    if (!url || !url.startsWith('http')) {
+      showToast('Please enter a valid HTTP/HTTPS filter subscription URL');
+      return;
+    }
+    const subs = await ipcRenderer.invoke('shields:get-subscriptions');
+    if (!Array.isArray(subs.customLists)) subs.customLists = [];
+    if (!subs.customLists.includes(url)) {
+      subs.customLists.push(url);
+      await ipcRenderer.invoke('shields:save-subscriptions', subs);
+      inputSubCustomUrl.value = '';
+      loadShields2Settings();
+      showToast('✓ Added custom filter list subscription');
+    }
   });
 }
 

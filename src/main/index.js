@@ -5,6 +5,10 @@ const { spawn } = require('child_process');
 const { Updater } = require('./updater');
 const { PasswordVault } = require('./vault');
 const { HistoryManager } = require('./history');
+const { SyncManager } = require('./sync');
+const { ArchiveManager } = require('./archive');
+const { ShieldsManager } = require('./shields2');
+const { exportBookmarksToHtml, parseBookmarksHtml, exportVaultToCsv, parseVaultCsv } = require('./importer-exporter');
 const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link');
 const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
 
@@ -15,6 +19,9 @@ const pausedHosts = new Set();
 let updater = null;
 const vault = new PasswordVault();
 const historyManager = new HistoryManager();
+const syncManager = new SyncManager();
+const archiveManager = new ArchiveManager();
+const shieldsManager = new ShieldsManager();
 
 // Load tracking domains blocklist
 const filterPath = path.join(__dirname, '../../config/filters/default-trackers.txt');
@@ -286,29 +293,74 @@ function createWindow() {
     return false;
   }
 
-  // Network request interception (Recon Shields)
+  // Network request interception (Recon Shields 2.0 & Live Inspector)
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
     if (!shieldsEnabled) {
+      shieldsManager.logRequest(details.webContentsId, {
+        url: details.url,
+        method: details.method,
+        resourceType: details.resourceType,
+        blocked: false,
+        reason: 'Shields Global Disabled'
+      });
       return callback({ cancel: false });
     }
 
     try {
       if (isSiteShieldsPaused(details)) {
+        shieldsManager.logRequest(details.webContentsId, {
+          url: details.url,
+          method: details.method,
+          resourceType: details.resourceType,
+          blocked: false,
+          reason: 'Site Shield Paused'
+        });
         return callback({ cancel: false });
       }
 
       const url = new URL(details.url);
       const host = url.hostname.toLowerCase();
 
+      let isBlocked = false;
+      let reason = '';
+
       for (const domain of trackingDomains) {
         if (host === domain || host.endsWith('.' + domain)) {
-          blockedCount++;
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send('shield-blocked-update', { count: blockedCount, blockedUrl: host });
-          }
-          return callback({ cancel: true });
+          isBlocked = true;
+          reason = 'Suffix Tracker Filter';
+          break;
         }
       }
+
+      if (!isBlocked && shieldsManager.isDomainBlocked(host)) {
+        isBlocked = true;
+        reason = 'Shields 2.0 Subscription';
+      }
+
+      if (isBlocked) {
+        blockedCount++;
+        shieldsManager.logRequest(details.webContentsId, {
+          url: details.url,
+          host,
+          method: details.method,
+          resourceType: details.resourceType,
+          blocked: true,
+          reason
+        });
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('shield-blocked-update', { count: blockedCount, blockedUrl: host });
+        }
+        return callback({ cancel: true });
+      }
+
+      shieldsManager.logRequest(details.webContentsId, {
+        url: details.url,
+        host,
+        method: details.method,
+        resourceType: details.resourceType,
+        blocked: false,
+        reason: 'Allowed'
+      });
     } catch (err) {
       // Ignore malformed URLs
     }
@@ -601,6 +653,168 @@ ipcMain.handle('default-browser:set', () => {
 });
 
 // ==========================================================================
+// Zero-Knowledge Sync & Encrypted Backup IPC (v1.5.0)
+// ==========================================================================
+ipcMain.handle('sync:get-config', () => syncManager.getConfig());
+ipcMain.handle('sync:save-config', (event, cfg) => syncManager.saveConfig(cfg));
+ipcMain.handle('sync:select-folder', async () => {
+  const res = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select Folder for Zero-Knowledge Sync',
+    properties: ['openDirectory', 'createDirectory']
+  });
+  if (!res.canceled && res.filePaths.length > 0) {
+    return res.filePaths[0];
+  }
+  return null;
+});
+
+ipcMain.handle('sync:execute-now', async (event, { passphrase, localData }) => {
+  try {
+    return syncManager.executeFolderSync(passphrase, localData);
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sync:create-backup', async (event, { passphrase, data }) => {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const res = await dialog.showSaveDialog(mainWindow, {
+      title: 'Save Encrypted Recon Browser Backup',
+      defaultPath: `ReconBrowser-Backup-${today}.reconbackup`,
+      filters: [{ name: 'Recon Browser Backup', extensions: ['reconbackup'] }]
+    });
+    if (res.canceled || !res.filePath) return { canceled: true };
+    const r = syncManager.createBackup(res.filePath, passphrase, data);
+    return { success: true, path: r.path };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sync:restore-backup', async (event, { passphrase }) => {
+  try {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select Recon Browser Backup to Restore',
+      filters: [{ name: 'Recon Browser Backup', extensions: ['reconbackup'] }],
+      properties: ['openFile']
+    });
+    if (res.canceled || res.filePaths.length === 0) return { canceled: true };
+    const data = syncManager.restoreBackup(res.filePaths[0], passphrase);
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Universal Importer & Exporter (Chrome, Brave, Firefox, Edge, Safari)
+ipcMain.handle('sync:import-bookmarks-html', async () => {
+  try {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: 'Import Bookmarks (Chrome, Brave, Firefox, Edge, Safari)',
+      filters: [{ name: 'HTML Bookmarks File', extensions: ['html', 'htm'] }],
+      properties: ['openFile']
+    });
+    if (res.canceled || res.filePaths.length === 0) return { canceled: true };
+    const content = fs.readFileSync(res.filePaths[0], 'utf8');
+    const bookmarks = parseBookmarksHtml(content);
+    return { success: true, bookmarks, count: bookmarks.length };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sync:export-bookmarks-html', async (event, bookmarks) => {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const res = await dialog.showSaveDialog(mainWindow, {
+      title: 'Export Bookmarks to Standard HTML',
+      defaultPath: `bookmarks_${today}.html`,
+      filters: [{ name: 'HTML File', extensions: ['html'] }]
+    });
+    if (res.canceled || !res.filePath) return { canceled: true };
+    const html = exportBookmarksToHtml(bookmarks);
+    fs.writeFileSync(res.filePath, html, 'utf8');
+    return { success: true, path: res.filePath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sync:import-vault-csv', async () => {
+  try {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: 'Import Passwords CSV (Bitwarden, Chrome, Firefox, Brave, 1Password)',
+      filters: [{ name: 'CSV File', extensions: ['csv'] }],
+      properties: ['openFile']
+    });
+    if (res.canceled || res.filePaths.length === 0) return { canceled: true };
+    const content = fs.readFileSync(res.filePaths[0], 'utf8');
+    const creds = parseVaultCsv(content);
+    let added = 0;
+    for (const c of creds) {
+      vault.addOrUpdate(c);
+      added++;
+    }
+    return { success: true, count: added };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sync:export-vault-csv', async () => {
+  try {
+    const all = vault.getAll();
+    const today = new Date().toISOString().slice(0, 10);
+    const res = await dialog.showSaveDialog(mainWindow, {
+      title: 'Export Passwords to CSV',
+      defaultPath: `recon_passwords_${today}.csv`,
+      filters: [{ name: 'CSV File', extensions: ['csv'] }]
+    });
+    if (res.canceled || !res.filePath) return { canceled: true };
+    const csv = exportVaultToCsv(all);
+    fs.writeFileSync(res.filePath, csv, 'utf8');
+    return { success: true, path: res.filePath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// ==========================================================================
+// Offline Research Archives IPC (v1.5.0)
+// ==========================================================================
+ipcMain.handle('archive:save-active-tab', async (event, metadata) => {
+  try {
+    const allWebContents = session.defaultSession.getAllWebContents();
+    const webviewContents = allWebContents.find(wc => wc.getType() === 'webview' && !wc.isDestroyed() && wc.getURL() === metadata.url);
+    if (!webviewContents) {
+      throw new Error('Active page contents not found for archiving');
+    }
+    const saved = await archiveManager.savePageArchive(webviewContents, metadata);
+    return { success: true, archive: saved };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+ipcMain.handle('archive:get-all', () => archiveManager.getAll());
+ipcMain.handle('archive:search', (event, query) => archiveManager.search(query));
+ipcMain.handle('archive:delete', (event, id) => archiveManager.delete(id));
+
+// ==========================================================================
+// Shields 2.0 & Live Network Inspector IPC (v1.5.0)
+// ==========================================================================
+ipcMain.handle('shields:get-subscriptions', () => shieldsManager.getSubscriptions());
+ipcMain.handle('shields:save-subscriptions', (event, subs) => shieldsManager.saveSubscriptions(subs));
+ipcMain.handle('network-inspector:get-logs', (event, tabId) => shieldsManager.getTabLogs(tabId));
+ipcMain.handle('network-inspector:clear-logs', (event, tabId) => {
+  shieldsManager.clearTabLogs(tabId);
+  return true;
+});
+ipcMain.handle('zapper:get-rules', (event, domain) => shieldsManager.getZapperRulesForDomain(domain));
+ipcMain.handle('zapper:add-rule', (event, { domain, selector }) => shieldsManager.addZapperRule(domain, selector));
+ipcMain.handle('zapper:remove-rule', (event, { domain, selector }) => shieldsManager.removeZapperRule(domain, selector));
+
+// ==========================================================================
 // Recon App Link & Research Clips (v1.3.0)
 // ==========================================================================
 let appLinkInstance = null;
@@ -755,6 +969,20 @@ app.on('web-contents-created', (event, contents) => {
       historyManager.add({ url, title });
     });
 
+    contents.on('did-finish-load', () => {
+      try {
+        const u = contents.getURL();
+        if (u && (u.startsWith('http://') || u.startsWith('https://'))) {
+          const host = new URL(u).hostname;
+          const rules = shieldsManager.getZapperRulesForDomain(host);
+          if (rules && rules.length > 0) {
+            const css = `${rules.join(', ')} { display: none !important; visibility: hidden !important; }`;
+            contents.insertCSS(css).catch(() => {});
+          }
+        }
+      } catch {}
+    });
+
     contents.on('context-menu', async (e, params) => {
       const menuTemplate = [];
 
@@ -872,6 +1100,23 @@ app.on('web-contents-created', (event, contents) => {
             click: () => {
               if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('bookmark-active-tab');
+              }
+            }
+          },
+          {
+            label: '📦 Save Page to Offline Archive',
+            accelerator: 'CmdOrCtrl+S',
+            click: () => {
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('archive-active-page');
+              }
+            }
+          },
+          {
+            label: '⚡ Zap Element on Page...',
+            click: () => {
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('trigger-element-zapper');
               }
             }
           }

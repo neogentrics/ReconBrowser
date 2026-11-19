@@ -2312,3 +2312,228 @@ body {
   border-top: 1px solid var(--border-color);
   margin-top: 4px;
 }
+
+/* ==========================================================================
+   v1.5.0: Live Network Inspector Drawer, Archives & Sync Styles
+   ========================================================================== */
+
+#network-inspector-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 290px;
+  background-color: var(--bg-primary);
+  border-top: 2px solid var(--accent-purple);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  z-index: 1200;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#network-inspector-drawer.inspector-drawer-hidden {
+  transform: translateY(100%);
+  pointer-events: none;
+}
+
+#network-inspector-drawer.inspector-drawer-visible {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.inspector-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+}
+
+.inspector-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inspector-domain-pill {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-family: monospace;
+}
+
+.inspector-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.inspector-filter-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.inspector-filter-btn:hover {
+  color: var(--text-main);
+  border-color: var(--text-muted);
+}
+
+.inspector-filter-btn.active {
+  background: var(--accent-purple);
+  color: #fff;
+  border-color: var(--accent-purple);
+}
+
+.inspector-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inspector-table-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.inspector-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+
+.inspector-table th {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-secondary);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-align: left;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-color);
+  letter-spacing: 0.3px;
+  z-index: 1;
+}
+
+.inspector-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+
+.inspector-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.req-status-blocked {
+  color: #f87171;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.req-status-allowed {
+  color: #4ade80;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.req-method-badge {
+  font-family: monospace;
+  font-size: 10.5px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+}
+
+.req-type-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Offline Archive Cards */
+.archive-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  transition: border-color 0.15s ease;
+}
+
+.archive-card:hover {
+  border-color: var(--accent-purple);
+}
+
+.archive-card-left {
+  flex: 1;
+  overflow: hidden;
+}
+
+.archive-card-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+
+.archive-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.archive-card-domain {
+  color: var(--accent-cyan);
+  font-family: monospace;
+}
+
+.archive-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Filter Subscriptions List Items */
+.sub-list-item, .zapper-rule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
+.zapper-rule-selector {
+  font-family: monospace;
+  color: var(--accent-purple);
+  font-size: 11px;
+}

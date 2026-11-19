@@ -24,7 +24,7 @@
 
 ## Downloads
 
-The latest version is **v1.4.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
+The latest version is **v1.5.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
 
 | Platform | Download Package | Description |
 | :--- | :--- | :--- |
@@ -62,7 +62,28 @@ An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 
 ## What's New
 
-### v1.3.3: Tabbed Settings Pop-Up, View Menu Quick Themes & Shields Sync
+### v1.5.0: Zero-Knowledge Sync, Universal Import/Export, Shields 2.0 & Offline Research Archives
+
+- **Zero-Knowledge Sync & Encrypted Vault / Backup Suite**:
+  - Accountless folder sync encrypted with authenticated AES-256-GCM and scrypt key derivation. Works over Syncthing, Nextcloud, local network folders, or USB keys without remote cloud servers.
+  - Multi-device union merging for bookmarks, password vault, history, and preferences.
+  - **Universal Netscape Bookmarks HTML Import & Export**: 1-click bookmarks import and export fully compatible with **Brave**, Google Chrome, Mozilla Firefox, Microsoft Edge, Safari, and Opera.
+  - **Universal Passwords CSV Import & Export**: Seamless credential import and export compatible with **Brave**, Bitwarden, 1Password, Chrome, and Firefox CSV exports.
+  - **Encrypted System Backup (.reconbackup)**: 1-click password-protected snapshot generation and restore for your entire Recon environment.
+- **Recon Shields 2.0 & Live Network Inspector**:
+  - Filter list subscriptions with built-in EasyPrivacy and Fanboy's Annoyance lists, plus custom external filter URL subscriptions.
+  - **Live Network Inspector Drawer** (`🔍 Live Inspector`): sliding panel at the bottom of the window displaying real-time per-tab requests, HTTP methods, resource types, block reasons, and filter counts.
+  - **Cosmetic Element Zapper** (`⚡ Zap Element on Page`): interactive element highlighter and click-to-zap tool to permanently hide cookie banners and invasive overlays per-domain.
+- **Offline Research Archives (.reconarchive / MHTML)**:
+  - 1-click page preservation (`Ctrl+S` or omnibar `📦` button) bundling complete DOM, stylesheets, and images into self-contained offline MHTML files.
+  - Searchable **Offline Research Library** in Settings with 1-click launch, tag filters, file size metrics, and deletion.
+
+### v1.4.0: Native Bookmarks System, Daily History & Hardware Password Vault
+
+- **Native Bookmarks System & Toolbar**: Bookmarks bar (`Ctrl+Shift+B`), navbar button (`★` / `Ctrl+B`), folders (Favorites, Recon Apps, Search), and right-click link bookmarking.
+- **Daily-Sorted Browsing History**: Local history tracker grouped chronologically (*Today*, *Yesterday*, or full date), search filtering, and granular time-range clearing.
+- **Encrypted Password Vault & Opt-In Autofill**: Hardware-backed OS encryption (`safeStorage`), permission-based opt-in autofill, and built-in cryptographically secure password generator.
+- **Background Auto-Updater & Default Browser Integration**: Streaming binary download in the background with native elevation, plus 1-click Default Browser setting.
 
 - **Centered Tabbed Settings Modal**: Replaced the sliding right-hand sidebar with a focused, centered pop-up window featuring 6 organized tabs (*Appearance*, *Interface & Layout*, *Search & Privacy*, *Read Aloud*, *Recon App Link*, *About*). Clicking outside the modal or pressing `Esc` instantly dismisses it so you can get right back to the page.
 - **View Menu Quick Theme Switching**: Added native `Themes` and `Theme Finishes & Aspects` submenus under the application menu bar `View`, allowing one-click theme switching across all 15 palettes and 3 finishes without opening settings.
@@ -160,12 +181,12 @@ The full plan, with every feature, is in [docs/ROADMAP.md](docs/ROADMAP.md). In 
 | **v1.3.2**| Released | Tab dragging & rearranging, 4 spectrum themes (blues/reds/yellows), auto-updater manifest pipeline |
 | **v1.3.3**| Released | Centered tabbed settings modal, high contrast theme fixes, draggable modal, live shields sync |
 | **v1.4.0**| Released | Encrypted Password Vault, opt-in autofill, bookmarks bar, right-click bookmarking, daily history |
-| **v1.5** | Planned | Offline archives: save a page as one file, search all your saved research |
-| **v1.6** | Planned | Shields 2.0: filter list subscriptions and a live network inspector |
-| **v1.7** | Planned | Creative suite hooks: a docked Author Desk rail and an audio grabber for RT Audio Studio |
-| **v1.8** | Planned | Containers for separate identities, per-container proxies and disposable tabs |
-| **v1.9** | Planned | A local AI helper through Ollama, with nothing sent to the cloud |
-| **v2.0** | Milestone | The connected studio browser: everything from 1.x hardened, with a Recon Spotlight search (`Ctrl+K`) |
+| **v1.5.0**| Released | Zero-Knowledge Sync, Shields 2.0, Universal Cross-Browser Import/Export & Offline Research Archives |
+| **v1.6.0**| Planned | Creative suite hooks: a docked Author Desk rail and an audio grabber for RT Audio Studio |
+| **v1.7.0**| Planned | Containers for separate identities, per-container proxies and disposable tabs |
+| **v1.8.0**| Planned | A local AI helper through Ollama, with nothing sent to the cloud |
+| **v1.9.0**| Planned | Decentralized Gateway: native IPFS (`ipfs://`) and Gemini (`gemini://`) handlers |
+| **v2.0.0**| Milestone | The connected studio browser: everything from 1.x hardened, with a Recon Spotlight search (`Ctrl+K`) |
 | **v2.x** | Planned | Workspaces and tree tabs, `ipfs://` and `gemini://`, home server sync, a security toolkit, a research canvas, a hardware-key vault |
 | **v3.0** | Milestone | The default browser on ReconOS, and the browser for the whole Recon Towers suite |
 

@@ -72,6 +72,12 @@ function buildMenu() {
           accelerator: 'CmdOrCtrl+Alt+T',
           click: () => mainWindow && mainWindow.webContents.send('menu-new-container-tab')
         },
+        { type: 'separator' },
+        {
+          label: 'Browsing History',
+          accelerator: 'CmdOrCtrl+H',
+          click: () => mainWindow && mainWindow.webContents.send('menu-open-history')
+        },
         {
           label: 'Close Tab',
           accelerator: 'CmdOrCtrl+W',
@@ -445,50 +451,125 @@ function createWindow() {
   buildMenu();
 }
 
-// App Launching / Detection Logic
+// App Launching / Detection Logic & Ecosystem Catalog
+const RECON_APP_CATALOG = [
+  {
+    id: 'rt-story-tracker',
+    name: 'RT Story Tracker',
+    icon: '📚',
+    desc: 'Character bibles, series arcs, canon management & timelines',
+    webUrl: 'https://recontowers.com/apps/rt-story-tracker/',
+    exeNames: ['RT Story Tracker.exe', 'rt-story-tracker.exe', 'StoryTracker.exe'],
+    projectDirs: ['StoryTracker', 'StoryTracker-v3.0', 'rt-story-tracker']
+  },
+  {
+    id: 'rt-markdown-reader',
+    name: 'RT Markdown Reader',
+    icon: '📝',
+    desc: 'Distraction-free Markdown editor, manuscript viewer & research notes',
+    webUrl: 'https://recontowers.com/apps/rt-markdown-reader/',
+    exeNames: ['RT Markdown Reader.exe', 'rt-markdown-reader.exe', 'neo-markdown-reader.exe'],
+    projectDirs: ['rt-markdown-reader-v3.11', 'neo-markdown-reader', 'rt-markdown-reader']
+  },
+  {
+    id: 'rt-author-desk',
+    name: 'RT Author Desk',
+    icon: '✍️',
+    desc: 'Creative drafting desk, chapter builder & companion rail',
+    webUrl: 'https://recontowers.com/apps/rt-author-desk/',
+    exeNames: ['RT Author Desk.exe', 'rt-author-desk.exe', 'author-desk.exe'],
+    projectDirs: ['rt-author-desk', 'author-desk']
+  },
+  {
+    id: 'rt-audio-studio',
+    name: 'RT Audio Studio',
+    icon: '🎙️',
+    desc: 'Voice generation, audio stream capture & audio references',
+    webUrl: 'https://recontowers.com/apps/rt-audio-studio/',
+    exeNames: ['RT Audio Studio.exe', 'rt-audio-studio.exe', 'audio-studio.exe'],
+    projectDirs: ['rt-audio-studio', 'audio-studio']
+  },
+  {
+    id: 'rt-press',
+    name: 'RT Press',
+    icon: '📰',
+    desc: 'Book typesetting, EPUB/PDF publishing & print layout',
+    webUrl: 'https://recontowers.com/apps/rt-press/',
+    exeNames: ['RT Press.exe', 'rt-press.exe', 'press.exe'],
+    projectDirs: ['rt-press', 'press']
+  }
+];
+
 function findLocalAppPath(appName) {
   const platform = process.platform;
   const home = process.env.USERPROFILE || process.env.HOME || '';
+  const appEntry = RECON_APP_CATALOG.find(a => a.id === appName || a.name.toLowerCase() === appName.toLowerCase()) || {
+    id: appName,
+    name: appName,
+    exeNames: [`${appName}.exe`],
+    projectDirs: [appName]
+  };
 
   if (platform === 'win32') {
     const local = process.env.LOCALAPPDATA || path.join(home, 'AppData', 'Local');
-    const programs = [path.join(local, 'Programs'), process.env.ProgramFiles, process.env['ProgramFiles(x86)']].filter(Boolean);
+    const roaming = process.env.APPDATA || path.join(home, 'AppData', 'Roaming');
+    const searchDirs = [
+      path.join(local, 'Programs'),
+      process.env.ProgramFiles,
+      process.env['ProgramFiles(x86)'],
+      path.join(home, 'Desktop'),
+      path.join(roaming, 'Microsoft', 'Windows', 'Start Menu', 'Programs'),
+      path.resolve(__dirname, '../../..'),
+      'E:\\Github Projects',
+      'D:\\Github Projects',
+      'C:\\Github Projects'
+    ].filter(Boolean);
 
-    if (appName === 'rt-markdown-reader') {
-      const names = ['rt-markdown-reader', 'RT Markdown Reader'];
-      for (const dir of programs) {
-        for (const name of names) {
-          const candidate = path.join(dir, name, 'RT Markdown Reader.exe');
-          if (fs.existsSync(candidate)) return candidate;
-        }
+    for (const baseDir of searchDirs) {
+      if (!fs.existsSync(baseDir)) continue;
+      // Direct executable checks
+      for (const exeName of appEntry.exeNames) {
+        const direct = path.join(baseDir, exeName);
+        if (fs.existsSync(direct)) return direct;
       }
-    } else if (appName === 'rt-story-tracker') {
-      const names = ['rt-story-tracker', 'RT Story Tracker'];
-      for (const dir of programs) {
-        for (const name of names) {
-          const candidate = path.join(dir, name, 'RT Story Tracker.exe');
-          if (fs.existsSync(candidate)) return candidate;
+      // Subfolder checks
+      const candidateFolders = [appEntry.name, appEntry.id, ...(appEntry.projectDirs || [])];
+      for (const folder of candidateFolders) {
+        for (const exeName of appEntry.exeNames) {
+          const checkPaths = [
+            path.join(baseDir, folder, exeName),
+            path.join(baseDir, folder, 'release', 'win-unpacked', exeName),
+            path.join(baseDir, folder, 'dist', 'win-unpacked', exeName),
+            path.join(baseDir, folder, 'build', exeName)
+          ];
+          for (const cp of checkPaths) {
+            try {
+              if (fs.existsSync(cp)) return cp;
+            } catch {}
+          }
         }
       }
     }
   } else if (platform === 'darwin') {
-    if (appName === 'rt-markdown-reader') {
-      for (const p of ['/Applications/RT Markdown Reader.app', path.join(home, 'Applications', 'RT Markdown Reader.app')]) {
-        if (fs.existsSync(p)) return p;
-      }
-    } else if (appName === 'rt-story-tracker') {
-      for (const p of ['/Applications/RT Story Tracker.app', path.join(home, 'Applications', 'RT Story Tracker.app')]) {
+    const appNames = [appEntry.name, appEntry.id];
+    for (const name of appNames) {
+      for (const p of [`/Applications/${name}.app`, path.join(home, 'Applications', `${name}.app`)]) {
         if (fs.existsSync(p)) return p;
       }
     }
   } else if (platform === 'linux') {
-    if (appName === 'rt-markdown-reader') {
-      for (const p of ['/usr/bin/rt-markdown-reader', '/opt/RT Markdown Reader/rt-markdown-reader']) {
+    for (const exe of [appEntry.id, appEntry.name.toLowerCase().replace(/\s+/g, '-')]) {
+      for (const p of [`/usr/bin/${exe}`, `/opt/${appEntry.name}/${exe}`, `/usr/local/bin/${exe}`]) {
         if (fs.existsSync(p)) return p;
       }
-    } else if (appName === 'rt-story-tracker') {
-      for (const p of ['/usr/bin/rt-story-tracker', '/opt/RT Story Tracker/rt-story-tracker']) {
-        if (fs.existsSync(p)) return p;
+    }
+    const devBases = ['/mnt/e/Github Projects', '/mnt/d/Github Projects', path.resolve(__dirname, '../../..')];
+    for (const base of devBases) {
+      for (const folder of (appEntry.projectDirs || [])) {
+        for (const exe of appEntry.exeNames) {
+          const cp = path.join(base, folder, 'release', 'win-unpacked', exe);
+          if (fs.existsSync(cp)) return cp;
+        }
       }
     }
   }
@@ -1012,11 +1093,47 @@ async function initAppLink() {
 // App Link IPC Handlers
 ipcMain.handle('app-link:get-status', async () => {
   if (!appLinkInstance) await initAppLink();
-  const apps = appLinkInstance ? await appLinkInstance.list() : [];
+  const rawPeers = appLinkInstance ? await appLinkInstance.list() : [];
+
+  const catalogWithStatus = RECON_APP_CATALOG.map(cat => {
+    const peer = rawPeers.find(p => p.id === cat.id);
+    const localExe = findLocalAppPath(cat.id);
+    return {
+      id: cat.id,
+      name: cat.name,
+      icon: cat.icon,
+      desc: cat.desc,
+      webUrl: cat.webUrl,
+      version: peer?.version || '',
+      running: !!peer?.running,
+      linked: !!peer?.linked,
+      installed: !!localExe,
+      localPath: localExe || ''
+    };
+  });
+
+  // Also include any other running App Link peers not in catalog
+  for (const p of rawPeers) {
+    if (!catalogWithStatus.some(c => c.id === p.id)) {
+      catalogWithStatus.push({
+        id: p.id,
+        name: p.name,
+        icon: '⚡',
+        desc: 'Recon Towers App Link Peer',
+        webUrl: 'https://recontowers.com',
+        version: p.version || '',
+        running: !!p.running,
+        linked: !!p.linked,
+        installed: true,
+        localPath: ''
+      });
+    }
+  }
+
   return {
     enabled: true,
     safe: isSecureStorage(),
-    apps
+    apps: catalogWithStatus
   };
 });
 

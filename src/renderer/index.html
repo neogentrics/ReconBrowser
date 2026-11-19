@@ -602,7 +602,12 @@
 
           <!-- 4. Browsing History Panel -->
           <div class="settings-panel" id="panel-history">
-            <h4 class="panel-heading">Browsing History</h4>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 10px;">
+              <h4 class="panel-heading" style="margin: 0;">Browsing History</h4>
+              <button id="btn-open-full-history-tab" type="button" class="btn-primary" style="font-size: 11.5px; padding: 5px 12px; background: var(--accent-purple); color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <span>🚀 Open Dedicated History Tab (Ctrl+H)</span>
+              </button>
+            </div>
             
             <div style="display: flex; gap: 8px; margin-bottom: 12px;">
               <input type="text" id="input-history-search" class="settings-input" placeholder="Search history by title or URL..." style="flex: 1;" />
@@ -644,6 +649,16 @@
                 <strong style="color: var(--accent-cyan); display: block;">Hardware-Backed OS Encryption (safeStorage)</strong>
                 <span style="color: var(--text-muted);">Logins are encrypted locally on disk (recon_vault.enc) with Windows DPAPI / Keychain. Zero cloud syncing, zero telemetry.</span>
               </div>
+            </div>
+
+            <!-- How It Works Guide Box -->
+            <div style="background: rgba(124, 58, 237, 0.08); border: 1px solid rgba(124, 58, 237, 0.25); border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 11.5px; line-height: 1.5; color: var(--text-main);">
+              <div style="font-weight: 700; color: var(--accent-purple); margin-bottom: 4px;">💡 How Password Vault &amp; Autofill Work:</div>
+              <ul style="margin: 0; padding-left: 18px; color: var(--text-muted); display: flex; flex-direction: column; gap: 3px;">
+                <li><strong>Local Encrypted Storage:</strong> Your passwords are saved in an encrypted vault on this machine using your Windows user account key. No cloud accounts needed.</li>
+                <li><strong>1-Click Autofill:</strong> When browsing a website with a saved login, the key button (<span style="color: var(--text-main);">🔑</span>) in the top right navbar shows your credentials. Click the account to fill your username and password.</li>
+                <li><strong>Universal Import/Export:</strong> In the <em>Sync &amp; Backup</em> tab, you can import and export standard password CSV files from Chrome, Brave, Firefox, 1Password, or Bitwarden.</li>
+              </ul>
             </div>
 
             <!-- Built-in Password Generator Card -->
@@ -1280,7 +1295,7 @@
   </div>
 
   <!-- RT Audio Studio Media Grabber Drawer (v1.6.0) -->
-  <div id="audio-grabber-drawer" class="inspector-drawer-hidden">
+  <div id="audio-grabber-drawer" class="inspector-drawer-hidden" style="display: none;">
     <div class="inspector-drawer-header">
       <div class="inspector-header-left">
         <span class="inspector-badge-icon">🎙️</span>

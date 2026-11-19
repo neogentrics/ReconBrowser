@@ -145,6 +145,21 @@ function getStartPageURL() {
   return `file://${__dirname}/startpage.html`;
 }
 
+// Helper to resolve history page URL (v1.8.0 dedicated tab)
+function getHistoryPageURL() {
+  return `file://${__dirname}/history.html`;
+}
+
+function openHistoryTab() {
+  for (const [id, tab] of tabs.entries()) {
+    if (tab.url && tab.url.includes('history.html')) {
+      switchTab(id);
+      return;
+    }
+  }
+  createTab(getHistoryPageURL(), true);
+}
+
 function showToast(message, duration = 3000) {
   toastEl.textContent = message;
   toastEl.classList.remove('toast-hidden');
@@ -186,7 +201,8 @@ function createTab(initialUrl = null, activate = true, containerId = 'default', 
   const id = nextTabId++;
   const url = initialUrl || getStartPageURL();
   const isStart = url.includes('startpage.html');
-  const title = isStart ? 'Recon Start' : 'New Tab';
+  const isHistory = url.includes('history.html');
+  const title = isStart ? 'Recon Start' : (isHistory ? 'Recon History' : 'New Tab');
 
   if (containerId === 'ephemeral' || isEphemeral) {
     isEphemeral = true;
@@ -222,7 +238,7 @@ function createTab(initialUrl = null, activate = true, containerId = 'default', 
   tabEl.style.setProperty('--tab-container-color', containerObj.color);
 
   const containerBadgeHtml = `<div class="tab-container-strip" style="background-color: ${containerObj.color};"></div>`;
-  const iconDisplay = isStart ? '⚡' : (containerObj.isEphemeral ? '🔥' : (containerObj.id !== 'default' ? containerObj.icon : '🌐'));
+  const iconDisplay = isStart ? '⚡' : (isHistory ? '🕒' : (containerObj.isEphemeral ? '🔥' : (containerObj.id !== 'default' ? containerObj.icon : '🌐')));
 
   tabEl.innerHTML = `
     ${containerBadgeHtml}
@@ -383,6 +399,37 @@ function createTab(initialUrl = null, activate = true, containerId = 'default', 
           tabData.webviewEl.insertCSS(`${selector} { display: none !important; visibility: hidden !important; }`).catch(() => {});
         });
       }
+    } else if (msg.startsWith('RECON_HISTORY_REQ:LOAD:')) {
+      const q = msg.replace('RECON_HISTORY_REQ:LOAD:', '').trim();
+      ipcRenderer.invoke('history:get-grouped', q).then(groups => {
+        webviewEl.executeJavaScript(`if (typeof window.renderHistoryData === 'function') window.renderHistoryData(${JSON.stringify(groups)}, ${JSON.stringify(q)});`).catch(() => {});
+      });
+    } else if (msg.startsWith('RECON_HISTORY_NAV:')) {
+      const targetUrl = msg.replace('RECON_HISTORY_NAV:', '').trim();
+      if (targetUrl) createTab(targetUrl, true);
+    } else if (msg.startsWith('RECON_HISTORY_DEL:')) {
+      const delId = msg.replace('RECON_HISTORY_DEL:', '').trim();
+      if (delId) {
+        ipcRenderer.invoke('history:delete', delId).then(() => {
+          showToast('Entry removed from history');
+          ipcRenderer.invoke('history:get-grouped', '').then(groups => {
+            webviewEl.executeJavaScript(`if (typeof window.renderHistoryData === 'function') window.renderHistoryData(${JSON.stringify(groups)}, '');`).catch(() => {});
+          });
+        });
+      }
+    } else if (msg.startsWith('RECON_HISTORY_CLEAR:')) {
+      const range = msg.replace('RECON_HISTORY_CLEAR:', '').trim();
+      if (range) {
+        ipcRenderer.invoke('history:clear', range).then(() => {
+          showToast('Browsing history cleared');
+          ipcRenderer.invoke('history:get-grouped', '').then(groups => {
+            webviewEl.executeJavaScript(`if (typeof window.renderHistoryData === 'function') window.renderHistoryData(${JSON.stringify(groups)}, '');`).catch(() => {});
+          });
+        });
+      }
+    } else if (msg.startsWith('RECON_HISTORY_CLEAR_QUIT:')) {
+      const val = msg.replace('RECON_HISTORY_CLEAR_QUIT:', '').trim() === 'true';
+      ipcRenderer.invoke('history:set-clear-on-quit', val);
     }
   });
 
@@ -518,6 +565,10 @@ function updateOmnibar(url) {
     omnibar.placeholder = `Search with ${getEngineDisplayName(engine)} or enter address (!g for Google, !b for Bing)...`;
     btnReaderView.style.display = 'none';
     btnReadAloud.style.display = 'none';
+  } else if (url.includes('history.html')) {
+    omnibar.value = 'recon://history';
+    btnReaderView.style.display = 'none';
+    btnReadAloud.style.display = 'none';
   } else {
     omnibar.value = url;
     btnReaderView.style.display = 'flex';
@@ -567,7 +618,11 @@ omnibar.addEventListener('keydown', (e) => {
     let targetUrl = '';
     const selectedEngine = localStorage.getItem('recon_default_engine') || 'duckduckgo';
 
-    if (input.startsWith('!g ')) {
+    if (input.toLowerCase() === 'recon://history' || input.toLowerCase() === 'about:history' || input.toLowerCase() === 'history') {
+      targetUrl = getHistoryPageURL();
+    } else if (input.toLowerCase() === 'recon://start' || input.toLowerCase() === 'about:start') {
+      targetUrl = getStartPageURL();
+    } else if (input.startsWith('!g ')) {
       targetUrl = `https://www.google.com/search?q=${encodeURIComponent(input.substring(3).trim())}`;
     } else if (input.startsWith('!b ')) {
       targetUrl = `https://www.bing.com/search?q=${encodeURIComponent(input.substring(3).trim())}`;
@@ -1484,6 +1539,7 @@ ipcRenderer.on('menu-new-tab', () => createTab());
 ipcRenderer.on('menu-new-ephemeral-tab', () => createTab(null, true, 'ephemeral', true));
 ipcRenderer.on('menu-new-container-tab', () => toggleContainerPicker());
 ipcRenderer.on('menu-close-tab', () => closeTab(activeTabId));
+ipcRenderer.on('menu-open-history', () => openHistoryTab());
 ipcRenderer.on('menu-reload', () => {
   const activeTab = tabs.get(activeTabId);
   if (activeTab && activeTab.webviewEl) activeTab.webviewEl.reload();
@@ -1538,8 +1594,8 @@ async function refreshAppLinkStatus() {
     if (apps.length === 0) {
       appLinkStatusList.innerHTML = `
         <div style="font-size: 11.5px; color: var(--text-muted); padding: 4px 0;">
-          No Recon Towers apps detected in presence directory.<br>
-          Launch RT Story Tracker or RT Markdown Reader to connect.
+          No Recon Towers apps detected.<br>
+          Install RT Story Tracker, RT Markdown Reader, Author Desk, Audio Studio or Press.
         </div>
       `;
       return;
@@ -1547,32 +1603,46 @@ async function refreshAppLinkStatus() {
 
     appLinkStatusList.innerHTML = apps.map(app => {
       let pillClass = 'offline';
-      let pillText = 'Offline';
-      let actionBtn = '';
+      let pillText = 'Web Ready';
+      let actionButtons = '';
 
       if (app.running && app.linked) {
         pillClass = 'linked';
-        pillText = 'Linked';
-        actionBtn = `<button class="app-link-btn-action" data-action="unlink" data-id="${app.id}">Unlink</button>`;
+        pillText = '🟢 Active & Linked';
+        actionButtons = `<button class="app-link-btn-action" data-action="unlink" data-id="${app.id}">Unlink</button>`;
       } else if (app.running && !app.linked) {
         pillClass = 'unlinked';
-        pillText = 'Unlinked';
-        actionBtn = `<button class="app-link-btn-action" data-action="pair" data-id="${app.id}">Link Now</button>`;
-      } else if (!app.running && app.linked) {
-        pillClass = 'linked';
-        pillText = 'Linked (Offline)';
-        actionBtn = `<button class="app-link-btn-action" data-action="unlink" data-id="${app.id}">Unlink</button>`;
+        pillText = '⚡ Running';
+        actionButtons = `<button class="app-link-btn-action app-launch-btn" data-action="pair" data-id="${app.id}">Link Now</button>`;
+      } else if (app.installed) {
+        pillClass = 'installed';
+        pillText = '📦 Installed';
+        actionButtons = `
+          <button class="app-link-btn-action app-launch-btn" data-action="launch" data-id="${app.id}" data-url="${escapeHtml(app.webUrl || '')}" title="Launch local desktop application">🚀 Launch App</button>
+        `;
+      } else {
+        pillClass = 'offline';
+        pillText = '🌐 Available';
+        actionButtons = `
+          <button class="app-link-btn-action" data-action="web" data-url="${escapeHtml(app.webUrl || '')}" title="Open web version on Recon Towers Hub">Open Web</button>
+        `;
       }
+
+      const icon = app.icon || '⚡';
+      const desc = app.desc || '';
 
       return `
         <div class="app-link-card">
-          <div class="app-link-card-info">
-            <span class="app-link-card-name">${escapeHtml(app.name)}</span>
-            <span style="font-size: 10.5px; color: var(--text-muted);">${app.id} (v${app.version || '1.0'})</span>
+          <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+            <span style="font-size: 24px; line-height: 1;">${icon}</span>
+            <div class="app-link-card-info">
+              <span class="app-link-card-name">${escapeHtml(app.name)}</span>
+              <span style="font-size: 11px; color: var(--text-muted);">${escapeHtml(desc || app.id)}</span>
+            </div>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <span class="app-link-status-pill ${pillClass}">${pillText}</span>
-            ${actionBtn}
+            ${actionButtons}
           </div>
         </div>
       `;
@@ -1582,7 +1652,21 @@ async function refreshAppLinkStatus() {
       btn.addEventListener('click', async (e) => {
         const action = e.target.getAttribute('data-action');
         const id = e.target.getAttribute('data-id');
-        if (action === 'pair') {
+        const url = e.target.getAttribute('data-url');
+
+        if (action === 'launch') {
+          showToast(`Launching ${id}...`);
+          const res = await ipcRenderer.invoke('launch-or-open-app', { appName: id, storeUrl: url });
+          if (res.launched) {
+            showToast(`✓ Launched ${id} locally`);
+            setTimeout(() => refreshAppLinkStatus(), 1500);
+          } else {
+            showToast(`Opening ${id} on Recon Towers Hub...`);
+            createTab(res.url || url, true);
+          }
+        } else if (action === 'web') {
+          if (url) createTab(url, true);
+        } else if (action === 'pair') {
           showToast(`Requesting link with ${id}... approve in the other app.`);
           const res = await ipcRenderer.invoke('app-link:pair-with', id);
           if (res.success) {
@@ -1920,13 +2004,21 @@ document.addEventListener('keydown', (e) => {
     if (mLogin && mLogin.open) {
       mLogin.close();
     }
+    if (audioGrabberDrawer && audioGrabberDrawer.classList.contains('inspector-drawer-visible')) {
+      closeAudioGrabberDrawer();
+    }
+    const aiDrawer = document.getElementById('recon-ai-drawer');
+    if (aiDrawer && aiDrawer.classList.contains('inspector-drawer-visible')) {
+      aiDrawer.classList.add('inspector-drawer-hidden');
+      aiDrawer.classList.remove('inspector-drawer-visible');
+    }
     const activeTab = tabs.get(activeTabId);
     if (activeTab && activeTab.readerActive) {
       toggleReaderView();
     }
   } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'h') {
     e.preventDefault();
-    openSettingsModal('history');
+    openHistoryTab();
   } else if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'l') {
     e.preventDefault();
     const vToggle = document.getElementById('btn-vault-toggle');
@@ -2390,7 +2482,15 @@ if (toggleHistoryClearOnQuit) {
 if (btnHistoryToggle) {
   btnHistoryToggle.addEventListener('click', (e) => {
     e.stopPropagation();
-    openSettingsModal('history');
+    openHistoryTab();
+  });
+}
+
+const btnOpenFullHistoryTab = document.getElementById('btn-open-full-history-tab');
+if (btnOpenFullHistoryTab) {
+  btnOpenFullHistoryTab.addEventListener('click', () => {
+    closeSettingsModal();
+    openHistoryTab();
   });
 }
 
@@ -3971,8 +4071,10 @@ if (btnRailModeEdit && btnRailModePreview) {
 
 function openAudioGrabberDrawer() {
   if (audioGrabberDrawer) {
+    audioGrabberDrawer.style.display = 'flex';
     audioGrabberDrawer.classList.remove('inspector-drawer-hidden');
     audioGrabberDrawer.classList.add('inspector-drawer-visible');
+    if (btnAudioGrabber) btnAudioGrabber.classList.add('active');
     refreshAudioDetection();
     loadSavedAudioClips();
   }
@@ -3982,6 +4084,8 @@ function closeAudioGrabberDrawer() {
   if (audioGrabberDrawer) {
     audioGrabberDrawer.classList.add('inspector-drawer-hidden');
     audioGrabberDrawer.classList.remove('inspector-drawer-visible');
+    audioGrabberDrawer.style.display = 'none';
+    if (btnAudioGrabber) btnAudioGrabber.classList.remove('active');
   }
 }
 
@@ -4154,7 +4258,15 @@ async function scanActivePageForAudio() {
   }
 }
 
-if (btnAudioGrabber) btnAudioGrabber.addEventListener('click', openAudioGrabberDrawer);
+if (btnAudioGrabber) {
+  btnAudioGrabber.addEventListener('click', () => {
+    if (audioGrabberDrawer && audioGrabberDrawer.classList.contains('inspector-drawer-visible')) {
+      closeAudioGrabberDrawer();
+    } else {
+      openAudioGrabberDrawer();
+    }
+  });
+}
 if (btnCloseAudioDrawer) btnCloseAudioDrawer.addEventListener('click', closeAudioGrabberDrawer);
 if (btnScanAudioPage) btnScanAudioPage.addEventListener('click', scanActivePageForAudio);
 if (btnRailRefreshAudio) btnRailRefreshAudio.addEventListener('click', scanActivePageForAudio);

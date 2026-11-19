@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recon History</title>
+  <link rel="stylesheet" href="startpage.css">
+  <style>
+    body {
+      background: var(--start-bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px 60px;
+      overflow-y: auto;
+    }
+
+    .history-page-container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .history-hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 16px;
+    }
+
+    .history-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .history-hero-icon {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .history-hero h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: var(--text-main);
+      margin: 0;
+    }
+
+    .history-hero-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 2px 0 0;
+    }
+
+    /* Controls Bar */
+    .history-controls-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      flex-wrap: wrap;
+    }
+
+    .history-search-wrap {
+      flex: 1;
+      min-width: 260px;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .history-search-icon {
+      position: absolute;
+      left: 12px;
+      color: var(--text-muted);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    #input-history-filter {
+      width: 100%;
+      height: 38px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0 12px 0 36px;
+      color: var(--text-main);
+      font-size: 13.5px;
+      font-weight: 500;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    #input-history-filter:focus {
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25);
+    }
+
+    #input-history-filter::placeholder {
+      color: var(--text-muted) !important;
+      opacity: 0.9 !important;
+    }
+
+    .history-clear-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .history-select {
+      height: 38px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 0 10px;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .btn-clear-danger {
+      height: 38px;
+      background: #dc2626;
+      border: 1px solid #ef4444;
+      color: #ffffff;
+      padding: 0 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .btn-clear-danger:hover {
+      background: #b91c1c;
+    }
+
+    .btn-clear-danger:active {
+      transform: scale(0.98);
+    }
+
+    .history-options-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 0 4px;
+    }
+
+    .clear-on-quit-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Day Cards */
+    .history-day-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      margin-bottom: 14px;
+    }
+
+    .history-day-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.18);
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .history-day-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .day-toggle-arrow {
+      font-size: 11px;
+      color: var(--text-muted);
+      transition: transform 0.15s ease;
+    }
+
+    .history-day-card.collapsed .day-toggle-arrow {
+      transform: rotate(-90deg);
+    }
+
+    .history-day-card.collapsed .history-items-list {
+      display: none;
+    }
+
+    .day-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .day-count-badge {
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      padding: 2px 7px;
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .history-items-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .history-item-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+      gap: 14px;
+      transition: background 0.12s ease;
+      cursor: pointer;
+    }
+
+    .history-item-row:last-child {
+      border-bottom: none;
+    }
+
+    .history-item-row:hover {
+      background: var(--bg-hover, rgba(255, 255, 255, 0.04));
+    }
+
+    .history-time {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      min-width: 64px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .history-item-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .history-item-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.12s ease;
+    }
+
+    .history-item-row:hover .history-item-title {
+      color: var(--accent-purple);
+    }
+
+    .history-item-url {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item-del {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      width: 26px;
+      height: 26px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: all 0.12s ease;
+    }
+
+    .history-item-del:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      opacity: 1;
+    }
+
+    .history-empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--text-muted);
+    }
+
+    .history-empty-state .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
+
+    .history-empty-state h3 {
+      font-size: 16px;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body class="theme-cyber">
+  <div class="history-page-container">
+    <div class="history-hero">
+      <div class="history-title-group">
+        <span class="history-hero-icon">🕒</span>
+        <div>
+          <h1>Browsing History</h1>
+          <p class="history-hero-sub">Organized daily • Partition-aware • Local zero-telemetry storage</p>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted);">
+        <span id="history-total-count">0</span> entries
+      </div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="history-controls-bar">
+      <div class="history-search-wrap">
+        <span class="history-search-icon">🔍</span>
+        <input type="text" id="input-history-filter" placeholder="Search browsing history (title or URL)..." autofocus />
+      </div>
+      <div class="history-clear-group">
+        <select id="select-clear-range" class="history-select">
+          <option value="1h">Last hour</option>
+          <option value="24h" selected>Last 24 hours</option>
+          <option value="7d">Last 7 days</option>
+          <option value="4w">Last 4 weeks</option>
+          <option value="all">All time</option>
+        </select>
+        <button id="btn-page-clear-history" class="btn-clear-danger" title="Clear selected browsing history">
+          <span>🗑️</span> Clear Data
+        </button>
+      </div>
+    </div>
+
+    <div class="history-options-row">
+      <label class="clear-on-quit-label">
+        <input type="checkbox" id="toggle-page-clear-on-quit" />
+        <span>Automatically clear history on browser exit</span>
+      </label>
+      <span style="font-size: 11px; opacity: 0.7;">Click any entry to open in a new tab</span>
+    </div>
+
+    <!-- History Day Cards Container -->
+    <div id="history-page-list"></div>
+  </div>
+
+  <script>
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    const inputFilter = document.getElementById('input-history-filter');
+    const selectRange = document.getElementById('select-clear-range');
+    const btnClear = document.getElementById('btn-page-clear-history');
+    const toggleClearOnQuit = document.getElementById('toggle-page-clear-on-quit');
+    const listContainer = document.getElementById('history-page-list');
+    const totalCountEl = document.getElementById('history-total-count');
+
+    // Apply active theme
+    function applyTheme() {
+      const theme = localStorage.getItem('recon_theme') || 'cyber';
+      const aspect = localStorage.getItem('recon_aspect') || 'solid';
+      document.body.className = `theme-${theme} aspect-${aspect}`;
+    }
+    applyTheme();
+    window.addEventListener('storage', applyTheme);
+
+    // Initial clear-on-quit toggle state
+    toggleClearOnQuit.checked = localStorage.getItem('recon_history_clear_on_quit') === 'true';
+    toggleClearOnQuit.addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      localStorage.setItem('recon_history_clear_on_quit', String(checked));
+      console.log('RECON_HISTORY_CLEAR_QUIT:' + (checked ? 'true' : 'false'));
+    });
+
+    // Request data on load
+    console.log('RECON_HISTORY_REQ:LOAD:');
+
+    // Debounced search
+    let filterTimer = null;
+    inputFilter.addEventListener('input', (e) => {
+      clearTimeout(filterTimer);
+      filterTimer = setTimeout(() => {
+        console.log('RECON_HISTORY_REQ:LOAD:' + e.target.value.trim());
+      }, 180);
+    });
+
+    // Clear history action
+    btnClear.addEventListener('click', () => {
+      const range = selectRange.value;
+      const labels = { '1h': 'last hour', '24h': 'last 24 hours', '7d': 'last 7 days', '4w': 'last 4 weeks', 'all': 'all time' };
+      if (confirm(`Are you sure you want to clear browsing history from ${labels[range] || range}? This cannot be undone.`)) {
+        console.log('RECON_HISTORY_CLEAR:' + range);
+      }
+    });
+
+    // Window callback called by host webview via executeJavaScript
+    window.renderHistoryData = function(groups, currentQuery) {
+      if (!groups || groups.length === 0) {
+        totalCountEl.textContent = '0';
+        listContainer.innerHTML = `
+          <div class="history-empty-state">
+            <div class="empty-icon">🕒</div>
+            <h3>${currentQuery ? 'No history matching "' + escapeHtml(currentQuery) + '"' : 'No browsing history yet'}</h3>
+            <p style="font-size: 12px; opacity: 0.8;">Pages you visit in non-ephemeral tabs will appear here.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let totalItems = 0;
+      groups.forEach(g => { totalItems += (g.items ? g.items.length : 0); });
+      totalCountEl.textContent = String(totalItems);
+
+      listContainer.innerHTML = groups.map(group => {
+        const items = group.items || [];
+        const itemsHtml = items.map(item => {
+          const d = new Date(item.timestamp);
+          const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          return `
+            <div class="history-item-row" data-url="${escapeHtml(item.url)}">
+              <span class="history-time">${timeStr}</span>
+              <div class="history-item-info">
+                <span class="history-item-title" title="${escapeHtml(item.title || item.url)}">${escapeHtml(item.title || item.url)}</span>
+                <span class="history-item-url" title="${escapeHtml(item.url)}">${escapeHtml(item.url)}</span>
+              </div>
+              <button class="history-item-del" data-id="${escapeHtml(item.id)}" title="Delete from history">×</button>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="history-day-card">
+            <div class="history-day-header">
+              <div class="history-day-left">
+                <span class="day-toggle-arrow">▼</span>
+                <span class="day-title">${escapeHtml(group.label)}</span>
+              </div>
+              <span class="day-count-badge">${items.length} ${items.length === 1 ? 'item' : 'items'}</span>
+            </div>
+            <div class="history-items-list">
+              ${itemsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Attach click events
+      listContainer.querySelectorAll('.history-day-header').forEach(hdr => {
+        hdr.addEventListener('click', () => {
+          const card = hdr.closest('.history-day-card');
+          if (card) card.classList.toggle('collapsed');
+        });
+      });
+
+      listContainer.querySelectorAll('.history-item-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+          if (e.target.closest('.history-item-del')) {
+            e.stopPropagation();
+            const id = e.target.closest('.history-item-del').getAttribute('data-id');
+            if (id) console.log('RECON_HISTORY_DEL:' + id);
+            return;
+          }
+          const url = row.getAttribute('data-url');
+          if (url) console.log('RECON_HISTORY_NAV:' + url);
+        });
+      });
+    };
+  </script>
+</body>
+</html>

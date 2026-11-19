@@ -1046,17 +1046,20 @@ textarea::placeholder {
 .settings-modal {
   margin: auto;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 14px;
   background-color: var(--card-bg);
   color: var(--text-main);
   padding: 0;
-  width: 760px;
-  max-width: 92vw;
-  height: 590px;
-  max-height: 86vh;
+  width: min(1040px, 88vw);
+  max-width: 94vw;
+  min-width: 680px;
+  height: min(780px, 84vh);
+  max-height: 90vh;
+  min-height: 540px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
   outline: none;
   overflow: hidden;
+  transition: width 0.2s ease, height 0.2s ease;
 }
 
 .settings-modal::backdrop {
@@ -1179,7 +1182,7 @@ textarea::placeholder {
 /* Main Tab Panels Content */
 .settings-content {
   flex: 1;
-  padding: 20px 24px;
+  padding: 24px 30px;
   overflow-y: auto;
 }
 
@@ -1898,6 +1901,12 @@ textarea::placeholder {
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
+.app-link-status-pill.installed {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
 .app-link-status-pill.offline {
   background: rgba(148, 163, 184, 0.15);
   color: var(--text-muted);
@@ -1913,6 +1922,18 @@ textarea::placeholder {
   color: var(--text-main);
   cursor: pointer;
   transition: all 0.15s ease;
+}
+
+.app-link-btn-action.app-launch-btn {
+  background: var(--accent-purple);
+  color: #ffffff;
+  border-color: var(--accent-purple);
+  font-weight: 600;
+}
+
+.app-link-btn-action.app-launch-btn:hover {
+  opacity: 0.9;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
 }
 
 .app-link-btn-action:hover {
@@ -2390,29 +2411,49 @@ textarea::placeholder {
    v1.5.0: Live Network Inspector Drawer, Archives & Sync Styles
    ========================================================================== */
 
-#network-inspector-drawer {
+#network-inspector-drawer,
+#audio-grabber-drawer,
+#recon-ai-drawer {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 290px;
   background-color: var(--bg-primary);
   border-top: 2px solid var(--accent-purple);
   box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   z-index: 1200;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 
-#network-inspector-drawer.inspector-drawer-hidden {
-  transform: translateY(100%);
-  pointer-events: none;
+#network-inspector-drawer,
+#audio-grabber-drawer {
+  height: 290px;
 }
 
-#network-inspector-drawer.inspector-drawer-visible {
-  transform: translateY(0);
-  pointer-events: auto;
+#recon-ai-drawer {
+  height: 340px;
+}
+
+.inspector-drawer-hidden,
+#network-inspector-drawer.inspector-drawer-hidden,
+#audio-grabber-drawer.inspector-drawer-hidden,
+#recon-ai-drawer.inspector-drawer-hidden {
+  transform: translateY(100%) !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.inspector-drawer-visible,
+#network-inspector-drawer.inspector-drawer-visible,
+#audio-grabber-drawer.inspector-drawer-visible,
+#recon-ai-drawer.inspector-drawer-visible {
+  transform: translateY(0) !important;
+  pointer-events: auto !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .inspector-drawer-header {
@@ -3102,31 +3143,6 @@ textarea::placeholder {
 /* ==========================================================================
    v1.8.0: Recon AI Drawer & Local Intelligence Bridge
    ========================================================================== */
-
-#recon-ai-drawer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 340px;
-  background-color: var(--bg-primary);
-  border-top: 2px solid var(--accent-purple);
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  z-index: 1200;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-#recon-ai-drawer.inspector-drawer-hidden {
-  transform: translateY(100%);
-  pointer-events: none;
-}
-
-#recon-ai-drawer.inspector-drawer-visible {
-  transform: translateY(0);
-  pointer-events: auto;
-}
 
 @keyframes spin {
   from { transform: rotate(0deg); }

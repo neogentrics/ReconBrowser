@@ -5,6 +5,27 @@ All notable changes to **Recon Browser** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-11-19
+
+### Added
+- **Unified Recon Spotlight (`Ctrl+K` / `Cmd+K`)**:
+  - Modal search and command palette launched globally via `Ctrl+K`, top omnibar button (`🔍`), or Edit &rarr; Recon Spotlight menu item.
+  - Multi-domain fuzzy search across open tabs, saved bookmarks, daily browsing history, offline archives, and system actions.
+  - Smart prefix filtering:
+    - `>` or `/command`: system commands & actions (toggle shields, password vault, hibernate tabs, dedicated history, new ephemeral tab, settings).
+    - `@` or `/tab`: live open tabs across all workspaces with instant focus switching.
+    - `*` or `/bm`: saved bookmarks library with direct navigation.
+    - `?` or `h:`: full historical visits archive.
+  - Keyboard navigation (`ArrowUp`, `ArrowDown`, `Enter`, `Escape`) with selected item highlighting and category chips.
+- **Named Project Workspaces**:
+  - Segment browser tabs into isolated, named project workspaces with persistent state.
+  - Built-in templates: Main (`🌐`), Research (`🔬`), Lore & Story (`📚`), and Studio (`✍️`).
+  - Interactive workspace pill in tab strip with dropdown switcher, badge tab counts, and active workspace indicator.
+  - Workspaces manager panel in Recon Settings (`#panel-workspaces`) with custom workspace creation (name, emoji icon, color accent), rename, color picker, and safe deletion (with automatic tab migration to Main).
+  - Integration with Tab Suspender and Zero-Data-Loss Migration audit (`workspaces.json`).
+- **Dynamic Version Binding in About Panels**:
+  - Runtime version binding (`app.getVersion()`) for both Settings About panel and standalone About dialog, ensuring version numbers stay synchronized with releases automatically.
+
 ## [1.9.0] - 2026-11-19
 
 ### Added

@@ -8,6 +8,25 @@
 <body class="theme-cyber">
   <!-- Tab Strip -->
   <div id="tab-strip">
+    <!-- Workspace Selector Pill (v1.10.0) -->
+    <div class="workspace-pill" id="workspace-pill" title="Current Project Workspace. Click to switch or create workspaces.">
+      <span class="workspace-pill-icon" id="workspace-pill-icon">🌐</span>
+      <span class="workspace-pill-name" id="workspace-pill-name">Main</span>
+      <span class="workspace-pill-caret">▾</span>
+    </div>
+
+    <!-- Workspace Dropdown Menu -->
+    <div id="workspace-dropdown-menu" class="workspace-dropdown" style="display: none;">
+      <div class="workspace-dropdown-header">
+        <span>📁 Project Workspaces</span>
+        <button id="btn-add-workspace-quick" class="workspace-add-mini-btn" title="Create New Workspace">+</button>
+      </div>
+      <div id="workspace-dropdown-list" class="workspace-items-list"></div>
+      <div class="workspace-dropdown-footer">
+        <button id="btn-manage-workspaces" class="picker-action-btn">⚙️ Manage Workspaces...</button>
+      </div>
+    </div>
+
     <div id="tabs-container"></div>
     <button id="btn-new-tab" title="New Tab (Ctrl+T)">+</button>
   </div>
@@ -53,6 +72,7 @@
       <button id="btn-audio-grabber" class="omnibar-action-btn" title="Audio Studio Grabber (Ctrl+Shift+G)">🎙️</button>
       <button id="btn-toggle-companion-rail" class="omnibar-action-btn" title="Toggle Author Desk Companion Rail (Ctrl+Shift+D)">✍️</button>
       <button id="btn-recon-ai" class="omnibar-action-btn" title="Recon AI — Local Intelligence Bridge (Ctrl+Shift+I)">🤖</button>
+      <button id="btn-spotlight" class="omnibar-action-btn" title="Recon Spotlight — Quick Command &amp; Search Palette (Ctrl+K)">🔍</button>
     </div>
 
     <!-- Recon Shields Status Widget -->
@@ -386,6 +406,9 @@
           </button>
           <button class="settings-nav-btn" data-tab="gateway">
             <span class="nav-icon">🪐</span> Decentralized Gateway
+          </button>
+          <button class="settings-nav-btn" data-tab="workspaces">
+            <span class="nav-icon">📁</span> Workspaces
           </button>
           <button class="settings-nav-btn" data-tab="about">
             <span class="nav-icon">ℹ️</span> About
@@ -1126,13 +1149,47 @@
             </div>
           </div>
 
-          <!-- 14. About -->
+          <!-- 14. Workspaces & Spotlight (v1.10.0) -->
+          <div class="settings-panel" id="panel-workspaces">
+            <h4 class="panel-heading" style="margin-bottom: 12px;">Workspaces &amp; Recon Spotlight</h4>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+              Group open research tabs into dedicated project workspaces, and trigger <strong>Recon Spotlight (Ctrl+K)</strong> to find anything instantly.
+            </p>
+
+            <h5 class="subpanel-heading" style="margin-bottom: 8px;">📁 Active Project Workspaces</h5>
+            <div id="settings-workspaces-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;"></div>
+
+            <!-- Create New Workspace Form -->
+            <div style="padding: 12px; background: rgba(124, 58, 237, 0.08); border: 1px solid rgba(124, 58, 237, 0.2); border-radius: 8px; margin-bottom: 18px;">
+              <strong style="font-size: 12.5px; color: #c4b5fd;">Create New Project Workspace</strong>
+              <div style="display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="text" id="input-new-workspace-name" class="settings-input" placeholder="e.g. Science Archive, Lore..." style="flex: 1; min-width: 180px;" />
+                <input type="text" id="input-new-workspace-icon" class="settings-input" placeholder="Icon" value="📁" style="width: 50px; text-align: center;" />
+                <input type="color" id="input-new-workspace-color" value="#7c3aed" style="width: 36px; height: 32px; border: none; background: transparent; cursor: pointer;" />
+                <button id="btn-create-workspace" class="btn-primary" style="font-size: 11.5px; padding: 6px 14px;">Add Workspace</button>
+              </div>
+            </div>
+
+            <h5 class="subpanel-heading" style="margin-top: 14px; margin-bottom: 8px;">🔍 Recon Spotlight Shortcuts</h5>
+            <div style="font-size: 12px; line-height: 1.6; color: var(--text-muted);">
+              <div><strong style="color: var(--text-main);">Global Palette:</strong> Press <kbd style="background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px;">Ctrl+K</kbd> or click 🔍 to open Spotlight anywhere.</div>
+              <div style="margin-top: 4px;"><strong style="color: var(--text-main);">Filter Prefixes:</strong></div>
+              <ul style="margin: 4px 0 0 20px; padding: 0;">
+                <li><code>@</code> — Search only across active and sleeping tabs</li>
+                <li><code>*</code> — Search only your saved bookmarks</li>
+                <li><code>?</code> — Search your browsing history</li>
+                <li><code>&gt;</code> — Search and execute system commands</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 15. About -->
           <div class="settings-panel" id="panel-about">
             <div class="about-panel-header" style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
               <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
               <div>
                 <h3 style="margin: 0; font-size: 18px;">Recon Browser</h3>
-                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.9.0</span>
+                <span id="settings-about-version" class="about-ver" style="font-size: 12px; color: var(--accent-purple);">Version 1.10.0</span>
               </div>
             </div>
             <p class="about-desc" style="font-size: 12px; opacity: 0.85; margin: 8px 0 14px; line-height: 1.4;">
@@ -1187,7 +1244,7 @@
         <img src="../../build/icon.png" width="48" height="48" class="about-app-icon" alt="Recon Browser Logo" />
         <div>
           <h2>Recon Browser</h2>
-          <span id="about-version" class="about-ver">Version 1.8.0</span>
+          <span id="about-version" class="about-ver">Version 1.10.0</span>
         </div>
       </div>
 
@@ -1536,6 +1593,34 @@
 
   <!-- Toast Notification -->
   <div id="toast" class="toast-hidden"></div>
+
+  <!-- Recon Spotlight Modal Palette (v1.10.0) -->
+  <div id="recon-spotlight-modal" class="spotlight-overlay" style="display: none;">
+    <div class="spotlight-dialog">
+      <div class="spotlight-input-wrap">
+        <span class="spotlight-search-icon">🔍</span>
+        <input type="text" id="spotlight-input" placeholder="Search open tabs, bookmarks, history, archives, or type '>' for commands..." autocomplete="off" spellcheck="false" />
+        <span class="spotlight-shortcut-badge">ESC to close</span>
+      </div>
+      <div class="spotlight-hint-bar">
+        <span class="spotlight-hint-tag" data-prefix="@">@ Tabs</span>
+        <span class="spotlight-hint-tag" data-prefix="*">* Bookmarks</span>
+        <span class="spotlight-hint-tag" data-prefix="?">? History</span>
+        <span class="spotlight-hint-tag" data-prefix=">">&gt; Commands</span>
+      </div>
+      <div id="spotlight-results-container" class="spotlight-results">
+        <!-- Live items rendered here -->
+      </div>
+      <div class="spotlight-footer">
+        <div class="spotlight-footer-keys">
+          <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+          <span><kbd>↵</kbd> Select</span>
+          <span><kbd>ESC</kbd> Close</span>
+        </div>
+        <span class="spotlight-footer-brand">Recon Spotlight</span>
+      </div>
+    </div>
+  </div>
 
   <script src="renderer.js"></script>
 </body>

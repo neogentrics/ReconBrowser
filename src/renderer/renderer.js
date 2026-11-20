@@ -324,6 +324,7 @@ function createTab(initialUrl = null, activate = true, containerId = 'default', 
   webviewEl.setAttribute('allowpopups', '');
   webviewEl.style.display = 'none';
 
+  const currentWsId = localStorage.getItem('recon_active_workspace') || 'default';
   const tabData = {
     id,
     title,
@@ -338,8 +339,13 @@ function createTab(initialUrl = null, activate = true, containerId = 'default', 
     partitionKey,
     containerObj,
     isSleeping: false,
-    lastActiveAt: Date.now()
+    lastActiveAt: Date.now(),
+    workspaceId: currentWsId
   };
+
+  if (tabData.workspaceId !== currentWsId) {
+    tabEl.style.display = 'none';
+  }
 
   wireWebviewEvents(tabData, webviewEl);
   browserContainer.appendChild(webviewEl);
@@ -540,6 +546,9 @@ function wakeTab(id) {
   tab.isSleeping = false;
   tab.lastActiveAt = Date.now();
   tab.tabEl.classList.remove('tab-sleeping');
+
+  const currentWsId = localStorage.getItem('recon_active_workspace') || 'default';
+  tab.tabEl.style.display = ((tab.workspaceId || 'default') === currentWsId) ? 'flex' : 'none';
 
   const badge = tab.tabEl.querySelector('.tab-sleep-badge');
   if (badge) badge.remove();
@@ -941,6 +950,8 @@ settingsNavBtns.forEach(btn => {
       checkDefaultBrowserStatus();
     } else if (tabId === 'gateway' && typeof loadGatewaySettings === 'function') {
       loadGatewaySettings();
+    } else if (tabId === 'workspaces' && typeof loadWorkspacesSettings === 'function') {
+      loadWorkspacesSettings();
     }
   });
 });
@@ -1017,10 +1028,15 @@ async function loadAboutSettingsInfo() {
     const info = await ipcRenderer.invoke('get-app-info');
     const verEl = document.getElementById('settings-about-version');
     const techEl = document.getElementById('settings-about-tech');
+    const standaloneVerEl = document.getElementById('about-version');
+    const standaloneTechEl = document.getElementById('about-tech');
     if (verEl) verEl.textContent = `Version ${info.version}`;
     if (techEl) techEl.textContent = `Electron ${info.electron} · Chromium ${info.chrome} · Node ${info.node} · ${info.os}`;
+    if (standaloneVerEl) standaloneVerEl.textContent = `Version ${info.version}`;
+    if (standaloneTechEl) standaloneTechEl.textContent = `Electron ${info.electron} · Chromium ${info.chrome} · Node ${info.node} · ${info.os}`;
   } catch (err) {}
 }
+loadAboutSettingsInfo();
 
 if (btnSettingsCheckUpdates) {
   btnSettingsCheckUpdates.addEventListener('click', () => {
@@ -2118,7 +2134,39 @@ btnSettingsToggle.addEventListener('click', () => {
 
 // Global Keyboard Shortcuts
 document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
+  // Handle Spotlight open key navigation
+  const spotlightModal = document.getElementById('recon-spotlight-modal');
+  if (spotlightModal && spotlightModal.style.display !== 'none') {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (currentSpotlightResults.length > 0) {
+        spotlightSelectedIndex = (spotlightSelectedIndex + 1) % currentSpotlightResults.length;
+        renderSpotlightResults();
+      }
+      return;
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (currentSpotlightResults.length > 0) {
+        spotlightSelectedIndex = (spotlightSelectedIndex - 1 + currentSpotlightResults.length) % currentSpotlightResults.length;
+        renderSpotlightResults();
+      }
+      return;
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      executeSpotlightItem(spotlightSelectedIndex);
+      return;
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeSpotlight();
+      return;
+    }
+  }
+
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    toggleSpotlight();
+    return;
+  } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
     e.preventDefault();
     omnibar.focus();
     omnibar.select();
@@ -2151,6 +2199,10 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     toggleContainerPicker();
   } else if (e.key === 'Escape') {
+    const wsDrop = document.getElementById('workspace-dropdown-menu');
+    if (wsDrop && wsDrop.style.display !== 'none') {
+      wsDrop.style.display = 'none';
+    }
     const cDrop = document.getElementById('container-picker-menu');
     if (cDrop && cDrop.style.display !== 'none') {
       cDrop.style.display = 'none';
@@ -5226,4 +5278,457 @@ async function loadGatewaySettings() {
       }
     }
   }, 30000);
+})();
+
+// ==========================================================================
+// Recon Spotlight & Project Workspaces Controller (v1.10.0)
+// ==========================================================================
+let currentWorkspacesList = [];
+let currentActiveWorkspaceId = localStorage.getItem('recon_active_workspace') || 'default';
+
+async function initWorkspaces() {
+  try {
+    currentWorkspacesList = await ipcRenderer.invoke('workspaces:get-all');
+    renderWorkspacePill();
+  } catch (err) {
+    console.warn('[Workspaces] Could not load workspaces:', err);
+  }
+}
+
+function renderWorkspacePill() {
+  const ws = currentWorkspacesList.find(w => w.id === currentActiveWorkspaceId) || currentWorkspacesList[0] || { id: 'default', name: 'Main', icon: '🌐' };
+  const pillIcon = document.getElementById('workspace-pill-icon');
+  const pillName = document.getElementById('workspace-pill-name');
+  if (pillIcon) pillIcon.textContent = ws.icon || '📁';
+  if (pillName) pillName.textContent = ws.name || 'Main';
+}
+
+function switchWorkspace(id) {
+  currentActiveWorkspaceId = id;
+  localStorage.setItem('recon_active_workspace', id);
+  renderWorkspacePill();
+  filterTabsForActiveWorkspace();
+  const dropdown = document.getElementById('workspace-dropdown-menu');
+  if (dropdown) dropdown.style.display = 'none';
+  showToast(`Switched to workspace: ${getActiveWorkspaceName()}`);
+}
+
+function getActiveWorkspaceName() {
+  const ws = currentWorkspacesList.find(w => w.id === currentActiveWorkspaceId);
+  return ws ? ws.name : 'Main';
+}
+
+function filterTabsForActiveWorkspace() {
+  let hasVisibleTab = false;
+  let firstVisibleTabId = null;
+
+  for (const [id, tab] of tabs.entries()) {
+    const belongs = (tab.workspaceId || 'default') === currentActiveWorkspaceId;
+    tab.tabEl.style.display = belongs ? 'flex' : 'none';
+    if (belongs) {
+      if (!firstVisibleTabId) firstVisibleTabId = id;
+      if (id === activeTabId) hasVisibleTab = true;
+    }
+  }
+
+  if (!hasVisibleTab) {
+    if (firstVisibleTabId) {
+      switchTab(firstVisibleTabId);
+    } else {
+      createTab(getStartPageURL(), true);
+    }
+  }
+}
+
+function renderWorkspaceDropdownItems() {
+  const listEl = document.getElementById('workspace-dropdown-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  currentWorkspacesList.forEach(ws => {
+    let count = 0;
+    for (const tab of tabs.values()) {
+      if ((tab.workspaceId || 'default') === ws.id) count++;
+    }
+
+    const row = document.createElement('div');
+    row.className = `workspace-item-row ${ws.id === currentActiveWorkspaceId ? 'active' : ''}`;
+    row.innerHTML = `
+      <div class="workspace-item-info">
+        <span class="workspace-item-dot" style="background: ${ws.color || '#7c3aed'};"></span>
+        <span>${escapeHtml(ws.icon || '📁')}</span>
+        <span>${escapeHtml(ws.name)}</span>
+      </div>
+      <span class="workspace-tab-count">${count} ${count === 1 ? 'tab' : 'tabs'}</span>
+    `;
+    row.addEventListener('click', () => {
+      switchWorkspace(ws.id);
+    });
+    listEl.appendChild(row);
+  });
+}
+
+async function loadWorkspacesSettings() {
+  const container = document.getElementById('settings-workspaces-list');
+  if (!container) return;
+  container.innerHTML = '<div style="color: var(--text-muted); font-size: 12px;">Loading workspaces…</div>';
+
+  try {
+    currentWorkspacesList = await ipcRenderer.invoke('workspaces:get-all');
+    container.innerHTML = currentWorkspacesList.map(ws => {
+      const isDefault = ws.id === 'default' || ws.isDefault;
+      let count = 0;
+      for (const tab of tabs.values()) {
+        if ((tab.workspaceId || 'default') === ws.id) count++;
+      }
+
+      return `
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 16px;">${escapeHtml(ws.icon || '📁')}</span>
+            <div>
+              <strong style="font-size: 13px; color: var(--text-main);">${escapeHtml(ws.name)}</strong>
+              ${isDefault ? '<span style="font-size: 10px; color: var(--accent-purple); margin-left: 6px; font-weight: 700;">DEFAULT</span>' : ''}
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${count} open ${count === 1 ? 'tab' : 'tabs'}</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            ${!isDefault ? `<button class="btn-subtle btn-del-workspace" data-id="${escapeHtml(ws.id)}" style="font-size: 11px; color: #f87171; padding: 3px 8px;">Delete</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.btn-del-workspace').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const wsId = btn.getAttribute('data-id');
+        if (!wsId) return;
+        for (const tab of tabs.values()) {
+          if (tab.workspaceId === wsId) tab.workspaceId = 'default';
+        }
+        await ipcRenderer.invoke('workspaces:delete', { id: wsId });
+        if (currentActiveWorkspaceId === wsId) {
+          currentActiveWorkspaceId = 'default';
+          localStorage.setItem('recon_active_workspace', 'default');
+        }
+        await initWorkspaces();
+        loadWorkspacesSettings();
+        filterTabsForActiveWorkspace();
+        showToast('Workspace deleted');
+      });
+    });
+  } catch (err) {
+    container.innerHTML = `<div style="color: #f87171; font-size: 12px;">Error: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+// Spotlight Controller State & Logic
+let spotlightSelectedIndex = 0;
+let currentSpotlightResults = [];
+let spotlightDebounceTimer = null;
+
+function toggleSpotlight() {
+  const modal = document.getElementById('recon-spotlight-modal');
+  if (!modal) return;
+  if (modal.style.display === 'none' || !modal.style.display) {
+    openSpotlight();
+  } else {
+    closeSpotlight();
+  }
+}
+
+function openSpotlight() {
+  const modal = document.getElementById('recon-spotlight-modal');
+  const input = document.getElementById('spotlight-input');
+  if (!modal || !input) return;
+
+  modal.style.display = 'flex';
+  input.value = '';
+  input.focus();
+  runSpotlightSearch('');
+}
+
+function closeSpotlight() {
+  const modal = document.getElementById('recon-spotlight-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function runSpotlightSearch(query) {
+  const container = document.getElementById('spotlight-results-container');
+  if (!container) return;
+
+  const openTabs = [];
+  for (const [id, tab] of tabs.entries()) {
+    openTabs.push({
+      id: id,
+      title: tab.title || tab.url,
+      url: tab.url,
+      isSleeping: tab.isSleeping,
+      containerName: tab.containerObj ? tab.containerObj.name : 'Default',
+      icon: tab.tabEl ? (tab.tabEl.querySelector('.tab-favicon') ? tab.tabEl.querySelector('.tab-favicon').textContent : '🌐') : '🌐'
+    });
+  }
+
+  const bookmarks = (typeof bookmarksList !== 'undefined' && Array.isArray(bookmarksList)) ? bookmarksList : [];
+
+  try {
+    const results = await ipcRenderer.invoke('spotlight:search', {
+      query,
+      context: { openTabs, bookmarks }
+    });
+
+    currentSpotlightResults = results || [];
+    spotlightSelectedIndex = 0;
+    renderSpotlightResults();
+  } catch (err) {
+    container.innerHTML = `<div style="padding: 16px; color: #f87171; font-size: 12.5px;">Search error: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderSpotlightResults() {
+  const container = document.getElementById('spotlight-results-container');
+  if (!container) return;
+
+  if (currentSpotlightResults.length === 0) {
+    container.innerHTML = `
+      <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px;">
+        No results found. Try '@' for tabs, '*' for bookmarks, or '>' for commands.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = currentSpotlightResults.map((item, index) => {
+    const isSelected = index === spotlightSelectedIndex;
+    const badgeHtml = item.category ? `<span class="spotlight-item-badge">${escapeHtml(item.category)}</span>` : '';
+
+    return `
+      <div class="spotlight-item ${isSelected ? 'selected' : ''}" data-index="${index}">
+        <span class="spotlight-item-icon">${escapeHtml(item.icon || '🔍')}</span>
+        <div class="spotlight-item-text">
+          <span class="spotlight-item-title">${escapeHtml(item.title)}</span>
+          ${item.subtitle ? `<span class="spotlight-item-subtitle">${escapeHtml(item.subtitle)}</span>` : ''}
+        </div>
+        ${badgeHtml}
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.spotlight-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.getAttribute('data-index'), 10);
+      executeSpotlightItem(idx);
+    });
+  });
+
+  const selectedEl = container.querySelector('.spotlight-item.selected');
+  if (selectedEl) {
+    selectedEl.scrollIntoView({ block: 'nearest' });
+  }
+}
+
+function executeSpotlightItem(index) {
+  const item = currentSpotlightResults[index];
+  if (!item) return;
+
+  closeSpotlight();
+
+  if (item.type === 'tab' && item.tabId) {
+    switchTab(item.tabId);
+  } else if (item.type === 'bookmark' && item.url) {
+    createTab(item.url, true);
+  } else if (item.type === 'history' && item.url) {
+    createTab(item.url, true);
+  } else if (item.type === 'archive' && item.archivePath) {
+    createTab(`file://${item.archivePath}`, true);
+  } else if (item.type === 'command' && item.action) {
+    executeCommandAction(item.action);
+  }
+}
+
+function executeCommandAction(action) {
+  switch (action) {
+    case 'new-tab':
+      createTab();
+      break;
+    case 'new-ephemeral-tab':
+      createTab(null, true, 'ephemeral', true);
+      break;
+    case 'new-container-tab':
+      toggleContainerPicker();
+      break;
+    case 'open-ai':
+      openReconAiDrawer();
+      break;
+    case 'open-history':
+      openHistoryTab();
+      break;
+    case 'toggle-shields':
+      const widget = document.getElementById('shields-widget');
+      if (widget) widget.click();
+      break;
+    case 'open-vault':
+      openSettingsModal('vault');
+      break;
+    case 'hibernate-tabs':
+      sleepAllBackgroundTabs();
+      break;
+    case 'toggle-reader':
+      toggleReaderView();
+      break;
+    case 'read-aloud':
+      startReadAloud();
+      break;
+    case 'open-rail':
+      const btnRail = document.getElementById('btn-toggle-companion-rail');
+      if (btnRail) btnRail.click();
+      break;
+    case 'open-audio-grabber':
+      openAudioGrabberDrawer();
+      break;
+    case 'open-gateway':
+      openSettingsModal('gateway');
+      break;
+    case 'launch-gemini':
+      openGeminiTab('gemini://geminispace.info');
+      break;
+    case 'open-settings':
+      openSettingsModal('appearance');
+      break;
+    case 'open-ecosystem':
+      const btnEco = document.getElementById('btn-ecosystem');
+      if (btnEco) btnEco.click();
+      break;
+    default:
+      showToast(`Command executed: ${action}`);
+  }
+}
+
+// Wire Event Listeners for Spotlight & Workspaces
+(function initSpotlightAndWorkspacesUI() {
+  initWorkspaces();
+
+  // Workspace Pill Click
+  const wsPill = document.getElementById('workspace-pill');
+  const wsDropdown = document.getElementById('workspace-dropdown-menu');
+  if (wsPill && wsDropdown) {
+    wsPill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (wsDropdown.style.display === 'none' || !wsDropdown.style.display) {
+        renderWorkspaceDropdownItems();
+        wsDropdown.style.display = 'block';
+      } else {
+        wsDropdown.style.display = 'none';
+      }
+    });
+  }
+
+  // Quick Add Workspace Button in Dropdown
+  const btnQuickAddWs = document.getElementById('btn-add-workspace-quick');
+  if (btnQuickAddWs) {
+    btnQuickAddWs.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const name = prompt('Enter new project workspace name:');
+      if (name && name.trim()) {
+        try {
+          const created = await ipcRenderer.invoke('workspaces:create', { name: name.trim(), icon: '📁', color: '#7c3aed' });
+          await initWorkspaces();
+          switchWorkspace(created.id);
+        } catch (err) {
+          showToast(`Error creating workspace: ${err.message}`);
+        }
+      }
+    });
+  }
+
+  // Manage Workspaces Button in Dropdown
+  const btnManageWs = document.getElementById('btn-manage-workspaces');
+  if (btnManageWs) {
+    btnManageWs.addEventListener('click', () => {
+      if (wsDropdown) wsDropdown.style.display = 'none';
+      openSettingsModal('workspaces');
+    });
+  }
+
+  // Create Workspace in Settings
+  const btnCreateWs = document.getElementById('btn-create-workspace');
+  if (btnCreateWs) {
+    btnCreateWs.addEventListener('click', async () => {
+      const nameInput = document.getElementById('input-new-workspace-name');
+      const iconInput = document.getElementById('input-new-workspace-icon');
+      const colorInput = document.getElementById('input-new-workspace-color');
+
+      const name = nameInput ? nameInput.value.trim() : '';
+      const icon = iconInput ? iconInput.value.trim() || '📁' : '📁';
+      const color = colorInput ? colorInput.value : '#7c3aed';
+
+      if (!name) {
+        showToast('Please enter a workspace name');
+        return;
+      }
+
+      try {
+        await ipcRenderer.invoke('workspaces:create', { name, icon, color });
+        if (nameInput) nameInput.value = '';
+        await initWorkspaces();
+        loadWorkspacesSettings();
+        showToast(`Workspace "${name}" created!`);
+      } catch (err) {
+        showToast(`Error: ${err.message}`);
+      }
+    });
+  }
+
+  // Spotlight Button in Omnibar
+  const btnSpotlight = document.getElementById('btn-spotlight');
+  if (btnSpotlight) {
+    btnSpotlight.addEventListener('click', toggleSpotlight);
+  }
+
+  // IPC Menu Handler for Spotlight
+  ipcRenderer.on('menu-open-spotlight', () => {
+    openSpotlight();
+  });
+
+  // Spotlight Live Search Input
+  const spotlightInput = document.getElementById('spotlight-input');
+  if (spotlightInput) {
+    spotlightInput.addEventListener('input', (e) => {
+      clearTimeout(spotlightDebounceTimer);
+      spotlightDebounceTimer = setTimeout(() => {
+        runSpotlightSearch(e.target.value);
+      }, 50);
+    });
+  }
+
+  // Spotlight Hint Tags
+  document.querySelectorAll('.spotlight-hint-tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      if (spotlightInput) {
+        const prefix = tag.getAttribute('data-prefix');
+        spotlightInput.value = prefix + ' ';
+        spotlightInput.focus();
+        runSpotlightSearch(spotlightInput.value);
+      }
+    });
+  });
+
+  // Close Spotlight on Backdrop Click
+  const spotlightModal = document.getElementById('recon-spotlight-modal');
+  if (spotlightModal) {
+    spotlightModal.addEventListener('click', (e) => {
+      if (e.target === spotlightModal) {
+        closeSpotlight();
+      }
+    });
+  }
+
+  // Close Workspace Dropdown on click outside
+  document.addEventListener('click', (e) => {
+    if (wsDropdown && wsDropdown.style.display !== 'none') {
+      if (!wsDropdown.contains(e.target) && !wsPill.contains(e.target)) {
+        wsDropdown.style.display = 'none';
+      }
+    }
+  });
 })();

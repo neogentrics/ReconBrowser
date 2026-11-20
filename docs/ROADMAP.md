@@ -39,8 +39,9 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 | **v1.7.0** | ✅ **Live** | Containers & Ephemeral Personas | Isolated cookie & cache containers, per-container SOCKS5/Tor routing, ephemeral disposable tabs (`Ctrl+Shift+N`) with cryptographic wipe on close |
 | **v1.7.1** | ✅ **Live** | High-Contrast Theme & Text Legibility | Universal WCAG AAA contrast overhaul across all 19 themes, eliminated dark metallic sludge smears on light themes, explicit high-contrast placeholder styling, high-visibility controls |
 | **v1.8.0** | ✅ **Live** | Local AI Integration | Ollama bridge (`localhost:11434`), zero-cloud summarization & claim extraction |
-| **v1.9.0** | 🚀 **Live** | Decentralized Gateway & Gen 1 Hardening | Native IPFS (`ipfs://`) and Gemini (`gemini://`) protocol handlers, tab memory suspender (<250MB RAM), zero-data-loss store migration audit |
-| **v2.0.0** | 🎯 Milestone | The Connected Studio Browser | **All Gen 1 features graduate to permanent production**; unified Recon Spotlight (`Ctrl+K`) |
+| **v1.9.0** | ✅ **Live** | Decentralized Gateway & Gen 1 Hardening | Native IPFS (`ipfs://`) and Gemini (`gemini://`) protocol handlers, tab memory suspender (<250MB RAM), zero-data-loss store migration audit |
+| **v1.10.0** | 🚀 **Live** | Unified Recon Spotlight & Project Workspaces | Omnipresent modal command palette (`Ctrl+K`), multi-domain fuzzy scoring, named project workspaces, persistent workspace tabs, runtime version sync |
+| **v2.0.0** | 🎯 Milestone | The Connected Studio Browser | **All Gen 1 features graduate to permanent production** |
 | **v2.1.0** | 📋 Planned | Workspaces & Tree Tabs | Collapsible tab trees, project workspaces, intelligent tab memory sleep |
 | **v2.2.0** | 📋 Planned | Decentralized Gateway | Native IPFS (`ipfs://`) and Gemini (`gemini://`) protocol handlers |
 | **v2.3.0** | 📋 Planned | Home Server Sync | WebDAV & Nextcloud integration, remote device tab handoff |
@@ -141,6 +142,12 @@ Following the established standard of **RT Story Tracker** and **RT Markdown Rea
 - [x] Native Gemini (`gemini://`) TLS client (port 1965) with TOFU certificate tracking and cyber Gemtext reader (`gemini-viewer.html`).
 - [x] Intelligent Tab Memory Suspender: auto-hibernates background tabs to maintain < 250MB RAM footprint with 10+ tabs.
 - [x] Zero-data-loss integrity audit and automatic migration across all 7 user stores.
+
+### Milestone 11: v1.10.0 — Unified Recon Spotlight & Project Workspaces [Complete & Live]
+- [x] Unified Recon Spotlight (`Ctrl+K` / `Cmd+K`): multi-domain fuzzy scoring across open tabs, bookmarks, browsing history, archives, and system actions.
+- [x] Category prefix filtering (`>` for commands, `@` for tabs, `*` for bookmarks, `?` for history).
+- [x] Named Project Workspaces: segmented tab groups with persistent state, tab strip workspace pill, and dropdown switcher.
+- [x] Dynamic runtime version binding (`app.getVersion()`) for About panels and dialogs.
 
 ### Milestone 11: v2.0.0 Stable — The Connected Studio Browser [Production Milestone]
 - [ ] **Graduation Milestone**: All features from v1.1.0–v1.9.0 graduate from test to permanent production.

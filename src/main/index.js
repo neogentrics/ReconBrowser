@@ -16,9 +16,13 @@ const ollamaManager = new OllamaManager();
 const { IPFSManager } = require('./ipfs');
 const { GeminiManager } = require('./gemini');
 const { MigrationManager } = require('./migration');
+const { SpotlightManager } = require('./spotlight');
+const { WorkspaceManager } = require('./workspaces');
 const ipfsManager = new IPFSManager();
 const geminiManager = new GeminiManager();
 const migrationManager = new MigrationManager();
+const spotlightManager = new SpotlightManager();
+const workspaceManager = new WorkspaceManager();
 const { exportBookmarksToHtml, parseBookmarksHtml, exportVaultToCsv, parseVaultCsv } = require('./importer-exporter');
 const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link');
 const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
@@ -36,6 +40,7 @@ const shieldsManager = new ShieldsManager();
 const companionRailManager = new CompanionRailManager();
 const audioGrabberManager = new AudioGrabberManager();
 const containerManager = new ContainerManager();
+spotlightManager.setManagers({ historyManager, archiveManager });
 
 // Load tracking domains blocklist
 const filterPath = path.join(__dirname, '../../config/filters/default-trackers.txt');
@@ -104,6 +109,11 @@ function buildMenu() {
         { role: 'paste' },
         { role: 'selectAll' },
         { type: 'separator' },
+        {
+          label: 'Recon Spotlight...',
+          accelerator: 'CmdOrCtrl+K',
+          click: () => mainWindow && mainWindow.webContents.send('menu-open-spotlight')
+        },
         {
           label: 'Send Research Clip...',
           accelerator: 'CmdOrCtrl+Shift+C',
@@ -1217,6 +1227,28 @@ ipcMain.handle('gemini:fetch', async (event, { url }) => {
 });
 ipcMain.handle('migration:audit', async () => {
   return await migrationManager.runAuditAndMigrate();
+});
+
+// Recon Spotlight Search IPC Handlers (v1.10.0)
+ipcMain.handle('spotlight:search', async (event, { query, context }) => {
+  return await spotlightManager.search(query, context);
+});
+
+// Workspaces & Project Tab Groups IPC Handlers (v1.10.0)
+ipcMain.handle('workspaces:get-all', () => {
+  return workspaceManager.getAll();
+});
+ipcMain.handle('workspaces:create', (event, { name, icon, color }) => {
+  return workspaceManager.create(name, icon, color);
+});
+ipcMain.handle('workspaces:update', (event, { id, updates }) => {
+  return workspaceManager.update(id, updates);
+});
+ipcMain.handle('workspaces:delete', (event, { id }) => {
+  return workspaceManager.delete(id);
+});
+ipcMain.handle('workspaces:set-active', (event, { id }) => {
+  return workspaceManager.setActive(id);
 });
 
 // Context menu & history logging on web contents

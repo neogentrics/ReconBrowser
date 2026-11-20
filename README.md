@@ -24,7 +24,7 @@
 
 ## Downloads
 
-The latest version is **v1.9.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
+The latest version is **v1.10.0**. Download it from [GitHub Releases](https://github.com/neogentrics/ReconBrowser/releases/latest). Each file name carries the version, shown here as `<version>`:
 
 | Platform | Download Package | Description |
 | :--- | :--- | :--- |
@@ -61,6 +61,19 @@ An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 ---
 
 ## What's New
+
+### v1.10.0: Unified Recon Spotlight & Project Workspaces
+
+- **Unified Recon Spotlight (`Ctrl+K` / `Cmd+K`)**:
+  - Global fuzzy search modal across open tabs, bookmarks, browsing history, offline archives, and system actions.
+  - Prefix filters: `>` for commands (shields, password vault, hibernate tabs, dedicated history), `@` for active tabs, `*` for bookmarks, and `?` for history.
+  - Keyboard navigation with instant Enter execution.
+- **Named Project Workspaces**:
+  - Partition tabs into named project workspaces (Main, Research, Lore & Story, Studio, or custom).
+  - Workspace selector pill in tab strip with active workspace badge counts and dropdown switcher.
+  - Full workspaces manager in Settings (`#panel-workspaces`) with create, edit, color customization, and tab migration.
+- **Dynamic Version Synchronization**:
+  - Dynamic runtime version binding (`app.getVersion()`) for About panels and dialogs, ensuring the About screen always reflects the running release.
 
 ### v1.9.0: Decentralized Gateway & Generation 1 Hardening
 

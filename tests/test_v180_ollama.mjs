@@ -146,7 +146,7 @@ test('Recon AI nav button (data-tab="ai") exists', () => {
 });
 
 test('Version is at least 1.8.0 in settings-about-version', () => {
-  assert(/Version 1\.[89]\.0/.test(html), 'Version 1.8.0+ not found in HTML');
+  assert(/Version 1\.(?:[89]|\d{2,})\.0/.test(html), 'Version 1.8.0+ not found in HTML');
 });
 
 test('Summarize tab panel exists', () => {
@@ -178,7 +178,8 @@ console.log('\n5. package.json');
 
 test('package.json version is at least 1.8.0', () => {
   const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf-8'));
-  assert(pkg.version >= '1.8.0', `Expected >= 1.8.0, got ${pkg.version}`);
+  const [major, minor] = pkg.version.split('.').map(Number);
+  assert(major > 1 || (major === 1 && minor >= 8), `Expected >= 1.8.0, got ${pkg.version}`);
 });
 
 // ── 6. renderer.js ───────────────────────────────────────────────────────

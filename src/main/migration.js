@@ -31,7 +31,7 @@ class MigrationManager {
     this.ensureBackupDir();
     const auditReport = {
       timestamp: new Date().toISOString(),
-      version: '1.9.0',
+      version: '1.10.0',
       status: 'healthy',
       stores: {},
       repaired: 0,
@@ -45,7 +45,8 @@ class MigrationManager {
       { name: 'archives', file: 'archives.json', defaultContent: [] },
       { name: 'sync', file: 'sync-settings.json', defaultContent: {} },
       { name: 'companion', file: 'companion-notes.json', defaultContent: [] },
-      { name: 'audioClips', file: 'audio-clips.json', defaultContent: [] }
+      { name: 'audioClips', file: 'audio-clips.json', defaultContent: [] },
+      { name: 'workspaces', file: 'workspaces.json', defaultContent: [] }
     ];
 
     for (const store of targetStores) {

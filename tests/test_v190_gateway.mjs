@@ -131,10 +131,10 @@ describe('Recon Browser v1.9.0 — Decentralized Gateway Suite', () => {
     assert(indexHtml.includes('id="panel-gateway"'), 'Gateway settings panel missing');
     assert(indexHtml.includes('id="select-tab-sleep-timeout"'), 'Tab memory sleep timeout select missing');
     assert(indexHtml.includes('id="btn-hibernate-background-tabs"'), 'Hibernate tabs button missing');
-    assert(indexHtml.includes('Version 1.9.0'), 'Version 1.9.0 in about panel missing');
+    assert(/Version 1\.(?:[9]|\d{2,})\.0/.test(indexHtml), 'Version 1.9.0+ in about panel missing');
 
     const pkgJson = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
-    assert.strictEqual(pkgJson.version, '1.9.0', 'package.json version is not 1.9.0');
+    assert(/1\.(?:[9]|\d{2,})\.0/.test(pkgJson.version), 'package.json version is not 1.9.0+');
   });
 
 });

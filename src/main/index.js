@@ -1,4 +1,13 @@
-const { app, BrowserWindow, session, ipcMain, Menu, shell, clipboard, dialog, safeStorage } = require('electron');
+const { app, BrowserWindow, session, ipcMain, Menu, shell, clipboard, dialog, safeStorage, webContents: electronWebContents } = require('electron');
+
+// One process per profile. A second launch hands off to the running process, which
+// opens a new window. This must stay above every manager: a second process must not
+// touch the profile (two processes overwrite each other's data files and settings).
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+  return;
+}
+
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -26,8 +35,9 @@ const workspaceManager = new WorkspaceManager();
 const { exportBookmarksToHtml, parseBookmarksHtml, exportVaultToCsv, parseVaultCsv } = require('./importer-exporter');
 const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link');
 const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
+const { WindowManager, cascadeBounds } = require('./window-manager');
 
-let mainWindow;
+const windows = new WindowManager();
 let blockedCount = 0;
 let shieldsEnabled = true;
 const pausedHosts = new Set();
@@ -41,6 +51,9 @@ const companionRailManager = new CompanionRailManager();
 const audioGrabberManager = new AudioGrabberManager();
 const containerManager = new ContainerManager();
 spotlightManager.setManagers({ historyManager, archiveManager });
+
+// The window a renderer request came from, for parenting its dialogs
+const dialogParent = (event) => windows.windowFor(event.sender) || windows.active();
 
 // Load tracking domains blocklist
 const filterPath = path.join(__dirname, '../../config/filters/default-trackers.txt');
@@ -69,33 +82,39 @@ function buildMenu() {
       label: 'File',
       submenu: [
         {
+          label: 'New Window',
+          accelerator: 'CmdOrCtrl+N',
+          click: () => openWindow()
+        },
+        {
           label: 'New Tab',
           accelerator: 'CmdOrCtrl+T',
-          click: () => mainWindow && mainWindow.webContents.send('menu-new-tab')
+          click: (_item, win) => windows.send(win, 'menu-new-tab')
         },
         {
           label: 'New Ephemeral Tab (Burn on Close)',
           accelerator: 'CmdOrCtrl+Shift+N',
-          click: () => mainWindow && mainWindow.webContents.send('menu-new-ephemeral-tab')
+          click: (_item, win) => windows.send(win, 'menu-new-ephemeral-tab')
         },
         {
           label: 'New Container Tab...',
           accelerator: 'CmdOrCtrl+Alt+T',
-          click: () => mainWindow && mainWindow.webContents.send('menu-new-container-tab')
+          click: (_item, win) => windows.send(win, 'menu-new-container-tab')
         },
         { type: 'separator' },
         {
           label: 'Browsing History',
           accelerator: 'CmdOrCtrl+H',
-          click: () => mainWindow && mainWindow.webContents.send('menu-open-history')
+          click: (_item, win) => windows.send(win, 'menu-open-history')
         },
         {
           label: 'Close Tab',
           accelerator: 'CmdOrCtrl+W',
-          click: () => mainWindow && mainWindow.webContents.send('menu-close-tab')
+          click: (_item, win) => windows.send(win, 'menu-close-tab')
         },
         { type: 'separator' },
-        isMac ? { role: 'close' } : { role: 'quit' }
+        { role: 'close', label: 'Close Window', accelerator: 'CmdOrCtrl+Shift+W' },
+        ...(isMac ? [] : [{ role: 'quit' }])
       ]
     },
     {
@@ -112,12 +131,12 @@ function buildMenu() {
         {
           label: 'Recon Spotlight...',
           accelerator: 'CmdOrCtrl+K',
-          click: () => mainWindow && mainWindow.webContents.send('menu-open-spotlight')
+          click: (_item, win) => windows.send(win, 'menu-open-spotlight')
         },
         {
           label: 'Send Research Clip...',
           accelerator: 'CmdOrCtrl+Shift+C',
-          click: () => mainWindow && mainWindow.webContents.send('menu-open-clip')
+          click: (_item, win) => windows.send(win, 'menu-open-clip')
         }
       ]
     },
@@ -127,71 +146,71 @@ function buildMenu() {
         {
           label: 'Reload',
           accelerator: 'CmdOrCtrl+R',
-          click: () => mainWindow && mainWindow.webContents.send('menu-reload')
+          click: (_item, win) => windows.send(win, 'menu-reload')
         },
         {
           label: 'Force Reload',
           accelerator: 'CmdOrCtrl+Shift+R',
-          click: () => mainWindow && mainWindow.webContents.send('menu-reload')
+          click: (_item, win) => windows.send(win, 'menu-reload')
         },
         { type: 'separator' },
         {
           label: 'Toggle Reader View',
           accelerator: 'CmdOrCtrl+Alt+R',
-          click: () => mainWindow && mainWindow.webContents.send('menu-toggle-reader')
+          click: (_item, win) => windows.send(win, 'menu-toggle-reader')
         },
         {
           label: 'Read Aloud (Play / Pause)',
           accelerator: 'CmdOrCtrl+Shift+A',
-          click: () => mainWindow && mainWindow.webContents.send('menu-read-aloud')
+          click: (_item, win) => windows.send(win, 'menu-read-aloud')
         },
         {
           label: 'Stop Reading Aloud',
           accelerator: 'CmdOrCtrl+Shift+X',
-          click: () => mainWindow && mainWindow.webContents.send('menu-stop-reading')
+          click: (_item, win) => windows.send(win, 'menu-stop-reading')
         },
         { type: 'separator' },
         {
           label: 'Themes',
           submenu: [
-            { label: 'Recon Cyber Dark (Default)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'cyber') },
-            { label: 'Pure Obsidian', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'obsidian') },
-            { label: 'Recon Slate', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'slate') },
-            { label: 'Warm Sepia', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'sepia') },
-            { label: 'Nordic Mist', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'mist') },
+            { label: 'Recon Cyber Dark (Default)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'cyber') },
+            { label: 'Pure Obsidian', click: (_item, win) => windows.send(win, 'menu-set-theme', 'obsidian') },
+            { label: 'Recon Slate', click: (_item, win) => windows.send(win, 'menu-set-theme', 'slate') },
+            { label: 'Warm Sepia', click: (_item, win) => windows.send(win, 'menu-set-theme', 'sepia') },
+            { label: 'Nordic Mist', click: (_item, win) => windows.send(win, 'menu-set-theme', 'mist') },
             { type: 'separator' },
-            { label: 'Cobalt Abyss (Deep Blue)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'ocean') },
-            { label: 'Glacial Azure (Light Blue)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'azure') },
+            { label: 'Cobalt Abyss (Deep Blue)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'ocean') },
+            { label: 'Glacial Azure (Light Blue)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'azure') },
             { type: 'separator' },
-            { label: 'Midnight Dusk (Royal Purple)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'dusk') },
-            { label: 'Classic Recon Dark', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'dark') },
+            { label: 'Midnight Dusk (Royal Purple)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'dusk') },
+            { label: 'Classic Recon Dark', click: (_item, win) => windows.send(win, 'menu-set-theme', 'dark') },
             { type: 'separator' },
-            { label: 'Crimson Horizon (Burgundy Red)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'red') },
-            { label: 'Scarlet Blaze (Vivid Red)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'scarlet') },
+            { label: 'Crimson Horizon (Burgundy Red)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'red') },
+            { label: 'Scarlet Blaze (Vivid Red)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'scarlet') },
             { type: 'separator' },
-            { label: 'Amber Sunset (Bronze Yellow)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'yellow') },
-            { label: 'Solar Flare (Cyber Gold)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'solar') },
+            { label: 'Amber Sunset (Bronze Yellow)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'yellow') },
+            { label: 'Solar Flare (Cyber Gold)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'solar') },
             { type: 'separator' },
-            { label: 'Deep Forest (Dark Green)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'forest') },
-            { label: 'Evergreen (Vivid Green)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'evergreen') },
+            { label: 'Deep Forest (Dark Green)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'forest') },
+            { label: 'Evergreen (Vivid Green)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'evergreen') },
             { type: 'separator' },
-            { label: 'High Contrast (ADA Compliant)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'contrast') },
-            { label: 'Colorblind Blue-Orange (ADA)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'colorblind-blue-orange') },
-            { label: 'Colorblind Cyan-Magenta (ADA)', click: () => mainWindow && mainWindow.webContents.send('menu-set-theme', 'colorblind-cyan-magenta') }
+            { label: 'High Contrast (ADA Compliant)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'contrast') },
+            { label: 'Colorblind Blue-Orange (ADA)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'colorblind-blue-orange') },
+            { label: 'Colorblind Cyan-Magenta (ADA)', click: (_item, win) => windows.send(win, 'menu-set-theme', 'colorblind-cyan-magenta') }
           ]
         },
         {
           label: 'Theme Finishes & Aspects',
           submenu: [
-            { label: 'Solid (Matte)', click: () => mainWindow && mainWindow.webContents.send('menu-set-aspect', 'solid') },
-            { label: 'Metallic (Brushed Sheen)', click: () => mainWindow && mainWindow.webContents.send('menu-set-aspect', 'metallic') },
-            { label: 'Glass (Frosted Acrylic)', click: () => mainWindow && mainWindow.webContents.send('menu-set-aspect', 'glass') }
+            { label: 'Solid (Matte)', click: (_item, win) => windows.send(win, 'menu-set-aspect', 'solid') },
+            { label: 'Metallic (Brushed Sheen)', click: (_item, win) => windows.send(win, 'menu-set-aspect', 'metallic') },
+            { label: 'Glass (Frosted Acrylic)', click: (_item, win) => windows.send(win, 'menu-set-aspect', 'glass') }
           ]
         },
         {
           label: 'Settings...',
           accelerator: 'CmdOrCtrl+,',
-          click: () => mainWindow && mainWindow.webContents.send('menu-open-settings')
+          click: (_item, win) => windows.send(win, 'menu-open-settings')
         },
         { type: 'separator' },
         { role: 'togglefullscreen' },
@@ -204,23 +223,23 @@ function buildMenu() {
         {
           label: 'New Ephemeral Tab (Burn on Close)',
           accelerator: 'CmdOrCtrl+Shift+N',
-          click: () => mainWindow && mainWindow.webContents.send('menu-new-ephemeral-tab')
+          click: (_item, win) => windows.send(win, 'menu-new-ephemeral-tab')
         },
         {
           label: 'New Container Tab...',
           accelerator: 'CmdOrCtrl+Alt+T',
-          click: () => mainWindow && mainWindow.webContents.send('menu-new-container-tab')
+          click: (_item, win) => windows.send(win, 'menu-new-container-tab')
         },
         { type: 'separator' },
         {
           label: 'Next Tab',
           accelerator: 'Ctrl+Tab',
-          click: () => mainWindow && mainWindow.webContents.send('menu-next-tab')
+          click: (_item, win) => windows.send(win, 'menu-next-tab')
         },
         {
           label: 'Previous Tab',
           accelerator: 'Ctrl+Shift+Tab',
-          click: () => mainWindow && mainWindow.webContents.send('menu-prev-tab')
+          click: (_item, win) => windows.send(win, 'menu-prev-tab')
         }
       ]
     },
@@ -230,23 +249,23 @@ function buildMenu() {
         {
           label: 'Toggle Author Desk Companion Rail',
           accelerator: 'CmdOrCtrl+Shift+D',
-          click: () => mainWindow && mainWindow.webContents.send('companion-toggle-rail')
+          click: (_item, win) => windows.send(win, 'companion-toggle-rail')
         },
         {
           label: 'Append Highlighted Text to Companion Rail',
           accelerator: 'CmdOrCtrl+Shift+E',
-          click: () => mainWindow && mainWindow.webContents.send('companion-append-active-selection')
+          click: (_item, win) => windows.send(win, 'companion-append-active-selection')
         },
         { type: 'separator' },
         {
           label: 'Open Audio Grabber (RT Audio Studio)...',
           accelerator: 'CmdOrCtrl+Shift+G',
-          click: () => mainWindow && mainWindow.webContents.send('audio-grabber-open')
+          click: (_item, win) => windows.send(win, 'audio-grabber-open')
         },
         {
           label: 'Save Active Page to Offline Archive',
           accelerator: 'CmdOrCtrl+S',
-          click: () => mainWindow && mainWindow.webContents.send('archive-active-page')
+          click: (_item, win) => windows.send(win, 'archive-active-page')
         }
       ]
     },
@@ -265,19 +284,19 @@ function buildMenu() {
         {
           label: 'Keyboard Shortcuts',
           accelerator: 'CmdOrCtrl+/',
-          click: () => mainWindow && mainWindow.webContents.send('menu-shortcuts')
+          click: (_item, win) => windows.send(win, 'menu-shortcuts')
         },
         { type: 'separator' },
         {
           label: 'Check for Updates...',
-          click: () => {
-            checkForUpdatesInteractive(mainWindow);
+          click: (_item, win) => {
+            checkForUpdatesInteractive(win);
           }
         },
         { type: 'separator' },
         {
           label: 'About Recon Browser',
-          click: () => mainWindow && mainWindow.webContents.send('open-about-dialog')
+          click: (_item, win) => windows.send(win, 'open-about-dialog')
         }
       ]
     }
@@ -287,32 +306,21 @@ function buildMenu() {
   Menu.setApplicationMenu(menu);
 }
 
-function createWindow() {
-  const iconPath = path.join(__dirname, '../../build/icon.png');
+// Per-request events go to the window whose tab made the request
+function sendToRequestWindow(details, channel, payload) {
+  const contents = details.webContentsId ? electronWebContents.fromId(details.webContentsId) : null;
+  windows.send(windows.windowFor(contents), channel, payload);
+}
 
-  mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 840,
-    minWidth: 800,
-    minHeight: 600,
-    backgroundColor: '#0f111a',
-    title: 'Recon Browser',
-    icon: fs.existsSync(iconPath) ? iconPath : undefined,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      webviewTag: true
-    }
-  });
-
+// Runs once per process: the default session is shared by every window, and each
+// webRequest event keeps only one listener.
+function setupDefaultSession() {
   // Set clean standard Chrome User-Agent to prevent bot/captcha detection
   const defaultUA = session.defaultSession.getUserAgent();
   const cleanUA = defaultUA
     .replace(/Electron\/\S+\s?/, '')
     .replace(/recon-browser\/\S+\s?/, '');
   session.defaultSession.setUserAgent(cleanUA);
-
-  mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 
   function isSiteShieldsPaused(details) {
     if (!pausedHosts || pausedHosts.size === 0) return false;
@@ -424,9 +432,7 @@ function createWindow() {
           blocked: true,
           reason
         });
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('shield-blocked-update', { count: blockedCount, blockedUrl: host });
-        }
+        sendToRequestWindow(details, 'shield-blocked-update', { count: blockedCount, blockedUrl: host });
         return callback({ cancel: true });
       }
 
@@ -441,9 +447,7 @@ function createWindow() {
 
       if (details.resourceType === 'media' || /\.(mp3|wav|ogg|m4a|aac|flac|opus|webm)(\?.*)?$/i.test(details.url)) {
         audioGrabberManager.recordDetectedMedia(details.webContentsId, { url: details.url });
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('media-detected-update', { url: details.url });
-        }
+        sendToRequestWindow(details, 'media-detected-update', { url: details.url });
       }
     } catch (err) {
       // Ignore malformed URLs
@@ -451,20 +455,52 @@ function createWindow() {
 
     callback({ cancel: false });
   });
+}
 
-  // Start updater
+// Runs once per process. Status toasts go to one window, not to all of them.
+function startUpdater() {
   updater = new Updater((status) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('updater-status', status);
-    }
-  }, () => mainWindow);
+    windows.send(null, 'updater-status', status);
+  }, () => windows.active());
   updater.start();
+}
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+function createWindow() {
+  const iconPath = path.join(__dirname, '../../build/icon.png');
+
+  let bounds = { width: 1280, height: 840 };
+  const source = windows.active();
+  if (source) {
+    const { screen } = require('electron'); // only usable after app 'ready'
+    bounds = cascadeBounds(source.getNormalBounds(), screen.getDisplayMatching(source.getBounds()).workArea, {
+      taken: windows.all().map(w => w.getNormalBounds())
+    });
+  }
+
+  const win = new BrowserWindow({
+    ...bounds,
+    minWidth: 800,
+    minHeight: 600,
+    backgroundColor: '#0f111a',
+    title: 'Recon Browser',
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      webviewTag: true
+    }
   });
 
-  buildMenu();
+  windows.add(win);
+  win.loadFile(path.join(__dirname, '../renderer/index.html'));
+  return win;
+}
+
+function openWindow() {
+  const win = createWindow();
+  win.show();
+  win.focus();
+  return win;
 }
 
 // App Launching / Detection Logic & Ecosystem Catalog
@@ -692,7 +728,7 @@ ipcMain.on('open-external-url', (event, url) => {
 
 async function checkForUpdatesInteractive(win) {
   if (!updater) return;
-  const parent = win || mainWindow;
+  const parent = windows.all().includes(win) ? win : windows.active();
   const res = await updater.check({ silent: false });
   if (res.state === 'current') {
     dialog.showMessageBox(parent, {
@@ -758,8 +794,8 @@ ipcMain.on('copy-to-clipboard', (event, text) => {
   clipboard.writeText(text);
 });
 
-ipcMain.on('check-updates-manual', () => {
-  checkForUpdatesInteractive(mainWindow);
+ipcMain.on('check-updates-manual', (event) => {
+  checkForUpdatesInteractive(windows.windowFor(event.sender));
 });
 
 ipcMain.on('install-update-now', () => {
@@ -816,8 +852,8 @@ ipcMain.handle('default-browser:set', () => {
 // ==========================================================================
 ipcMain.handle('sync:get-config', () => syncManager.getConfig());
 ipcMain.handle('sync:save-config', (event, cfg) => syncManager.saveConfig(cfg));
-ipcMain.handle('sync:select-folder', async () => {
-  const res = await dialog.showOpenDialog(mainWindow, {
+ipcMain.handle('sync:select-folder', async (event) => {
+  const res = await dialog.showOpenDialog(dialogParent(event), {
     title: 'Select Folder for Zero-Knowledge Sync',
     properties: ['openDirectory', 'createDirectory']
   });
@@ -838,7 +874,7 @@ ipcMain.handle('sync:execute-now', async (event, { passphrase, localData }) => {
 ipcMain.handle('sync:create-backup', async (event, { passphrase, data }) => {
   try {
     const today = new Date().toISOString().slice(0, 10);
-    const res = await dialog.showSaveDialog(mainWindow, {
+    const res = await dialog.showSaveDialog(dialogParent(event), {
       title: 'Save Encrypted Recon Browser Backup',
       defaultPath: `ReconBrowser-Backup-${today}.reconbackup`,
       filters: [{ name: 'Recon Browser Backup', extensions: ['reconbackup'] }]
@@ -853,7 +889,7 @@ ipcMain.handle('sync:create-backup', async (event, { passphrase, data }) => {
 
 ipcMain.handle('sync:restore-backup', async (event, { passphrase }) => {
   try {
-    const res = await dialog.showOpenDialog(mainWindow, {
+    const res = await dialog.showOpenDialog(dialogParent(event), {
       title: 'Select Recon Browser Backup to Restore',
       filters: [{ name: 'Recon Browser Backup', extensions: ['reconbackup'] }],
       properties: ['openFile']
@@ -867,9 +903,9 @@ ipcMain.handle('sync:restore-backup', async (event, { passphrase }) => {
 });
 
 // Universal Importer & Exporter (Chrome, Brave, Firefox, Edge, Safari)
-ipcMain.handle('sync:import-bookmarks-html', async () => {
+ipcMain.handle('sync:import-bookmarks-html', async (event) => {
   try {
-    const res = await dialog.showOpenDialog(mainWindow, {
+    const res = await dialog.showOpenDialog(dialogParent(event), {
       title: 'Import Bookmarks (Chrome, Brave, Firefox, Edge, Safari)',
       filters: [{ name: 'HTML Bookmarks File', extensions: ['html', 'htm'] }],
       properties: ['openFile']
@@ -886,7 +922,7 @@ ipcMain.handle('sync:import-bookmarks-html', async () => {
 ipcMain.handle('sync:export-bookmarks-html', async (event, bookmarks) => {
   try {
     const today = new Date().toISOString().slice(0, 10);
-    const res = await dialog.showSaveDialog(mainWindow, {
+    const res = await dialog.showSaveDialog(dialogParent(event), {
       title: 'Export Bookmarks to Standard HTML',
       defaultPath: `bookmarks_${today}.html`,
       filters: [{ name: 'HTML File', extensions: ['html'] }]
@@ -900,9 +936,9 @@ ipcMain.handle('sync:export-bookmarks-html', async (event, bookmarks) => {
   }
 });
 
-ipcMain.handle('sync:import-vault-csv', async () => {
+ipcMain.handle('sync:import-vault-csv', async (event) => {
   try {
-    const res = await dialog.showOpenDialog(mainWindow, {
+    const res = await dialog.showOpenDialog(dialogParent(event), {
       title: 'Import Passwords CSV (Bitwarden, Chrome, Firefox, Brave, 1Password)',
       filters: [{ name: 'CSV File', extensions: ['csv'] }],
       properties: ['openFile']
@@ -921,11 +957,11 @@ ipcMain.handle('sync:import-vault-csv', async () => {
   }
 });
 
-ipcMain.handle('sync:export-vault-csv', async () => {
+ipcMain.handle('sync:export-vault-csv', async (event) => {
   try {
     const all = vault.getAll();
     const today = new Date().toISOString().slice(0, 10);
-    const res = await dialog.showSaveDialog(mainWindow, {
+    const res = await dialog.showSaveDialog(dialogParent(event), {
       title: 'Export Passwords to CSV',
       defaultPath: `recon_passwords_${today}.csv`,
       filters: [{ name: 'CSV File', extensions: ['csv'] }]
@@ -983,7 +1019,7 @@ ipcMain.handle('companion:append-snippet', (event, { noteId, data }) => companio
 ipcMain.handle('companion:export-note-md', async (event, { title, content }) => {
   try {
     const safeTitle = (title || 'companion_note').replace(/[^a-zA-Z0-9_-]/g, '_');
-    const res = await dialog.showSaveDialog(mainWindow, {
+    const res = await dialog.showSaveDialog(dialogParent(event), {
       title: 'Export Note to Markdown',
       defaultPath: `${safeTitle}.md`,
       filters: [{ name: 'Markdown File', extensions: ['md', 'markdown'] }]
@@ -1080,7 +1116,7 @@ async function initAppLink() {
     load: loadLinks,
     save: saveLinks,
     ask: async ({ name }) => {
-      const { response } = await dialog.showMessageBox(mainWindow, {
+      const { response } = await dialog.showMessageBox(windows.active(), {
         type: 'question',
         title: 'App Link Request',
         message: `Link ${name} with Recon Browser?`,
@@ -1092,9 +1128,7 @@ async function initAppLink() {
       return response === 0;
     },
     open: async ({ from, name, text, kind }) => {
-      if (mainWindow) {
-        mainWindow.webContents.send('app-link-received-document', { from, name, text, kind });
-      }
+      windows.send(null, 'app-link-received-document', { from, name, text, kind });
     }
   });
 
@@ -1238,14 +1272,22 @@ ipcMain.handle('spotlight:search', async (event, { query, context }) => {
 ipcMain.handle('workspaces:get-all', () => {
   return workspaceManager.getAll();
 });
+const announceWorkspaces = (event, change = {}) =>
+  windows.broadcast('workspaces-changed', change, { except: windows.windowFor(event.sender) });
 ipcMain.handle('workspaces:create', (event, { name, icon, color }) => {
-  return workspaceManager.create(name, icon, color);
+  const created = workspaceManager.create(name, icon, color);
+  announceWorkspaces(event);
+  return created;
 });
 ipcMain.handle('workspaces:update', (event, { id, updates }) => {
-  return workspaceManager.update(id, updates);
+  const updated = workspaceManager.update(id, updates);
+  announceWorkspaces(event);
+  return updated;
 });
 ipcMain.handle('workspaces:delete', (event, { id }) => {
-  return workspaceManager.delete(id);
+  const result = workspaceManager.delete(id);
+  if (result.success) announceWorkspaces(event, { deletedId: id });
+  return result;
 });
 ipcMain.handle('workspaces:set-active', (event, { id }) => {
   return workspaceManager.setActive(id);
@@ -1279,6 +1321,8 @@ app.on('web-contents-created', (event, contents) => {
 
     contents.on('context-menu', async (e, params) => {
       const menuTemplate = [];
+      const hostWindow = windows.windowFor(contents);
+      const sendToHost = (channel, payload) => windows.send(hostWindow, channel, payload);
 
       // 1. Link Context Actions (Bookmark link, open in new tab, copy address)
       if (params.linkURL) {
@@ -1286,17 +1330,13 @@ app.on('web-contents-created', (event, contents) => {
           {
             label: 'Open Link in New Tab',
             click: () => {
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('open-link-new-tab', { url: params.linkURL });
-              }
+              sendToHost('open-link-new-tab', { url: params.linkURL });
             }
           },
           {
             label: '🔥 Open Link in Ephemeral Tab',
             click: () => {
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('open-link-ephemeral', { url: params.linkURL });
-              }
+              sendToHost('open-link-ephemeral', { url: params.linkURL });
             }
           },
           {
@@ -1304,21 +1344,17 @@ app.on('web-contents-created', (event, contents) => {
             submenu: containerManager.getAll().map(c => ({
               label: `${c.icon} ${c.name}`,
               click: () => {
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                  mainWindow.webContents.send('open-link-container', { url: params.linkURL, containerId: c.id });
-                }
+                sendToHost('open-link-container', { url: params.linkURL, containerId: c.id });
               }
             }))
           },
           {
             label: '★ Bookmark Link',
             click: () => {
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('bookmark-link', {
-                  url: params.linkURL,
-                  title: params.linkText || params.linkURL
-                });
-              }
+              sendToHost('bookmark-link', {
+                url: params.linkURL,
+                title: params.linkText || params.linkURL
+              });
             }
           },
           {
@@ -1339,9 +1375,7 @@ app.on('web-contents-created', (event, contents) => {
           label: 'Send Research Clip...',
           accelerator: 'CmdOrCtrl+Shift+C',
           click: () => {
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('open-clip-dialog', { selectedText: params.selectionText });
-            }
+            sendToHost('open-clip-dialog', { selectedText: params.selectionText });
           }
         });
 
@@ -1349,9 +1383,7 @@ app.on('web-contents-created', (event, contents) => {
           label: '📝 Append to Companion Rail',
           accelerator: 'CmdOrCtrl+Shift+E',
           click: () => {
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send('companion-append-selection', { text: params.selectionText });
-            }
+            sendToHost('companion-append-selection', { text: params.selectionText });
           }
         });
 
@@ -1360,12 +1392,10 @@ app.on('web-contents-created', (event, contents) => {
             menuTemplate.push({
               label: `Send to ${a.name}`,
               click: () => {
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                  mainWindow.webContents.send('open-clip-dialog', {
-                    selectedText: params.selectionText,
-                    targetAppId: a.id
-                  });
-                }
+                sendToHost('open-clip-dialog', {
+                  selectedText: params.selectionText,
+                  targetAppId: a.id
+                });
               }
             });
           });
@@ -1375,9 +1405,7 @@ app.on('web-contents-created', (event, contents) => {
           {
             label: 'Copy as Markdown Quote',
             click: () => {
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('copy-clip-as-markdown', { selectedText: params.selectionText });
-              }
+              sendToHost('copy-clip-as-markdown', { selectedText: params.selectionText });
             }
           },
           { type: 'separator' },
@@ -1422,18 +1450,14 @@ app.on('web-contents-created', (event, contents) => {
             submenu: containerManager.getAll().map(c => ({
               label: `${c.icon} ${c.name}`,
               click: () => {
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                  mainWindow.webContents.send('tab-reopen-container', { containerId: c.id });
-                }
+                sendToHost('tab-reopen-container', { containerId: c.id });
               }
             }))
           },
           {
             label: '🔥 Reopen in Ephemeral Session',
             click: () => {
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('tab-reopen-ephemeral');
-              }
+              sendToHost('tab-reopen-ephemeral');
             }
           },
           { type: 'separator' },
@@ -1441,26 +1465,20 @@ app.on('web-contents-created', (event, contents) => {
             label: '★ Bookmark This Page',
             accelerator: 'CmdOrCtrl+D',
             click: () => {
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('bookmark-active-tab');
-              }
+              sendToHost('bookmark-active-tab');
             }
           },
           {
             label: '📦 Save Page to Offline Archive',
             accelerator: 'CmdOrCtrl+S',
             click: () => {
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('archive-active-page');
-              }
+              sendToHost('archive-active-page');
             }
           },
           {
             label: '⚡ Zap Element on Page...',
             click: () => {
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('trigger-element-zapper');
-              }
+              sendToHost('trigger-element-zapper');
             }
           },
           { type: 'separator' },
@@ -1468,18 +1486,14 @@ app.on('web-contents-created', (event, contents) => {
             label: '✍️ Toggle Author Desk Companion Rail',
             accelerator: 'CmdOrCtrl+Shift+D',
             click: () => {
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('companion-toggle-rail');
-              }
+              sendToHost('companion-toggle-rail');
             }
           },
           {
             label: '🎙️ Grab Audio from Page (Audio Studio)...',
             accelerator: 'CmdOrCtrl+Shift+G',
             click: () => {
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('audio-grabber-open');
-              }
+              sendToHost('audio-grabber-open');
             }
           }
         );
@@ -1487,13 +1501,13 @@ app.on('web-contents-created', (event, contents) => {
 
       if (menuTemplate.length > 0) {
         const menu = Menu.buildFromTemplate(menuTemplate);
-        menu.popup();
+        menu.popup(hostWindow ? { window: hostWindow } : undefined);
       }
     });
   }
 });
 
-app.whenReady().then(async () => {
+const startup = app.whenReady().then(async () => {
   try {
     await migrationManager.runAuditAndMigrate();
   } catch (err) {
@@ -1501,7 +1515,16 @@ app.whenReady().then(async () => {
   }
   applyDohConfig(dohEnabled);
   await initAppLink();
+  setupDefaultSession();
+  buildMenu();
   createWindow();
+  startUpdater();
+});
+
+// Launched again while running: leave open windows alone and add one. Waiting on
+// `startup` covers a second launch that arrives before the first has finished.
+app.on('second-instance', () => {
+  startup.then(() => openWindow());
 });
 
 app.on('will-quit', async () => {
@@ -1521,5 +1544,5 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  startup.then(() => { if (windows.count === 0) openWindow(); });
 });

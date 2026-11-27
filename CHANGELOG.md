@@ -5,6 +5,14 @@ All notable changes to **Recon Browser** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Multiple windows**: File &rarr; New Window (`Ctrl+N` / `Cmd+N`), and File &rarr; Close Window (`Ctrl+Shift+W` / `Cmd+Shift+W`). Menu commands act on the window they are used in, and theme, finish, bookmarks and global shield settings stay in step across windows. Each window keeps its own tabs and active workspace.
+
+### Fixed
+- **Starting Recon Browser while it is already running** ([#18](https://github.com/neogentrics/ReconBrowser/issues/18)) now opens another window from the running app, offset from the current one. Before, it started a second process on the same profile, which came up without your saved settings, in a window placed over the first one.
+
 ## [1.10.0] - 2026-11-19
 
 ### Added

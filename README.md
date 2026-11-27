@@ -240,6 +240,8 @@ The first stable release: multi-tab browsing, the DuckDuckGo address bar with `!
 
 ## Keyboard Shortcuts
 
+- `Ctrl+N` / `Cmd+N`: Open a new window (starting the app again does the same)
+- `Ctrl+Shift+W` / `Cmd+Shift+W`: Close the current window
 - `Ctrl+T` / `Cmd+T`: Open new tab (defaults to Recon Start)
 - `Ctrl+W` / `Cmd+W`: Close active tab
 - `Ctrl+L` / `Cmd+L`: Focus and select omnibar

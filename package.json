@@ -63,6 +63,9 @@
       "synopsis": "A privacy-hardened, bloat-free browser for the Recon Apps ecosystem"
     }
   },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
+  },
   "devDependencies": {
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8"

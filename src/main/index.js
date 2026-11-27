@@ -11,7 +11,8 @@ if (!app.requestSingleInstanceLock()) {
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
-const { Updater } = require('./updater');
+const { Updater, RELEASES_URL } = require('./updater');
+const { Versions, updatesFor } = require('./versions');
 const { PasswordVault } = require('./vault');
 const { HistoryManager } = require('./history');
 const { SyncManager } = require('./sync');
@@ -288,14 +289,14 @@ function buildMenu() {
         },
         { type: 'separator' },
         {
-          label: 'Check for Updates...',
+          label: 'Check for Updates…',
           click: (_item, win) => {
             checkForUpdatesInteractive(win);
           }
         },
         { type: 'separator' },
         {
-          label: 'About Recon Browser',
+          label: `About Recon Browser ${app.getVersion()}`,
           click: (_item, win) => windows.send(win, 'open-about-dialog')
         }
       ]
@@ -457,11 +458,9 @@ function setupDefaultSession() {
   });
 }
 
-// Runs once per process. Status toasts go to one window, not to all of them.
+// Runs once per process. Every window shows the update message.
 function startUpdater() {
-  updater = new Updater((status) => {
-    windows.send(null, 'updater-status', status);
-  }, () => windows.active());
+  updater = new Updater((status) => windows.broadcast('updater-status', status));
   updater.start();
 }
 
@@ -726,66 +725,48 @@ ipcMain.on('open-external-url', (event, url) => {
   }
 });
 
+// Opened in a Recon Browser tab. Handing it to the system could come straight back
+// here (when this is the default browser) without the address.
+function openUpdatePage(win) {
+  windows.send(win, 'open-link-new-tab', { url: updater?.status?.url || RELEASES_URL });
+}
+
 async function checkForUpdatesInteractive(win) {
   if (!updater) return;
-  const parent = windows.all().includes(win) ? win : windows.active();
   const res = await updater.check({ silent: false });
+  // Chosen after the check: the window that asked may have been closed meanwhile
+  const parent = windows.all().includes(win) ? win : windows.active();
+  const opts = { type: 'info', title: 'Check for Updates', buttons: ['OK'] };
   if (res.state === 'current') {
-    dialog.showMessageBox(parent, {
-      type: 'info',
-      title: 'Check for Updates',
-      message: 'You’re up to date',
-      detail: `Recon Browser ${app.getVersion()} is the latest version.`,
-      buttons: ['OK']
-    });
+    dialog.showMessageBox(parent, { ...opts, message: 'You’re up to date', detail: `Recon Browser ${app.getVersion()} is the latest version.` });
   } else if (res.state === 'available') {
-    const isDownloading = updater.isDownloading;
-    const hasInstaller = Boolean(updater.downloadedInstallerPath);
-
-    if (hasInstaller) {
-      const { response } = await dialog.showMessageBox(parent, {
-        type: 'info',
-        title: 'Update Ready to Install',
-        message: `Recon Browser v${res.version} has been downloaded!`,
-        detail: 'Click "Install & Restart" to apply the update now. Windows may ask for administrative (UAC) permission.',
-        buttons: ['Install & Restart', 'Later'],
-        defaultId: 0,
-        cancelId: 1
-      });
-      if (response === 0) {
-        updater.installNow();
-      }
-    } else {
-      dialog.showMessageBox(parent, {
-        type: 'info',
-        title: 'Update Available',
-        message: `Recon Browser v${res.version} is available!`,
-        detail: isDownloading
-          ? 'Recon Browser is currently downloading the installer in the background. You will be prompted as soon as it is ready to install.'
-          : 'The update is downloading in the background. You can continue browsing.',
-        buttons: ['OK']
-      });
-    }
-  } else if (res.state === 'downloading' || res.state === 'ready') {
-    const isReady = res.state === 'ready';
     const { response } = await dialog.showMessageBox(parent, {
-      type: 'info',
-      title: isReady ? 'Update Ready to Install' : 'Downloading Update',
-      message: `Recon Browser v${res.version} is ${isReady ? 'ready to install' : 'downloading in the background'}`,
-      detail: isReady ? 'Restart Recon Browser now to apply the update?' : 'You will be notified as soon as the download finishes.',
-      buttons: isReady ? ['Restart to Update', 'Later'] : ['OK'],
+      ...opts,
+      message: `Version ${res.version} is available`,
+      detail: 'This copy can’t update itself. Download the new version from the Releases page.',
+      buttons: ['Open Download Page', 'Later'],
       defaultId: 0,
       cancelId: 1
     });
-    if (isReady && response === 0) {
-      updater.installNow();
-    }
-  } else if (res.state === 'error') {
+    if (response === 0) openUpdatePage(parent);
+  } else if (res.state === 'ready') {
+    const { response } = await dialog.showMessageBox(parent, {
+      ...opts,
+      message: `Version ${res.version} is ready to install`,
+      detail: 'Restart Recon Browser now to update, or it will install the next time you quit.',
+      buttons: ['Restart to update', 'Later'],
+      defaultId: 0,
+      cancelId: 1
+    });
+    if (response === 0) updater.installNow();
+  } else if (res.state === 'downloading') {
+    dialog.showMessageBox(parent, { ...opts, message: `Version ${res.version} is downloading`, detail: 'You’ll be asked to restart when it’s ready.' });
+  } else {
     dialog.showMessageBox(parent, {
+      ...opts,
       type: 'warning',
-      title: 'Update Check',
       message: 'Couldn’t check for updates',
-      detail: res.message || 'Check your internet connection and try again.'
+      detail: `${res.message || 'Check your internet connection and try again.'}\n\nYou can always find new versions at:\n${RELEASES_URL}`
     });
   }
 }
@@ -800,6 +781,29 @@ ipcMain.on('check-updates-manual', (event) => {
 
 ipcMain.on('install-update-now', () => {
   if (updater) updater.installNow();
+});
+
+// A window opened after an update was found asks for it here
+ipcMain.handle('update:get-status', () => updater?.status || { state: 'idle' });
+ipcMain.on('update:open-page', (event) => openUpdatePage(windows.windowFor(event.sender)));
+
+// Latest versions of the other Recon Towers apps, for the nudge in the apps panel
+let versions = null;
+function checkAppVersions(options) {
+  if (process.env.RB_DISABLE_UPDATES) return Promise.resolve({ state: 'unavailable', apps: {} });
+  // Tests may point this at a server on this computer, and nowhere else
+  const testUrl = /^http:\/\/127\.0\.0\.1:\d+\//.test(process.env.RB_VERSIONS_URL || '') ? process.env.RB_VERSIONS_URL : null;
+  versions ??= new Versions({
+    file: path.join(app.getPath('userData'), 'versions-cache.json'),
+    ...(testUrl ? { url: testUrl } : {})
+  });
+  return versions.check(options);
+}
+
+ipcMain.handle('app-versions:check', async (event, { force } = {}) => {
+  const answer = await checkAppVersions({ force: Boolean(force) });
+  const peers = appLinkInstance ? await appLinkInstance.list() : [];
+  return { state: answer.state, updates: updatesFor(answer, peers) };
 });
 
 // ==========================================================================
@@ -1519,6 +1523,7 @@ const startup = app.whenReady().then(async () => {
   buildMenu();
   createWindow();
   startUpdater();
+  checkAppVersions().catch(() => {});
 });
 
 // Launched again while running: leave open windows alone and add one. Waiting on

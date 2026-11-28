@@ -2,7 +2,7 @@
 
 Thanks for your interest in no!
 
-This is **proprietary software**: all rights are reserved, and no licence to copy, fork or redistribute it is granted. The source is public for transparency, but **code contributions are
+This is **proprietary software** (see [LICENSE](LICENSE)). The source is public for transparency, but **code contributions are
 by invitation only**. Please don't open pull requests unless you've been asked to.
 
 Please don't fork the project to publish your own version or send changes back without asking first. Knowing who is building on the code is how we keep unwanted or harmful changes out.
@@ -16,7 +16,7 @@ You are very welcome to:
 
 Issues are public, so please keep your own writing, story names and private details out of them.
 
-By submitting an issue, suggestion or other feedback you let the owner use it freely, with no obligation to you.
+By submitting an issue, suggestion or other feedback you agree to the terms of the [LICENSE](LICENSE).
 
 ## For invited collaborators
 

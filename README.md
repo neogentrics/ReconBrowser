@@ -8,8 +8,9 @@
 <br>
 
 [![Latest Release](https://img.shields.io/github/v/release/neogentrics/ReconBrowser?style=for-the-badge&color=7c3aed&labelColor=150e22)](https://github.com/neogentrics/ReconBrowser/releases/latest)
+[![Tests](https://img.shields.io/github/actions/workflow/status/neogentrics/ReconBrowser/ci.yml?branch=main&style=for-the-badge&label=tests&labelColor=150e22)](https://github.com/neogentrics/ReconBrowser/actions/workflows/ci.yml)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/neogentrics/ReconBrowser/release.yml?branch=main&style=for-the-badge&label=builds&labelColor=150e22)](https://github.com/neogentrics/ReconBrowser/actions)
-[![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge&labelColor=150e22)](LICENSE)
+[![License](https://img.shields.io/badge/license-proprietary-f2b417?style=for-the-badge&labelColor=150e22)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-1f6feb?style=for-the-badge&labelColor=150e22)](#downloads)
 [![Default Search](https://img.shields.io/badge/search-DuckDuckGo-de5833?style=for-the-badge&logo=duckduckgo&logoColor=white&labelColor=150e22)](https://duckduckgo.com)
 [![Shields](https://img.shields.io/badge/shields-native_blocking-da3633?style=for-the-badge&labelColor=150e22)](#key-highlights)
@@ -262,25 +263,7 @@ The first stable release: multi-tab browsing, the DuckDuckGo address bar with `!
 
 ## Roadmap
 
-The full plan, with every feature, is in [docs/ROADMAP.md](docs/ROADMAP.md). In short:
-
-| Version | Status | Theme |
-| :--- | :--- | :--- |
-| **v1.0** | Released | The first stable release |
-| **v1.1** | Released | Updates, tab isolation, themes and the shields popover |
-| **v1.2** | Released | Reader View, Read Aloud, aspects and accessible themes |
-| **v1.3.1**| Released | StoryTracker & Markdown Reader research: send research clips with YAML front matter via App Link |
-| **v1.3.2**| Released | Tab dragging & rearranging, 4 spectrum themes (blues/reds/yellows), auto-updater manifest pipeline |
-| **v1.3.3**| Released | Centered tabbed settings modal, high contrast theme fixes, draggable modal, live shields sync |
-| **v1.4.0**| Released | Encrypted Password Vault, opt-in autofill, bookmarks bar, right-click bookmarking, daily history |
-| **v1.5.0**| Released | Zero-Knowledge Sync, Shields 2.0, Universal Cross-Browser Import/Export & Offline Research Archives |
-| **v1.6.0**| Released | Creative suite hooks: docked Author Desk companion rail and audio grabber for RT Audio Studio |
-| **v1.7.0**| Planned | Containers for separate identities, per-container proxies and disposable tabs |
-| **v1.8.0**| Planned | A local AI helper through Ollama, with nothing sent to the cloud |
-| **v1.9.0**| Planned | Decentralized Gateway: native IPFS (`ipfs://`) and Gemini (`gemini://`) handlers |
-| **v2.0.0**| Milestone | The connected studio browser: everything from 1.x hardened, with a Recon Spotlight search (`Ctrl+K`) |
-| **v2.x** | Planned | Workspaces and tree tabs, `ipfs://` and `gemini://`, home server sync, a security toolkit, a research canvas, a hardware-key vault |
-| **v3.0** | Milestone | The default browser on ReconOS, and the browser for the whole Recon Towers suite |
+What is released, what is in progress and what is planned is in [ROADMAP.md](ROADMAP.md). The detailed plan is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---
 

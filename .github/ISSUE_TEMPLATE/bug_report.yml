@@ -1,0 +1,29 @@
+name: Bug report
+description: Something looks wrong or the browser misbehaves
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead? Screenshots help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What did you click or type, in order? Say if it only happens with several windows or tabs open.
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Help → About Recon Browser
+      placeholder: "1.10.0"
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows 11, Windows 10, macOS, Linux]
+    validations:
+      required: true

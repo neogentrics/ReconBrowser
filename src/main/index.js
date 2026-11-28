@@ -37,6 +37,8 @@ const { exportBookmarksToHtml, parseBookmarksHtml, exportVaultToCsv, parseVaultC
 const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link');
 const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
 const { WindowManager, cascadeBounds } = require('./window-manager');
+const { createShieldsGuard, parseFilterList } = require('./shields-guard');
+const { createPrivacy } = require('./privacy');
 
 const windows = new WindowManager();
 let blockedCount = 0;
@@ -58,22 +60,95 @@ const dialogParent = (event) => windows.windowFor(event.sender) || windows.activ
 
 // Load tracking domains blocklist
 const filterPath = path.join(__dirname, '../../config/filters/default-trackers.txt');
-const trackingDomains = new Set();
+let trackerRules;
 
 try {
-  const content = fs.readFileSync(filterPath, 'utf-8');
-  content.split('\n').forEach(line => {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('!') && !trimmed.startsWith('#') && !trimmed.startsWith('[')) {
-      let clean = trimmed.replace(/^\|\|/, '').replace(/\^.*$/, '').replace(/\$.*$/, '').replace(/\/.*$/, '').trim();
-      if (clean) trackingDomains.add(clean.toLowerCase());
-    }
-  });
-  console.log(`[Recon Shields] Loaded ${trackingDomains.size} tracking rules.`);
+  trackerRules = parseFilterList(fs.readFileSync(filterPath, 'utf-8'));
+  console.log(`[Recon Shields] Loaded ${trackerRules.length} tracking rules.`);
 } catch (e) {
   console.warn('[Recon Shields] Could not load blocklist from disk, using default fallbacks.');
-  ['google-analytics.com', 'doubleclick.net', 'criteo.com', 'facebook.net'].forEach(d => trackingDomains.add(d));
+  trackerRules = parseFilterList('google-analytics.com\ndoubleclick.net\ncriteo.com\nfacebook.net');
 }
+
+// Tracking-parameter, WebRTC and anti-fingerprinting protections
+const privacy = createPrivacy({ isShieldsEnabled: () => shieldsEnabled, pausedHosts });
+const fingerprintPreload = path.join(__dirname, '../preload/fingerprint.js');
+const protectedSessions = new WeakSet();
+
+function protectSession(ses) {
+  shieldsGuard.attach(ses);
+  if (!protectedSessions.has(ses)) {
+    protectedSessions.add(ses);
+    ses.setPreloads([...ses.getPreloads(), fingerprintPreload]);
+  }
+}
+
+// The browser's own pages are never altered, only tabs and the popups they open
+const isBrowserUi = (contents) => windows.all().some(w => w.webContents === contents);
+
+ipcMain.on('privacy:page-config', (event) => {
+  const frame = event.senderFrame;
+  event.returnValue = !frame || isBrowserUi(event.sender)
+    ? { fingerprint: false }
+    : privacy.fingerprintConfig(frame.url, frame.top?.url);
+});
+
+function applyWebRtcPolicy(contents, url = contents.getURL()) {
+  if (!contents.isDestroyed()) contents.setWebRTCIPHandlingPolicy(privacy.webrtcPolicy(url));
+}
+const refreshWebRtcPolicy = () => electronWebContents.getAllWebContents().forEach(c => applyWebRtcPolicy(c));
+
+ipcMain.on('set-privacy-options', (_event, options) => {
+  privacy.setOptions(options);
+  refreshWebRtcPolicy();
+});
+
+// Popups do not inherit the frame setting below, so they are given it as they open
+function coverPopupFrames(contents) {
+  contents.setWindowOpenHandler(() => ({
+    action: 'allow',
+    overrideBrowserWindowOptions: { webPreferences: { nodeIntegrationInSubFrames: true } }
+  }));
+  contents.on('did-create-window', (child) => coverPopupFrames(child.webContents));
+}
+
+app.on('web-contents-created', (_event, contents) => {
+  if (contents.getType() === 'webview') coverPopupFrames(contents);
+  applyWebRtcPolicy(contents, '');
+  contents.on('did-start-navigation', (details) => {
+    if (details.isMainFrame && !details.isSameDocument) applyWebRtcPolicy(contents, details.url);
+  });
+  // Lets the preload reach frames inside a page too. It does not give pages Node.
+  contents.on('will-attach-webview', (_e, webPreferences) => {
+    webPreferences.nodeIntegrationInSubFrames = true;
+  });
+});
+
+// Network request interception (Recon Shields 2.0 & Live Inspector). Tabs use their
+// own session partitions, so it is attached to every session, not just the default one.
+const shieldsGuard = createShieldsGuard({
+  rules: trackerRules,
+  isDomainBlocked: (host) => shieldsManager.isDomainBlocked(host),
+  isEnabled: () => shieldsEnabled,
+  pausedHosts,
+  pageUrlOf: (id) => {
+    const contents = electronWebContents.fromId(id);
+    return contents && !contents.isDestroyed() ? contents.getURL() : '';
+  },
+  cleanNavigation: (details) => privacy.cleanNavigation(details),
+  log: (id, entry) => shieldsManager.logRequest(id, entry),
+  onBlocked: (details, host) => {
+    blockedCount++;
+    sendToRequestWindow(details, 'shield-blocked-update', {
+      count: blockedCount, blockedUrl: host, webContentsId: details.webContentsId
+    });
+  },
+  onMedia: (details) => {
+    audioGrabberManager.recordDetectedMedia(details.webContentsId, { url: details.url });
+    sendToRequestWindow(details, 'media-detected-update', { url: details.url });
+  }
+});
+app.on('session-created', protectSession);
 
 function buildMenu() {
   const isMac = process.platform === 'darwin';
@@ -323,139 +398,7 @@ function setupDefaultSession() {
     .replace(/recon-browser\/\S+\s?/, '');
   session.defaultSession.setUserAgent(cleanUA);
 
-  function isSiteShieldsPaused(details) {
-    if (!pausedHosts || pausedHosts.size === 0) return false;
-
-    const candidates = [];
-    try {
-      const url = new URL(details.url);
-      if (url.hostname) candidates.push(url.hostname.toLowerCase());
-    } catch {}
-
-    if (details.initiator) {
-      try {
-        const initUrl = new URL(details.initiator);
-        if (initUrl.hostname) candidates.push(initUrl.hostname.toLowerCase());
-      } catch {}
-    }
-
-    if (details.referrer) {
-      try {
-        const refUrl = new URL(details.referrer);
-        if (refUrl.hostname) candidates.push(refUrl.hostname.toLowerCase());
-      } catch {}
-    }
-
-    if (details.webContentsId) {
-      try {
-        const wc = webContents.fromId(details.webContentsId);
-        if (wc && !wc.isDestroyed()) {
-          const pageUrl = wc.getURL();
-          if (pageUrl) {
-            const u = new URL(pageUrl);
-            if (u.hostname) candidates.push(u.hostname.toLowerCase());
-          }
-        }
-      } catch {}
-    }
-
-    for (const candidate of candidates) {
-      const baseCandidate = candidate.replace(/^www\./, '');
-      for (const p of pausedHosts) {
-        const cleanP = p.toLowerCase().trim();
-        const baseP = cleanP.replace(/^www\./, '');
-        if (
-          candidate === cleanP ||
-          candidate.endsWith('.' + cleanP) ||
-          cleanP.endsWith('.' + candidate) ||
-          baseCandidate === baseP ||
-          baseCandidate.endsWith('.' + baseP) ||
-          baseP.endsWith('.' + baseCandidate)
-        ) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  // Network request interception (Recon Shields 2.0 & Live Inspector)
-  session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
-    if (!shieldsEnabled) {
-      shieldsManager.logRequest(details.webContentsId, {
-        url: details.url,
-        method: details.method,
-        resourceType: details.resourceType,
-        blocked: false,
-        reason: 'Shields Global Disabled'
-      });
-      return callback({ cancel: false });
-    }
-
-    try {
-      if (isSiteShieldsPaused(details)) {
-        shieldsManager.logRequest(details.webContentsId, {
-          url: details.url,
-          method: details.method,
-          resourceType: details.resourceType,
-          blocked: false,
-          reason: 'Site Shield Paused'
-        });
-        return callback({ cancel: false });
-      }
-
-      const url = new URL(details.url);
-      const host = url.hostname.toLowerCase();
-
-      let isBlocked = false;
-      let reason = '';
-
-      for (const domain of trackingDomains) {
-        if (host === domain || host.endsWith('.' + domain)) {
-          isBlocked = true;
-          reason = 'Suffix Tracker Filter';
-          break;
-        }
-      }
-
-      if (!isBlocked && shieldsManager.isDomainBlocked(host)) {
-        isBlocked = true;
-        reason = 'Shields 2.0 Subscription';
-      }
-
-      if (isBlocked) {
-        blockedCount++;
-        shieldsManager.logRequest(details.webContentsId, {
-          url: details.url,
-          host,
-          method: details.method,
-          resourceType: details.resourceType,
-          blocked: true,
-          reason
-        });
-        sendToRequestWindow(details, 'shield-blocked-update', { count: blockedCount, blockedUrl: host });
-        return callback({ cancel: true });
-      }
-
-      shieldsManager.logRequest(details.webContentsId, {
-        url: details.url,
-        host,
-        method: details.method,
-        resourceType: details.resourceType,
-        blocked: false,
-        reason: 'Allowed'
-      });
-
-      if (details.resourceType === 'media' || /\.(mp3|wav|ogg|m4a|aac|flac|opus|webm)(\?.*)?$/i.test(details.url)) {
-        audioGrabberManager.recordDetectedMedia(details.webContentsId, { url: details.url });
-        sendToRequestWindow(details, 'media-detected-update', { url: details.url });
-      }
-    } catch (err) {
-      // Ignore malformed URLs
-    }
-
-    callback({ cancel: false });
-  });
+  protectSession(session.defaultSession);
 }
 
 // Runs once per process. Every window shows the update message.
@@ -667,6 +610,7 @@ ipcMain.on('toggle-doh', (event, enabled) => {
 
 ipcMain.on('toggle-shields', (event, enabled) => {
   shieldsEnabled = enabled;
+  refreshWebRtcPolicy();
   console.log(`[Recon Shields] Global State toggled: ${shieldsEnabled ? 'ACTIVE' : 'DISABLED'}`);
 });
 
@@ -681,6 +625,7 @@ ipcMain.on('set-site-shields', (event, { host, enabled }) => {
     pausedHosts.add(cleanHost);
     pausedHosts.add(baseHost);
   }
+  refreshWebRtcPolicy();
   console.log(`[Recon Shields] Host ${cleanHost} (${baseHost}) set to: ${enabled ? 'ACTIVE' : 'PAUSED'}`);
 });
 

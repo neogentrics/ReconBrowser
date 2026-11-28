@@ -126,7 +126,7 @@ class SpotlightManager {
     // 5. Offline Archives
     if (!isCommandOnly && !isTabOnly && !isBookmarkOnly && !isHistoryOnly && this.archiveManager) {
       try {
-        const archives = this.archiveManager.listArchives ? this.archiveManager.listArchives() : [];
+        const archives = this.archiveManager.getAll();
         for (const arc of archives) {
           const score = this.scoreMatch(cleanQuery, arc.title, arc.url);
           if (score > 0) {
@@ -136,7 +136,7 @@ class SpotlightManager {
               icon: '📦',
               title: arc.title || 'Archived Page',
               subtitle: arc.url || arc.filePath,
-              archivePath: arc.filePath,
+              archiveId: arc.id,
               score: score + 15
             });
           }

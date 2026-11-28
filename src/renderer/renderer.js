@@ -3511,12 +3511,13 @@ async function saveCurrentPageToArchive() {
   showToast('📦 Preserving page into Offline Research Archive (.reconarchive)...');
   try {
     const res = await ipcRenderer.invoke('archive:save-active-tab', {
+      webContentsId: tab.webviewEl.getWebContentsId(),
       url: tab.url,
       title: tab.title || tab.url,
       tags: ['research']
     });
     if (res && res.success) {
-      showToast(`✓ Page preserved offline (${(res.archive.sizeBytes / 1024).toFixed(1)} KB)`);
+      showToast(`✓ Page preserved offline (${(res.archive.fileSizeBytes / 1024).toFixed(1)} KB)`);
       loadAndRenderArchives();
     } else {
       showToast(`Archive failed: ${res && res.error ? res.error : 'Unknown error'}`);
@@ -3524,6 +3525,16 @@ async function saveCurrentPageToArchive() {
   } catch (err) {
     showToast(`Archive failed: ${err.message}`);
   }
+}
+
+async function openArchive(id) {
+  const res = await ipcRenderer.invoke('archive:open', id);
+  if (res && res.success) {
+    createTab(res.url, true);
+    return true;
+  }
+  showToast(`Could not open archive: ${res?.error || 'Unknown error'}`);
+  return false;
 }
 
 async function loadAndRenderArchives(query = '') {
@@ -3543,14 +3554,16 @@ async function loadAndRenderArchives(query = '') {
     }
 
     archiveListContainer.innerHTML = archives.map(item => {
-      const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—';
-      const sizeKb = (item.sizeBytes / 1024).toFixed(1);
+      const dateStr = item.savedAt ? new Date(item.savedAt).toLocaleDateString() : '—';
+      const sizeKb = ((item.fileSizeBytes || 0) / 1024).toFixed(1);
+      let domain = '';
+      try { domain = new URL(item.url).hostname; } catch {}
       return `
         <div class="archive-card" data-archive-id="${escapeHtml(item.id)}">
           <div class="archive-card-left">
             <div class="archive-card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
             <div class="archive-card-meta">
-              <span class="archive-card-domain">${escapeHtml(item.domain)}</span>
+              <span class="archive-card-domain">${escapeHtml(domain)}</span>
               <span>•</span>
               <span>${dateStr}</span>
               <span>•</span>
@@ -3558,7 +3571,7 @@ async function loadAndRenderArchives(query = '') {
             </div>
           </div>
           <div class="archive-card-actions">
-            <button class="btn-primary btn-open-archive" data-path="${escapeHtml(item.filePath)}" style="font-size: 11px; padding: 4px 10px;">📖 Open</button>
+            <button class="btn-primary btn-open-archive" data-id="${escapeHtml(item.id)}" style="font-size: 11px; padding: 4px 10px;">📖 Open</button>
             <button class="btn-subtle btn-delete-archive" data-id="${escapeHtml(item.id)}" style="font-size: 11px; padding: 4px 8px;" title="Delete Archive">🗑️</button>
           </div>
         </div>
@@ -3566,13 +3579,8 @@ async function loadAndRenderArchives(query = '') {
     }).join('');
 
     archiveListContainer.querySelectorAll('.btn-open-archive').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const p = btn.getAttribute('data-path');
-        if (p) {
-          const fileUrl = 'file:///' + p.replace(/\\/g, '/');
-          createTab(fileUrl, true);
-          closeSettingsModal();
-        }
+      btn.addEventListener('click', async () => {
+        if (await openArchive(btn.getAttribute('data-id'))) closeSettingsModal();
       });
     });
 
@@ -5591,8 +5599,8 @@ function executeSpotlightItem(index) {
     createTab(item.url, true);
   } else if (item.type === 'history' && item.url) {
     createTab(item.url, true);
-  } else if (item.type === 'archive' && item.archivePath) {
-    createTab(`file://${item.archivePath}`, true);
+  } else if (item.type === 'archive' && item.archiveId) {
+    openArchive(item.archiveId);
   } else if (item.type === 'command' && item.action) {
     executeCommandAction(item.action);
   }

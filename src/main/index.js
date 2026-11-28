@@ -11,12 +11,13 @@ if (!app.requestSingleInstanceLock()) {
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
+const { pathToFileURL } = require('url');
 const { Updater, RELEASES_URL } = require('./updater');
 const { Versions, updatesFor } = require('./versions');
 const { PasswordVault } = require('./vault');
 const { HistoryManager } = require('./history');
 const { SyncManager } = require('./sync');
-const { ArchiveManager } = require('./archive');
+const { ArchiveManager, tabToArchive } = require('./archive');
 const { ShieldsManager } = require('./shields2');
 const { CompanionRailManager } = require('./companion-rail');
 const { AudioGrabberManager } = require('./audio-grabber');
@@ -984,13 +985,17 @@ ipcMain.handle('sync:export-vault-csv', async (event) => {
 // ==========================================================================
 ipcMain.handle('archive:save-active-tab', async (event, metadata) => {
   try {
-    const allWebContents = session.defaultSession.getAllWebContents();
-    const webviewContents = allWebContents.find(wc => wc.getType() === 'webview' && !wc.isDestroyed() && wc.getURL() === metadata.url);
-    if (!webviewContents) {
-      throw new Error('Active page contents not found for archiving');
-    }
-    const saved = await archiveManager.savePageArchive(webviewContents, metadata);
+    const { webContentsId, ...details } = metadata || {};
+    const contents = Number.isInteger(webContentsId) ? electronWebContents.fromId(webContentsId) : null;
+    const saved = await archiveManager.savePageArchive(tabToArchive(contents, event.sender), details);
     return { success: true, archive: saved };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+ipcMain.handle('archive:open', (event, id) => {
+  try {
+    return { success: true, url: pathToFileURL(archiveManager.prepareForViewing(id)).href };
   } catch (err) {
     return { success: false, error: err.message };
   }

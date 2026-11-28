@@ -3,9 +3,62 @@
 const { app } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { fileURLToPath } = require('url');
+
+const RECORDED_PROTOCOLS = new Set(['http:', 'https:', 'file:']);
+// One-time tokens that Cloudflare's bot check adds to the address
+const CHALLENGE_PARAM = /^__cf_chl/i;
+// The same visit can be reported again while a person is completing a check
+const CHALLENGE_WINDOW_MS = 5 * 60 * 1000;
+const REPEAT_WINDOW_MS = 4000;
+// A page sets its title shortly after it loads. Later changes are ignored.
+const TITLE_WINDOW_MS = 30000;
+
+const isInside = (file, dir) => {
+  const relative = path.relative(dir, file);
+  return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
+};
+
+/**
+ * What to record for an address: `{ url, challenge }`, or null when it is not a
+ * visit worth keeping (the browser's own pages and files, and bot-check pages).
+ * `challenge` means one-time tokens were taken out of the address.
+ */
+function recordableAddress(address, internalDirs = []) {
+  let url;
+  try {
+    url = new URL(address);
+  } catch {
+    return null;
+  }
+  if (!RECORDED_PROTOCOLS.has(url.protocol)) return null;
+
+  if (url.protocol === 'file:') {
+    let file;
+    try {
+      file = fileURLToPath(url);
+    } catch {
+      return { url: address, challenge: false };
+    }
+    return internalDirs.some(dir => isInside(file, dir)) ? null : { url: address, challenge: false };
+  }
+
+  if (url.pathname.startsWith('/cdn-cgi/challenge-platform/')) return null;
+  if (/(^|\.)google\.[a-z.]+$/i.test(url.hostname) && url.pathname.startsWith('/sorry/')) return null;
+
+  const parts = url.search.slice(1).split('&');
+  const kept = parts.filter(part => !CHALLENGE_PARAM.test(part.split('=')[0]));
+  if (!url.search || kept.length === parts.length) return { url: address, challenge: false };
+  const hash = url.hash;
+  url.hash = '';
+  url.search = '';
+  return { url: url.href + (kept.length ? `?${kept.join('&')}` : '') + hash, challenge: true };
+}
 
 class HistoryManager {
-  constructor() {
+  /** `internalDirs` hold the browser's own pages and files, which are not history. */
+  constructor({ internalDirs = [] } = {}) {
+    this.internalDirs = internalDirs;
     this.historyPath = path.join(app.getPath('userData'), 'recon_history.json');
     this.memoryCache = null;
     this.lastAdded = null;
@@ -48,19 +101,24 @@ class HistoryManager {
     }
   }
 
-  add({ url, title }) {
-    if (!url || typeof url !== 'string') return null;
-    // Skip internal startpage or blank pages
-    if (url.includes('startpage.html') || url === 'about:blank' || url.startsWith('chrome://')) {
-      return null;
-    }
+  add({ url: address, title }) {
+    if (!address || typeof address !== 'string') return null;
+    const record = recordableAddress(address, this.internalDirs);
+    if (!record) return null;
+    const { url, challenge } = record;
 
-    const cleanTitle = title || url;
+    const cleanTitle = !title || title === address ? url : title;
     const now = Date.now();
 
-    // Debounce duplicate navigations within 4 seconds
-    if (this.lastAdded && this.lastAdded.url === url && (now - this.lastAdded.time) < 4000) {
-      return null;
+    // Debounce repeats of the same visit, for longer while a bot check is under way
+    const last = this.lastAdded;
+    if (last && last.url === url) {
+      const afterChallenge = challenge || last.challenge;
+      if (now - last.time < (afterChallenge ? CHALLENGE_WINDOW_MS : REPEAT_WINDOW_MS)) {
+        last.challenge = afterChallenge;
+        if (afterChallenge) this.markVisitedNow(url, now);
+        return null;
+      }
     }
 
     const all = this.load();
@@ -77,9 +135,30 @@ class HistoryManager {
       all.length = 5000;
     }
 
-    this.lastAdded = { url, time: now };
+    this.lastAdded = { url, time: now, challenge };
     this.save(all);
     return entry;
+  }
+
+  // The visit happens when the check is passed, and the real title follows that
+  markVisitedNow(url, now) {
+    const all = this.load();
+    const entry = all.find(item => item.url === url);
+    if (entry) {
+      entry.timestamp = now;
+      this.save(all);
+    }
+  }
+
+  /** The page's own title arrives after the visit has been recorded. */
+  setTitle(address, title) {
+    const record = recordableAddress(address, this.internalDirs);
+    if (!record || !title || title === address) return false;
+    const all = this.load();
+    const entry = all.find(item => item.url === record.url);
+    if (!entry || entry.title === title || Date.now() - entry.timestamp > TITLE_WINDOW_MS) return false;
+    entry.title = title;
+    return this.save(all);
   }
 
   getAll() {
@@ -171,4 +250,4 @@ class HistoryManager {
   }
 }
 
-module.exports = { HistoryManager };
+module.exports = { HistoryManager, recordableAddress };

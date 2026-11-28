@@ -916,6 +916,7 @@ function closeSettingsModal() {
 }
 
 function switchSettingsTab(tabId) {
+  if (tabId === 'applink') checkAppVersions();
   const navBtns = document.querySelectorAll('.settings-nav-btn');
   const panels = document.querySelectorAll('.settings-panel');
   navBtns.forEach(btn => {
@@ -1751,18 +1752,47 @@ ipcRenderer.on('menu-open-settings', () => {
   openSettingsModal('appearance');
 });
 
-// Auto-Updater status listener
-ipcRenderer.on('updater-status', (event, status) => {
-  if (status.state === 'checking') {
-    showToast('Checking GitHub for updates...');
-  } else if (status.state === 'current') {
-    showToast(`Recon Browser is up to date (v${status.version})`);
-  } else if (status.state === 'available') {
-    showToast(`Update available: v${status.version}! Click Help → Check for Updates to download.`, 6000);
-  } else if (status.state === 'ready') {
-    showToast(`Update v${status.version} ready. Restart to apply update!`, 8000);
-  }
+// ==========================================================================
+// Update Message
+// ==========================================================================
+// Only an update that can be acted on is shown. Checking, downloading, "up to
+// date" and failures are quiet here; a manual check reports those in a dialog.
+const updateBanner = document.getElementById('update-banner');
+const updateBannerText = document.getElementById('update-banner-text');
+const btnUpdateAction = document.getElementById('btn-update-action');
+let shownUpdate = null;
+let dismissedUpdate = null;
+
+function showUpdate(status) {
+  if (!updateBanner || (status?.state !== 'ready' && status?.state !== 'available')) return;
+  shownUpdate = `${status.state}:${status.version}`;
+  if (shownUpdate === dismissedUpdate) return;
+  const ready = status.state === 'ready';
+  updateBannerText.textContent = ready ? `Version ${status.version} is ready to install.` : `Version ${status.version} is available.`;
+  btnUpdateAction.textContent = ready ? 'Restart to update' : 'Download';
+  btnUpdateAction.onclick = () => ipcRenderer.send(ready ? 'install-update-now' : 'update:open-page');
+  updateBanner.hidden = false;
+}
+
+document.getElementById('btn-update-dismiss')?.addEventListener('click', () => {
+  dismissedUpdate = shownUpdate;
+  updateBanner.hidden = true;
 });
+ipcRenderer.on('updater-status', (event, status) => showUpdate(status));
+ipcRenderer.invoke('update:get-status').then(showUpdate).catch(() => {});
+
+// Newer releases of the other Recon Towers apps. Asked for when the apps panel
+// opens (the main process also reads it at start); the answer is cached there.
+let appVersions = { state: 'unavailable', updates: {} };
+
+async function checkAppVersions({ force = false } = {}) {
+  try {
+    appVersions = await ipcRenderer.invoke('app-versions:check', { force });
+  } catch {
+    appVersions = { state: 'unreachable', updates: {} };
+  }
+  await refreshAppLinkStatus();
+}
 
 // ==========================================================================
 // Recon App Link & Research Clips (v1.3.1)
@@ -1812,6 +1842,15 @@ async function refreshAppLinkStatus() {
       const icon = app.icon || '⚡';
       const desc = app.desc || '';
 
+      // A nudge only: it never changes what the app can do or whether it can link
+      const update = appVersions.updates[app.id];
+      const updateLine = update
+        ? `<span class="app-update-line"><strong>Update available</strong>: you have ${escapeHtml(update.have)}, the latest is ${escapeHtml(update.latest)}</span>`
+        : '';
+      if (update) {
+        actionButtons += `<button class="app-link-btn-action" data-action="web" data-url="${escapeHtml(update.url || app.webUrl || '')}">Download</button>`;
+      }
+
       return `
         <div class="app-link-card">
           <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
@@ -1819,6 +1858,7 @@ async function refreshAppLinkStatus() {
             <div class="app-link-card-info">
               <span class="app-link-card-name">${escapeHtml(app.name)}</span>
               <span style="font-size: 11px; color: var(--text-muted);">${escapeHtml(desc || app.id)}</span>
+              ${updateLine}
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
@@ -1828,6 +1868,10 @@ async function refreshAppLinkStatus() {
         </div>
       `;
     }).join('');
+
+    if (appVersions.state === 'unreachable') {
+      appLinkStatusList.insertAdjacentHTML('afterbegin', '<div class="app-update-line">Couldn’t check for updates</div>');
+    }
 
     appLinkStatusList.querySelectorAll('.app-link-btn-action').forEach(btn => {
       btn.addEventListener('click', async (e) => {
@@ -1870,7 +1914,7 @@ async function refreshAppLinkStatus() {
 }
 
 if (btnRefreshAppLink) {
-  btnRefreshAppLink.addEventListener('click', () => refreshAppLinkStatus());
+  btnRefreshAppLink.addEventListener('click', () => checkAppVersions({ force: true }));
 }
 
 async function extractSelectionAndMetadata(overrideSelection = null) {

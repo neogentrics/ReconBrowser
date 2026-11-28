@@ -44,6 +44,8 @@ The latest version is **v1.10.0**. Download it from [GitHub Releases](https://gi
 
 **Updates.** Windows installs and the Linux AppImage download new versions themselves. Portable, macOS and `.deb` copies check GitHub and tell you when a new version is out, with a link to it. There's also a *Check for Updates* command in the Help menu.
 
+When it starts, and when you open the App Link panel in Settings, Recon Browser also reads `https://recontowers.com/apps/versions.json` to see whether your other Recon Towers apps have newer versions. It is a plain download of that one file, with no cookies, ids or list of your apps, and the answer is kept for a day (an hour if the site can't be reached). Refresh in that panel asks again.
+
 An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 
 ---

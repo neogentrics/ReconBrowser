@@ -10,7 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Multiple windows**: File &rarr; New Window (`Ctrl+N` / `Cmd+N`), and File &rarr; Close Window (`Ctrl+Shift+W` / `Cmd+Shift+W`). Menu commands act on the window they are used in, and theme, finish, bookmarks and global shield settings stay in step across windows. Each window keeps its own tabs and active workspace.
 
+- **Update message**: &ldquo;Version X is ready to install&rdquo; with a *Restart to update* button. Portable, macOS and `.deb` copies get a *Download* button that opens the release page in a tab.
+- **App update nudge**: the App Link panel shows *Update available*, with both version numbers, when a running Recon Towers app is older than the version listed at `recontowers.com/apps/versions.json`. The app reads that file when it starts and when the panel opens. Until the site publishes it, nothing is shown.
+
+### Changed
+- The About item in the Help menu now includes the version number.
+
+### Security
+- Removed the updater that downloaded an installer from GitHub into the temp folder and ran it without checking it. Updates now go through `electron-updater`, which checks each download against the hash published with the release.
+
 ### Fixed
+- **Self-update never ran**: `electron-updater` was missing from the app's dependencies, so every copy fell back to the updater above. This takes effect from the first release that includes it; version 1.10.0 still updates the old way.
+- Scheduled update checks no longer show a &ldquo;Checking GitHub for updates&hellip;&rdquo; message.
 - **Starting Recon Browser while it is already running** ([#18](https://github.com/neogentrics/ReconBrowser/issues/18)) now opens another window from the running app, offset from the current one. Before, it started a second process on the same profile, which came up without your saved settings, in a window placed over the first one.
 
 ## [1.10.0] - 2026-11-19

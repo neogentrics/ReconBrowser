@@ -1139,12 +1139,22 @@ function updateShieldsPopoverDisplay() {
 }
 
 // Track blocked items from main process
+// The tab whose page made a request. A webview has no id until it is attached.
+function tabByWebContentsId(webContentsId) {
+  for (const tab of tabs.values()) {
+    try {
+      if (tab.webviewEl && tab.webviewEl.getWebContentsId() === webContentsId) return tab;
+    } catch {}
+  }
+  return null;
+}
+
 ipcRenderer.on('shield-blocked-update', (event, data) => {
   totalBlockedCount++;
-  const activeTab = tabs.get(activeTabId);
-  if (activeTab && !activeTab.shieldsPaused && shieldsGlobalActive) {
-    activeTab.blockedCount = (activeTab.blockedCount || 0) + 1;
-    updateShieldsPopoverDisplay();
+  const tab = tabByWebContentsId(data?.webContentsId);
+  if (tab && !tab.shieldsPaused && shieldsGlobalActive) {
+    tab.blockedCount = (tab.blockedCount || 0) + 1;
+    if (tab.id === activeTabId) updateShieldsPopoverDisplay();
   }
 });
 

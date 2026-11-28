@@ -1212,6 +1212,27 @@ bindProtectionSwitch(popoverOptFingerprint, toggleFingerprint, 'recon_opt_finger
 bindProtectionSwitch(popoverOptWebrtc, toggleWebrtc, 'recon_opt_webrtc');
 bindProtectionSwitch(popoverOptParams, toggleStripParams, 'recon_opt_params');
 
+// The main process enforces these. Sent before the first tab opens, and on change.
+const PRIVACY_SWITCHES = {
+  recon_opt_fingerprint: [popoverOptFingerprint, toggleFingerprint],
+  recon_opt_webrtc: [popoverOptWebrtc, toggleWebrtc],
+  recon_opt_params: [popoverOptParams, toggleStripParams]
+};
+
+function sendPrivacyOptions() {
+  const on = (key) => localStorage.getItem(key) !== 'false';
+  ipcRenderer.send('set-privacy-options', {
+    fingerprint: on('recon_opt_fingerprint'),
+    webrtc: on('recon_opt_webrtc'),
+    params: on('recon_opt_params')
+  });
+}
+
+for (const switches of Object.values(PRIVACY_SWITCHES)) {
+  switches.forEach(el => el.addEventListener('change', sendPrivacyOptions));
+}
+sendPrivacyOptions();
+
 // ==========================================================================
 // Themes & Aspects Management
 // ==========================================================================
@@ -5819,6 +5840,9 @@ const sharedSettingAppliers = {
     if (toggleDoh) toggleDoh.checked = value !== 'false';
     tabs.forEach(tab => syncThemeToWebview(tab));
   },
+  // The main process already has the new value; only the switches here are stale
+  ...Object.fromEntries(Object.entries(PRIVACY_SWITCHES).map(([key, switches]) =>
+    [key, (value) => switches.forEach(el => { el.checked = value !== 'false'; })])),
   recon_bookmarks: () => renderBookmarks(),
   recon_show_bookmarks_bar: (value) => setBookmarksBarVisibility(value === 'true', showOnly),
   recon_show_startpage_apps: (value) => setStartpageAppsVisibility(value !== 'false', showOnly),

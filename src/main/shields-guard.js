@@ -64,6 +64,7 @@ function createShieldsGuard({
   isEnabled,
   pausedHosts,
   pageUrlOf = () => '',
+  cleanNavigation = () => null,
   log = () => {},
   onBlocked = () => {},
   onMedia = () => {}
@@ -104,8 +105,14 @@ function createShieldsGuard({
 
     if (!isEnabled()) return allow('Shields Global Disabled');
 
-    // A page the user opens is never cancelled, only what pages load
-    if (details.resourceType === 'mainFrame') return allow('Allowed');
+    // A page the user opens is never cancelled, only what pages load. Its address
+    // may lose tracking parameters.
+    if (details.resourceType === 'mainFrame') {
+      const redirectURL = cleanNavigation(details);
+      if (!redirectURL) return allow('Allowed');
+      log(details.webContentsId, { ...entry, blocked: false, reason: 'Tracking Parameters Removed' });
+      return { redirectURL };
+    }
 
     const pageHost = hostOf(details.webContentsId ? pageUrlOf(details.webContentsId) : '') || hostOf(details.referrer);
     if (isPaused(pausedHosts, [entry.host, hostOf(details.referrer), pageHost])) return allow('Site Shield Paused');
@@ -139,4 +146,4 @@ function createShieldsGuard({
   return { attach, handle };
 }
 
-module.exports = { createShieldsGuard, parseFilterList };
+module.exports = { createShieldsGuard, parseFilterList, isPaused, hostOf };

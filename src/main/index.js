@@ -38,6 +38,7 @@ const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link')
 const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
 const { WindowManager, cascadeBounds } = require('./window-manager');
 const { createShieldsGuard, parseFilterList } = require('./shields-guard');
+const { createPrivacy } = require('./privacy');
 
 const windows = new WindowManager();
 let blockedCount = 0;
@@ -69,6 +70,50 @@ try {
   trackerRules = parseFilterList('google-analytics.com\ndoubleclick.net\ncriteo.com\nfacebook.net');
 }
 
+// Tracking-parameter, WebRTC and anti-fingerprinting protections
+const privacy = createPrivacy({ isShieldsEnabled: () => shieldsEnabled, pausedHosts });
+const fingerprintPreload = path.join(__dirname, '../preload/fingerprint.js');
+const protectedSessions = new WeakSet();
+
+function protectSession(ses) {
+  shieldsGuard.attach(ses);
+  if (!protectedSessions.has(ses)) {
+    protectedSessions.add(ses);
+    ses.setPreloads([...ses.getPreloads(), fingerprintPreload]);
+  }
+}
+
+// The browser's own pages are never altered, only tabs and the popups they open
+const isBrowserUi = (contents) => windows.all().some(w => w.webContents === contents);
+
+ipcMain.on('privacy:page-config', (event) => {
+  const frame = event.senderFrame;
+  event.returnValue = !frame || isBrowserUi(event.sender)
+    ? { fingerprint: false }
+    : privacy.fingerprintConfig(frame.url, frame.top?.url);
+});
+
+function applyWebRtcPolicy(contents, url = contents.getURL()) {
+  if (!contents.isDestroyed()) contents.setWebRTCIPHandlingPolicy(privacy.webrtcPolicy(url));
+}
+const refreshWebRtcPolicy = () => electronWebContents.getAllWebContents().forEach(c => applyWebRtcPolicy(c));
+
+ipcMain.on('set-privacy-options', (_event, options) => {
+  privacy.setOptions(options);
+  refreshWebRtcPolicy();
+});
+
+app.on('web-contents-created', (_event, contents) => {
+  applyWebRtcPolicy(contents, '');
+  contents.on('did-start-navigation', (details) => {
+    if (details.isMainFrame && !details.isSameDocument) applyWebRtcPolicy(contents, details.url);
+  });
+  // Lets the preload reach frames inside a page too. It does not give pages Node.
+  contents.on('will-attach-webview', (_e, webPreferences) => {
+    webPreferences.nodeIntegrationInSubFrames = true;
+  });
+});
+
 // Network request interception (Recon Shields 2.0 & Live Inspector). Tabs use their
 // own session partitions, so it is attached to every session, not just the default one.
 const shieldsGuard = createShieldsGuard({
@@ -80,6 +125,7 @@ const shieldsGuard = createShieldsGuard({
     const contents = electronWebContents.fromId(id);
     return contents && !contents.isDestroyed() ? contents.getURL() : '';
   },
+  cleanNavigation: (details) => privacy.cleanNavigation(details),
   log: (id, entry) => shieldsManager.logRequest(id, entry),
   onBlocked: (details, host) => {
     blockedCount++;
@@ -92,7 +138,7 @@ const shieldsGuard = createShieldsGuard({
     sendToRequestWindow(details, 'media-detected-update', { url: details.url });
   }
 });
-app.on('session-created', (ses) => shieldsGuard.attach(ses));
+app.on('session-created', protectSession);
 
 function buildMenu() {
   const isMac = process.platform === 'darwin';
@@ -342,7 +388,7 @@ function setupDefaultSession() {
     .replace(/recon-browser\/\S+\s?/, '');
   session.defaultSession.setUserAgent(cleanUA);
 
-  shieldsGuard.attach(session.defaultSession);
+  protectSession(session.defaultSession);
 }
 
 // Runs once per process. Every window shows the update message.
@@ -554,6 +600,7 @@ ipcMain.on('toggle-doh', (event, enabled) => {
 
 ipcMain.on('toggle-shields', (event, enabled) => {
   shieldsEnabled = enabled;
+  refreshWebRtcPolicy();
   console.log(`[Recon Shields] Global State toggled: ${shieldsEnabled ? 'ACTIVE' : 'DISABLED'}`);
 });
 
@@ -568,6 +615,7 @@ ipcMain.on('set-site-shields', (event, { host, enabled }) => {
     pausedHosts.add(cleanHost);
     pausedHosts.add(baseHost);
   }
+  refreshWebRtcPolicy();
   console.log(`[Recon Shields] Host ${cleanHost} (${baseHost}) set to: ${enabled ? 'ACTIVE' : 'PAUSED'}`);
 });
 

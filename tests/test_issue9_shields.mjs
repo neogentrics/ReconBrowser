@@ -57,7 +57,8 @@ describe('Issue #9: Shields block in every session', () => {
   });
 
   it('is attached to sessions as they are created, before any window exists', () => {
-    const hook = main.indexOf("app.on('session-created', (ses) => shieldsGuard.attach(ses))");
+    const hook = main.indexOf("app.on('session-created', protectSession)");
+    assert.match(main, /function protectSession\(ses\) \{\s*shieldsGuard\.attach\(ses\);/);
     assert.ok(hook > -1);
     assert.ok(hook < main.indexOf('app.whenReady()'));
     assert.equal(main.match(/onBeforeRequest\(/g), null, 'only the guard registers request handlers');

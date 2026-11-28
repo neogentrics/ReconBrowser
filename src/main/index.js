@@ -38,6 +38,12 @@ const { AppLink, LinkError, sharedFolder, toPlainWords } = require('./app-link')
 const { buildClipDocument, htmlToCleanMarkdown, safeDocumentName } = require('./clip-builder');
 const { WindowManager, cascadeBounds } = require('./window-manager');
 
+const { cleanUserAgent } = require('./user-agent');
+
+// The default for every session, so it reaches all tab partitions, popups and
+// workers. It has to be set before the first session is created.
+app.userAgentFallback = cleanUserAgent(app.userAgentFallback);
+
 const windows = new WindowManager();
 let blockedCount = 0;
 let shieldsEnabled = true;
@@ -316,13 +322,6 @@ function sendToRequestWindow(details, channel, payload) {
 // Runs once per process: the default session is shared by every window, and each
 // webRequest event keeps only one listener.
 function setupDefaultSession() {
-  // Set clean standard Chrome User-Agent to prevent bot/captcha detection
-  const defaultUA = session.defaultSession.getUserAgent();
-  const cleanUA = defaultUA
-    .replace(/Electron\/\S+\s?/, '')
-    .replace(/recon-browser\/\S+\s?/, '');
-  session.defaultSession.setUserAgent(cleanUA);
-
   function isSiteShieldsPaused(details) {
     if (!pausedHosts || pausedHosts.size === 0) return false;
 

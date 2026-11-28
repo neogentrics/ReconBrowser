@@ -439,7 +439,7 @@ function wireWebviewEvents(tabData, webviewEl) {
       if (toggleDoh) toggleDoh.checked = next;
       ipcRenderer.send('toggle-doh', next);
       tabs.forEach(tab => syncThemeToWebview(tab));
-      showToast(next ? 'DNS-over-HTTPS: Encrypted (Cloudflare)' : 'DNS-over-HTTPS: Standard (System DNS)');
+      showToast(next ? 'DNS-over-HTTPS: Encrypted (Cloudflare & Google)' : 'DNS-over-HTTPS: Standard (System DNS)');
     } else if (msg === 'RECON_ACTION:SHOW_TELEMETRY_INFO') {
       openSettingsModal('privacy');
     } else if (msg.startsWith('RECON_ZAP:')) {
@@ -1368,7 +1368,7 @@ if (toggleDoh) {
     localStorage.setItem('recon_doh_enabled', String(enabled));
     ipcRenderer.send('toggle-doh', enabled);
     tabs.forEach(tab => syncThemeToWebview(tab.webviewEl));
-    showToast(enabled ? 'DNS-over-HTTPS: Encrypted (Cloudflare)' : 'DNS-over-HTTPS: Standard (System DNS)');
+    showToast(enabled ? 'DNS-over-HTTPS: Encrypted (Cloudflare & Google)' : 'DNS-over-HTTPS: Standard (System DNS)');
   });
 }
 

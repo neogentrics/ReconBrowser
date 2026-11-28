@@ -1175,6 +1175,46 @@ textarea::placeholder {
   flex: 1;
 }
 
+#load-error {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+  background: var(--bg-primary);
+  color: var(--text-main);
+}
+
+#load-error[hidden] {
+  display: none;
+}
+
+.load-error-card {
+  max-width: 520px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.load-error-card h2 {
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.load-error-url {
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+
+.load-error-detail {
+  margin: 4px 0 16px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
 /* ==========================================================================
    Dedicated Recon Shields Popover (Anchored under Shields Widget)
    ========================================================================== */

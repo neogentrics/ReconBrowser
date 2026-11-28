@@ -46,6 +46,8 @@ The latest version is **v1.10.0**. Download it from [GitHub Releases](https://gi
 
 When it starts, and when you open the App Link panel in Settings, Recon Browser also reads `https://recontowers.com/apps/versions.json` to see whether your other Recon Towers apps have newer versions. It is a plain download of that one file, with no cookies, ids or list of your apps, and the answer is kept for a day (an hour if the site can't be reached). Refresh in that panel asks again.
 
+**Who sees your DNS lookups.** DNS-over-HTTPS is on by default. Looking up a site's address then goes over encrypted HTTPS to **Cloudflare** (`1.1.1.1`, `1.0.0.1`, `cloudflare-dns.com`) or **Google** (`dns.google`). The app uses both, and either one can receive any lookup, so treat both as able to see the domain names you visit, along with your IP address. Your internet provider can't read the lookups, though it can still see which servers you connect to. If you turn the switch off in Settings, your system's own DNS is used instead (often your provider's or router's).
+
 An Android companion is planned but not built yet. See the [roadmap](#roadmap).
 
 ---
@@ -237,7 +239,7 @@ The first stable release: multi-tab browsing, the DuckDuckGo address bar with `!
 | **Telemetry & Pingbacks** | **Disabled / Stripped** | Enabled | Enabled | Minimal |
 | **Crypto / Token Rewards Bloat**| **None (Pure Web)** | None | None | Enabled (BAT/Wallet) |
 | **Recon Apps Ecosystem Sync** | **Native** | None | None | None |
-| **Encrypted DoH by Default** | **Yes (Cloudflare/Quad9)**| Optional | Optional | Enabled |
+| **Encrypted DoH by Default** | **Yes (Cloudflare & Google)**| Optional | Optional | Enabled |
 
 ---
 

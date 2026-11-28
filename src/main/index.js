@@ -103,7 +103,17 @@ ipcMain.on('set-privacy-options', (_event, options) => {
   refreshWebRtcPolicy();
 });
 
+// Popups do not inherit the frame setting below, so they are given it as they open
+function coverPopupFrames(contents) {
+  contents.setWindowOpenHandler(() => ({
+    action: 'allow',
+    overrideBrowserWindowOptions: { webPreferences: { nodeIntegrationInSubFrames: true } }
+  }));
+  contents.on('did-create-window', (child) => coverPopupFrames(child.webContents));
+}
+
 app.on('web-contents-created', (_event, contents) => {
+  if (contents.getType() === 'webview') coverPopupFrames(contents);
   applyWebRtcPolicy(contents, '');
   contents.on('did-start-navigation', (details) => {
     if (details.isMainFrame && !details.isSameDocument) applyWebRtcPolicy(contents, details.url);

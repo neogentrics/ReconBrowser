@@ -183,6 +183,13 @@ describe('Issue #12: wiring', () => {
     assert.doesNotMatch(main, /webPreferences\.(nodeIntegration|contextIsolation|sandbox) = /);
   });
 
+  it('covers frames inside popups, and popups of popups', () => {
+    assert.match(main, /getType\(\) === 'webview'\) coverPopupFrames\(contents\)/);
+    const body = main.slice(main.indexOf('function coverPopupFrames'), main.indexOf("app.on('web-contents-created'"));
+    assert.match(body, /overrideBrowserWindowOptions: \{ webPreferences: \{ nodeIntegrationInSubFrames: true \} \}/);
+    assert.match(body, /did-create-window[\s\S]*coverPopupFrames\(child\.webContents\)/);
+  });
+
   it('sets the WebRTC policy on tabs and again when settings change', () => {
     assert.match(main, /setWebRTCIPHandlingPolicy\(privacy\.webrtcPolicy\(url\)\)/);
     for (const channel of ['set-privacy-options', 'toggle-shields', 'set-site-shields']) {

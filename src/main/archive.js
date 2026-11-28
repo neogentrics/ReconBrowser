@@ -19,6 +19,7 @@ class ArchiveManager {
     const baseDir = customDir || getUserDataPath();
     this.archiveDir = path.join(baseDir, 'archives');
     this.catalogPath = path.join(baseDir, 'recon_archives.json');
+    this.viewDir = path.join(baseDir, 'archive-view');
     this.ensureDir();
     this.memoryCatalog = null;
   }
@@ -115,6 +116,25 @@ class ArchiveManager {
     return entry;
   }
 
+  viewPath(id) {
+    return path.join(this.viewDir, `${id}.mhtml`);
+  }
+
+  /**
+   * A copy of the archive that the browser can show. Chromium picks the type of a
+   * local file from its extension, and shows a .reconarchive file as plain text.
+   */
+  prepareForViewing(id) {
+    const item = this.loadCatalog().find(i => i.id === id);
+    if (!item || !item.filePath || !fs.existsSync(item.filePath)) {
+      throw new Error('That archive file is no longer there');
+    }
+    fs.mkdirSync(this.viewDir, { recursive: true });
+    const copy = this.viewPath(item.id);
+    fs.copyFileSync(item.filePath, copy);
+    return copy;
+  }
+
   delete(id) {
     const all = this.loadCatalog();
     const item = all.find(i => i.id === id);
@@ -125,10 +145,25 @@ class ArchiveManager {
         console.warn('[Recon Archive] Failed to delete archive file:', err);
       }
     }
+    if (item) {
+      try { fs.rmSync(this.viewPath(item.id), { force: true }); } catch {}
+    }
     const filtered = all.filter(i => i.id !== id);
     this.saveCatalog(filtered);
     return true;
   }
 }
 
-module.exports = { ArchiveManager };
+/**
+ * The tab a window asked to archive: its own webview and nothing else. A window
+ * must not be able to save another window's page, or the browser's own pages.
+ */
+function tabToArchive(contents, requester) {
+  const ok = contents && !contents.isDestroyed() &&
+    contents.getType() === 'webview' &&
+    contents.hostWebContents?.id === requester.id;
+  if (!ok) throw new Error('Active page contents not found for archiving');
+  return contents;
+}
+
+module.exports = { ArchiveManager, tabToArchive };

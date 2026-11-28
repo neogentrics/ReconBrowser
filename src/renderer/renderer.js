@@ -118,6 +118,8 @@ const btnClipSend = document.getElementById('btn-clip-send');
 const tabs = new Map(); // tabId -> { id, title, url, tabEl, webviewEl, blockedCount, shieldsPaused, readerActive }
 let activeTabId = null;
 let nextTabId = 1;
+// Held per window. localStorage keeps only the last one chosen, for new windows.
+let currentActiveWorkspaceId = localStorage.getItem('recon_active_workspace') || 'default';
 let shieldsGlobalActive = localStorage.getItem('recon_shields_active') !== 'false';
 let totalBlockedCount = 0;
 let readerFontSize = 17;
@@ -324,7 +326,7 @@ function createTab(initialUrl = null, activate = true, containerId = 'default', 
   webviewEl.setAttribute('allowpopups', '');
   webviewEl.style.display = 'none';
 
-  const currentWsId = localStorage.getItem('recon_active_workspace') || 'default';
+  const currentWsId = currentActiveWorkspaceId;
   const tabData = {
     id,
     title,
@@ -480,6 +482,9 @@ function wireWebviewEvents(tabData, webviewEl) {
       }
     } else if (msg.startsWith('RECON_HISTORY_CLEAR_QUIT:')) {
       const val = msg.replace('RECON_HISTORY_CLEAR_QUIT:', '').trim() === 'true';
+      // Saved too, because every new window re-sends the stored value on load
+      localStorage.setItem('recon_history_clear_on_quit', String(val));
+      if (toggleHistoryClearOnQuit) toggleHistoryClearOnQuit.checked = val;
       ipcRenderer.invoke('history:set-clear-on-quit', val);
     } else if (msg.startsWith('RECON_GEMINI_REQ:LOAD:')) {
       const gUrl = msg.replace('RECON_GEMINI_REQ:LOAD:', '').trim();
@@ -547,7 +552,7 @@ function wakeTab(id) {
   tab.lastActiveAt = Date.now();
   tab.tabEl.classList.remove('tab-sleeping');
 
-  const currentWsId = localStorage.getItem('recon_active_workspace') || 'default';
+  const currentWsId = currentActiveWorkspaceId;
   tab.tabEl.style.display = ((tab.workspaceId || 'default') === currentWsId) ? 'flex' : 'none';
 
   const badge = tab.tabEl.querySelector('.tab-sleep-badge');
@@ -1199,13 +1204,15 @@ bindProtectionSwitch(popoverOptParams, toggleStripParams, 'recon_opt_params');
 // ==========================================================================
 // Themes & Aspects Management
 // ==========================================================================
-function applyThemeAndAspect(theme, aspect) {
+function applyThemeAndAspect(theme, aspect, { persist = true } = {}) {
   const activeTheme = theme || localStorage.getItem('recon_theme') || 'cyber';
   const activeAspect = aspect || localStorage.getItem('recon_aspect') || 'solid';
 
   document.body.className = `theme-${activeTheme} aspect-${activeAspect}`;
-  localStorage.setItem('recon_theme', activeTheme);
-  localStorage.setItem('recon_aspect', activeAspect);
+  if (persist) {
+    localStorage.setItem('recon_theme', activeTheme);
+    localStorage.setItem('recon_aspect', activeAspect);
+  }
 
   if (selectTheme) selectTheme.value = activeTheme;
   if (selectAspect) selectAspect.value = activeAspect;
@@ -1295,8 +1302,8 @@ function setupHomeSetting() {
 setupHomeSetting();
 
 // Start Page Apps Hub Toggle (Synchronized across Settings Modal & Recon Apps dropdown)
-function setStartpageAppsVisibility(show) {
-  localStorage.setItem('recon_show_startpage_apps', String(show));
+function setStartpageAppsVisibility(show, { persist = true } = {}) {
+  if (persist) localStorage.setItem('recon_show_startpage_apps', String(show));
   if (toggleStartpageApps) toggleStartpageApps.checked = show;
   if (dropdownToggleStartpageApps) dropdownToggleStartpageApps.checked = show;
   tabs.forEach(tab => syncThemeToWebview(tab));
@@ -1331,8 +1338,8 @@ toggleNavbarApps.addEventListener('change', (e) => {
 // ==========================================================================
 // Search Engine Setting & Sync
 // ==========================================================================
-function setEngine(engine) {
-  localStorage.setItem('recon_default_engine', engine);
+function setEngine(engine, { persist = true } = {}) {
+  if (persist) localStorage.setItem('recon_default_engine', engine);
   selectEngine.value = engine;
   updateEngineBadge(engine);
   const activeTab = tabs.get(activeTabId);
@@ -1735,7 +1742,7 @@ ipcRenderer.on('menu-prev-tab', () => {
   }
 });
 ipcRenderer.on('menu-shortcuts', () => {
-  showToast('Shortcuts: Ctrl+T (New Tab), Ctrl+W (Close Tab), Ctrl+L (Address), Ctrl+R (Reload), Ctrl+Alt+R (Reader), Ctrl+Shift+A (Read Aloud)');
+  showToast('Shortcuts: Ctrl+N (New Window), Ctrl+T (New Tab), Ctrl+W (Close Tab), Ctrl+L (Address), Ctrl+R (Reload), Ctrl+Alt+R (Reader), Ctrl+Shift+A (Read Aloud)');
 });
 ipcRenderer.on('menu-toggle-reader', () => toggleReaderView());
 ipcRenderer.on('menu-read-aloud', () => startReadAloud());
@@ -2433,8 +2440,8 @@ function renderBookmarks() {
   }
 }
 
-function setBookmarksBarVisibility(show) {
-  localStorage.setItem('recon_show_bookmarks_bar', String(show));
+function setBookmarksBarVisibility(show, { persist = true } = {}) {
+  if (persist) localStorage.setItem('recon_show_bookmarks_bar', String(show));
   if (bookmarksBar) bookmarksBar.style.display = show ? 'flex' : 'none';
   if (toggleBookmarksBar) toggleBookmarksBar.checked = show;
   if (settingsToggleBookmarksBar) settingsToggleBookmarksBar.checked = show;
@@ -5284,7 +5291,6 @@ async function loadGatewaySettings() {
 // Recon Spotlight & Project Workspaces Controller (v1.10.0)
 // ==========================================================================
 let currentWorkspacesList = [];
-let currentActiveWorkspaceId = localStorage.getItem('recon_active_workspace') || 'default';
 
 async function initWorkspaces() {
   try {
@@ -5409,6 +5415,8 @@ async function loadWorkspacesSettings() {
         await ipcRenderer.invoke('workspaces:delete', { id: wsId });
         if (currentActiveWorkspaceId === wsId) {
           currentActiveWorkspaceId = 'default';
+        }
+        if (localStorage.getItem('recon_active_workspace') === wsId) {
           localStorage.setItem('recon_active_workspace', 'default');
         }
         await initWorkspaces();
@@ -5732,3 +5740,70 @@ function executeCommandAction(action) {
     }
   });
 })();
+
+// ==========================================================================
+// Multiple Windows
+// ==========================================================================
+// Windows share localStorage. The 'storage' event fires only in the *other*
+// windows, so use it to keep what they show in step with what was changed.
+// These must only redraw, never write: events arrive one key at a time, so writing
+// here can put an older value back and undo the change in the window that made it.
+const showOnly = { persist: false };
+const sharedSettingAppliers = {
+  recon_theme: () => applyThemeAndAspect(null, null, showOnly),
+  recon_aspect: () => applyThemeAndAspect(null, null, showOnly),
+  recon_default_engine: (value) => setEngine(value || 'duckduckgo', showOnly),
+  recon_shields_active: (value) => {
+    // The main process already has the new value; only this window's UI is stale
+    shieldsGlobalActive = value !== 'false';
+    if (toggleAdblock) toggleAdblock.checked = shieldsGlobalActive;
+    if (popoverOptAdblock) popoverOptAdblock.checked = shieldsGlobalActive;
+    updateShieldsPopoverDisplay();
+    tabs.forEach(tab => syncThemeToWebview(tab));
+  },
+  recon_doh_enabled: (value) => {
+    if (toggleDoh) toggleDoh.checked = value !== 'false';
+    tabs.forEach(tab => syncThemeToWebview(tab));
+  },
+  recon_bookmarks: () => renderBookmarks(),
+  recon_show_bookmarks_bar: (value) => setBookmarksBarVisibility(value === 'true', showOnly),
+  recon_show_startpage_apps: (value) => setStartpageAppsVisibility(value !== 'false', showOnly),
+  recon_show_navbar_apps: (value) => {
+    toggleNavbarApps.checked = value !== 'false';
+    ecosystemContainer.style.display = toggleNavbarApps.checked ? 'flex' : 'none';
+  },
+  recon_history_clear_on_quit: (value) => {
+    if (toggleHistoryClearOnQuit) toggleHistoryClearOnQuit.checked = value === 'true';
+  },
+  recon_dismiss_default_browser: (value) => {
+    const banner = document.getElementById('default-browser-banner');
+    if (value === 'true' && banner) banner.style.display = 'none';
+  }
+};
+
+window.addEventListener('storage', (e) => {
+  if (Object.hasOwn(sharedSettingAppliers, e.key)) sharedSettingAppliers[e.key](e.newValue);
+});
+
+// Another window created, renamed or deleted a workspace. Each window keeps its
+// own active workspace; only a deleted one forces a move back to Main.
+ipcRenderer.on('workspaces-changed', async (_event, { deletedId } = {}) => {
+  if (deletedId) {
+    for (const tab of tabs.values()) {
+      if (tab.workspaceId === deletedId) tab.workspaceId = 'default';
+    }
+    if (currentActiveWorkspaceId === deletedId) currentActiveWorkspaceId = 'default';
+  }
+  await initWorkspaces();
+  if (deletedId) filterTabsForActiveWorkspace();
+});
+
+// closeTab() wipes an ephemeral tab's session. Closing a window no longer quits
+// the app while other windows are open, so wipe this window's ones here too.
+window.addEventListener('beforeunload', () => {
+  for (const tab of tabs.values()) {
+    if (tab.isEphemeral && tab.partitionKey) {
+      ipcRenderer.invoke('containers:wipe-ephemeral', tab.partitionKey).catch(() => {});
+    }
+  }
+});

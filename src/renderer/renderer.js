@@ -90,6 +90,7 @@ const aboutClose = document.getElementById('about-close');
 const aboutDone = document.getElementById('about-done');
 const aboutCopy = document.getElementById('about-copy');
 const toastEl = document.getElementById('toast');
+const inputDlg = document.getElementById('input-dlg');
 
 // Research Clip & App Link Elements (v1.3.1)
 const btnClipResearch = document.getElementById('btn-clip-research');
@@ -2494,14 +2495,17 @@ function setBookmarksBarVisibility(show, { persist = true } = {}) {
 if (selectBookmarkSort) selectBookmarkSort.addEventListener('change', renderBookmarks);
 if (selectBookmarkFolder) selectBookmarkFolder.addEventListener('change', renderBookmarks);
 if (btnNewBookmarkFolder) {
-  btnNewBookmarkFolder.addEventListener('click', () => {
-    const fName = prompt('Enter new bookmark folder name:');
-    if (fName && fName.trim()) {
-      const activeTab = tabs.get(activeTabId);
-      if (activeTab) {
-        addBookmark(activeTab.url, activeTab.title, fName.trim());
-      }
-    }
+  btnNewBookmarkFolder.addEventListener('click', async () => {
+    // The page to save is the one showing when the button was pressed
+    const activeTab = tabs.get(activeTabId);
+    if (!activeTab) return;
+    const { url, title } = activeTab;
+    const fName = await askForText(inputDlg, {
+      title: 'New bookmark folder',
+      label: 'Folder name. The current page is saved in it.',
+      confirmLabel: 'Create folder'
+    });
+    if (fName) addBookmark(url, title, fName);
   });
 }
 if (settingsToggleBookmarksBar) {
@@ -5680,10 +5684,15 @@ function executeCommandAction(action) {
   if (btnQuickAddWs) {
     btnQuickAddWs.addEventListener('click', async (e) => {
       e.stopPropagation();
-      const name = prompt('Enter new project workspace name:');
-      if (name && name.trim()) {
+      if (wsDropdown) wsDropdown.style.display = 'none';
+      const name = await askForText(inputDlg, {
+        title: 'New workspace',
+        label: 'Workspace name',
+        confirmLabel: 'Create workspace'
+      });
+      if (name) {
         try {
-          const created = await ipcRenderer.invoke('workspaces:create', { name: name.trim(), icon: '📁', color: '#7c3aed' });
+          const created = await ipcRenderer.invoke('workspaces:create', { name, icon: '📁', color: '#7c3aed' });
           await initWorkspaces();
           switchWorkspace(created.id);
         } catch (err) {

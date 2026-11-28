@@ -44,7 +44,9 @@ let shieldsEnabled = true;
 const pausedHosts = new Set();
 let updater = null;
 const vault = new PasswordVault();
-const historyManager = new HistoryManager();
+const historyManager = new HistoryManager({
+  internalDirs: [path.join(__dirname, '../renderer'), app.getPath('userData')]
+});
 const syncManager = new SyncManager();
 const archiveManager = new ArchiveManager();
 const shieldsManager = new ShieldsManager();
@@ -1304,9 +1306,13 @@ app.on('web-contents-created', (event, contents) => {
       const title = contents.getTitle() || url;
       historyManager.add({ url, title });
     });
-    contents.on('did-navigate-in-page', (event, url) => {
+    contents.on('did-navigate-in-page', (event, url, isMainFrame) => {
+      if (!isMainFrame) return; // a frame moving within itself is not a visit
       const title = contents.getTitle() || url;
       historyManager.add({ url, title });
+    });
+    contents.on('page-title-updated', (event, title) => {
+      historyManager.setTitle(contents.getURL(), title);
     });
 
     contents.on('did-finish-load', () => {

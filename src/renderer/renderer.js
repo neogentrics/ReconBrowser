@@ -1,6 +1,8 @@
 const { ipcRenderer } = require('electron');
 
 const browserContainer = document.getElementById('browser-container');
+const { navigate, describeLoadFailure } = window.pageLoading;
+const loadErrorPanel = document.getElementById('load-error');
 const tabsContainer = document.getElementById('tabs-container');
 const btnNewTab = document.getElementById('btn-new-tab');
 const omnibar = document.getElementById('omnibar');
@@ -387,6 +389,15 @@ function wireWebviewEvents(tabData, webviewEl) {
     }
   });
 
+  // A failed page is blank, so say what happened. A new load clears the message.
+  webviewEl.addEventListener('did-start-navigation', (e) => {
+    if (e.isMainFrame && !e.isInPlace) setLoadError(tabData, null);
+  });
+  webviewEl.addEventListener('did-fail-load', (e) => {
+    const failure = describeLoadFailure(e);
+    if (failure) setLoadError(tabData, failure);
+  });
+
   // Attach webview lifecycle events
   webviewEl.addEventListener('did-navigate', (e) => {
     onTabNavigated(id, e.url);
@@ -497,7 +508,7 @@ function wireWebviewEvents(tabData, webviewEl) {
       const targetUrl = msg.replace('RECON_GEMINI_NAV:', '').trim();
       if (targetUrl) {
         if (targetUrl.startsWith('gemini://')) {
-          webviewEl.loadURL(getGeminiViewerURL(targetUrl));
+          navigate(webviewEl, getGeminiViewerURL(targetUrl));
         } else {
           createTab(targetUrl, true);
         }
@@ -505,6 +516,34 @@ function wireWebviewEvents(tabData, webviewEl) {
     }
   });
 }
+
+function setLoadError(tab, failure) {
+  if (!failure && !tab.loadError) return;
+  tab.loadError = failure;
+  // The tab is named after what it tried to open, not the page before it
+  if (failure) {
+    let name = failure.url;
+    try { name = new URL(failure.url).hostname || failure.url; } catch {}
+    onTabTitleUpdated(tab.id, name);
+  }
+  if (tab.id !== activeTabId) return;
+  showLoadError(tab);
+  if (failure) updateOmnibar(failure.url);
+}
+
+function showLoadError(tab) {
+  const failure = tab.loadError;
+  loadErrorPanel.hidden = !failure;
+  if (!failure) return;
+  document.getElementById('load-error-reason').textContent = failure.reason;
+  document.getElementById('load-error-url').textContent = failure.url;
+  document.getElementById('load-error-detail').textContent = failure.detail;
+}
+
+document.getElementById('load-error-retry').addEventListener('click', () => {
+  const tab = tabs.get(activeTabId);
+  if (tab?.webviewEl && tab.loadError) navigate(tab.webviewEl, tab.loadError.url);
+});
 
 function sleepTab(id) {
   if (id === activeTabId) return;
@@ -525,6 +564,7 @@ function sleepTab(id) {
   } catch {}
 
   tab.isSleeping = true;
+  tab.loadError = null; // waking loads the page again
   tab.tabEl.classList.add('tab-sleeping');
 
   const titleEl = tab.tabEl.querySelector('.tab-title');
@@ -620,7 +660,8 @@ function switchTab(id) {
   });
 
   const activeTab = tabs.get(id);
-  updateOmnibar(activeTab.url);
+  updateOmnibar(activeTab.loadError ? activeTab.loadError.url : activeTab.url);
+  showLoadError(activeTab);
   updateNavButtons();
   updateShieldsPopoverDisplay();
   updateOmnibarContainerBadge(activeTab.containerObj);
@@ -811,7 +852,7 @@ omnibar.addEventListener('keydown', async (e) => {
     if (activeTab) {
       if (activeTab.isSleeping) wakeTab(activeTabId);
       if (activeTab.webviewEl) {
-        activeTab.webviewEl.loadURL(targetUrl);
+        navigate(activeTab.webviewEl, targetUrl);
       }
     }
   }
@@ -853,7 +894,7 @@ btnHome.addEventListener('click', () => {
     targetUrl = localStorage.getItem('recon_home_custom_url') || 'https://recontowers.com';
   }
 
-  activeTab.webviewEl.loadURL(targetUrl);
+  navigate(activeTab.webviewEl, targetUrl);
 });
 
 btnNewTab.addEventListener('click', () => createTab());
@@ -1410,7 +1451,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
 
     if (url) {
       const activeTab = tabs.get(activeTabId);
-      if (activeTab && activeTab.webviewEl) activeTab.webviewEl.loadURL(url);
+      if (activeTab && activeTab.webviewEl) navigate(activeTab.webviewEl, url);
       ecosystemDropdown.style.display = 'none';
     }
   });
@@ -2444,7 +2485,7 @@ function renderBookmarks() {
           if (url) {
             const activeTab = tabs.get(activeTabId);
             if (activeTab && activeTab.webviewEl) {
-              activeTab.webviewEl.loadURL(url);
+              navigate(activeTab.webviewEl, url);
             } else {
               createTab(url, true);
             }
@@ -2473,7 +2514,7 @@ function renderBookmarks() {
           } else {
             const activeTab = tabs.get(activeTabId);
             if (activeTab && activeTab.webviewEl) {
-              activeTab.webviewEl.loadURL(url);
+              navigate(activeTab.webviewEl, url);
             } else {
               createTab(url, true);
             }
@@ -2682,7 +2723,7 @@ async function loadAndRenderHistory(query = '') {
           closeSettingsModal();
           const activeTab = tabs.get(activeTabId);
           if (activeTab && activeTab.webviewEl) {
-            activeTab.webviewEl.loadURL(url);
+            navigate(activeTab.webviewEl, url);
           } else {
             createTab(url, true);
           }

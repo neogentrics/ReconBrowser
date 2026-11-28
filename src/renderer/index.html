@@ -209,7 +209,18 @@
 
   <!-- Split Workspace: Webviews & Docked Author Desk Companion Rail (v1.6.0) -->
   <div id="workspace-container" class="workspace-container">
-    <main id="browser-container"></main>
+    <main id="browser-container">
+      <!-- Shown over a tab whose page could not be loaded -->
+      <div id="load-error" role="alert" hidden>
+        <div class="load-error-card">
+          <h2>This page didn’t load</h2>
+          <p id="load-error-reason"></p>
+          <p id="load-error-url" class="load-error-url"></p>
+          <p id="load-error-detail" class="load-error-detail"></p>
+          <button type="button" id="load-error-retry" class="btn-primary">Try again</button>
+        </div>
+      </div>
+    </main>
     <div id="rail-resizer" class="rail-resizer" style="display: none;"></div>
     <aside id="companion-rail" class="companion-rail companion-rail-hidden">
       <!-- Companion Rail Header -->
@@ -1631,6 +1642,7 @@
     </div>
   </div>
 
+  <script src="page-loading.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

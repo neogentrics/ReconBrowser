@@ -1414,6 +1414,21 @@
     </div>
   </dialog>
 
+  <!-- Text input dialog (Electron has no window.prompt) -->
+  <dialog id="input-dlg" class="settings-modal input-dialog">
+    <form data-input-dialog="form">
+      <div class="input-dialog-header" data-input-dialog="title"></div>
+      <div class="input-dialog-body">
+        <label for="input-dlg-field" data-input-dialog="label"></label>
+        <input type="text" id="input-dlg-field" data-input-dialog="input" class="settings-input" maxlength="80" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="input-dialog-footer">
+        <button type="button" class="btn-subtle" data-input-dialog="cancel">Cancel</button>
+        <button type="submit" class="btn-primary" data-input-dialog="confirm">OK</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Live Network Inspector Drawer (v1.5.0) -->
   <div id="network-inspector-drawer" class="inspector-drawer-hidden">
     <div class="inspector-drawer-header">
@@ -1631,6 +1646,7 @@
     </div>
   </div>
 
+  <script src="input-dialog.js"></script>
   <script src="renderer.js"></script>
 </body>
 </html>

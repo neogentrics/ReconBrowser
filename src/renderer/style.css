@@ -1373,6 +1373,43 @@ textarea::placeholder {
   -webkit-backdrop-filter: blur(4px);
 }
 
+/* Takes its background and finish from .settings-modal; only the size differs */
+.settings-modal.input-dialog {
+  width: 400px;
+  min-width: 0;
+  /* "auto" would stretch a modal dialog to the full height of the window */
+  height: fit-content;
+  min-height: 0;
+}
+
+.input-dialog-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.input-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  font-size: 12px;
+}
+
+.input-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.input-dialog .btn-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .settings-modal-wrapper {
   display: flex;
   flex-direction: column;
